@@ -215,6 +215,29 @@
   .health-badge.critical{animation:pulseCritical 2s ease-in-out infinite;}
   .panel-animate{animation:fadeSlideUp 0.4s ease both;}
   .nzd{font-size:0.62rem;color:var(--muted);margin-left:2px;}
+
+  /* ── SYNC BADGE ── */
+  .sync-badge{display:inline-flex;align-items:center;gap:5px;font-size:0.65rem;letter-spacing:1px;padding:4px 10px;border-radius:20px;border:1px solid var(--border);background:rgba(255,255,255,0.04);cursor:pointer;transition:border-color 0.2s,background 0.2s;white-space:nowrap;}
+  .sync-badge:hover{border-color:var(--accent);background:rgba(16,216,255,0.08);}
+  .sync-badge.synced{color:#00ff99;border-color:rgba(0,255,153,0.3);}
+  .sync-badge.syncing{color:var(--accent);border-color:rgba(16,216,255,0.3);animation:syncPulse 1s ease-in-out infinite;}
+  .sync-badge.unset{color:var(--muted);border-color:var(--border);}
+  .sync-badge.error{color:#ff5577;border-color:rgba(255,85,119,0.3);}
+  @keyframes syncPulse{0%,100%{opacity:1;}50%{opacity:0.5;}}
+
+  /* ── SYNC MODAL ── */
+  .sync-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.75);display:flex;align-items:center;justify-content:center;z-index:300;display:none;}
+  .sync-overlay.open{display:flex;}
+  .sync-modal{background:var(--panel2);border:1px solid var(--accent);border-radius:16px;padding:28px;width:min(420px,92vw);box-shadow:var(--glow);}
+  .sync-modal h3{font-size:0.78rem;letter-spacing:2px;color:var(--accent);margin-bottom:6px;}
+  .sync-modal p{font-size:0.75rem;color:var(--muted);margin-bottom:16px;line-height:1.5;}
+  .sync-modal label{font-size:0.68rem;letter-spacing:1px;color:var(--muted);display:block;margin-bottom:4px;}
+  .sync-modal input{width:100%;background:var(--input-bg);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:0.82rem;padding:8px 11px;margin-bottom:13px;font-family:inherit;outline:none;box-sizing:border-box;}
+  .sync-modal input:focus{border-color:var(--accent);}
+  .sync-modal .modal-btns{display:flex;gap:8px;margin-top:4px;}
+  .sync-modal .modal-btns .btn{flex:1;text-align:center;}
+  .sync-help-link{font-size:0.65rem;color:var(--accent2);text-decoration:none;display:block;text-align:center;margin-top:10px;opacity:0.8;}
+  .sync-help-link:hover{opacity:1;}
 </style>
 </head>
 <body>
@@ -279,7 +302,27 @@
 <!-- ── MAIN APP ── -->
 <div id="appWrap" style="display:none;">
 
-<h1>◈ CLARITY</h1>
+<h1 style="display:flex;align-items:center;justify-content:center;gap:10px;">
+  <svg viewBox="0 0 220 220" width="32" height="32" xmlns="http://www.w3.org/2000/svg" style="flex-shrink:0;">
+    <defs>
+      <radialGradient id="gcH1" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="#fff"/><stop offset="38%" stop-color="#80ecff" stop-opacity=".8"/><stop offset="100%" stop-color="#c040ff" stop-opacity="0"/></radialGradient>
+      <linearGradient id="grH1" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#10d8ff"/><stop offset="100%" stop-color="#c040ff"/></linearGradient>
+    </defs>
+    <polygon points="110,16 87,83 110,110" fill="#0888b8"/>
+    <polygon points="110,16 110,110 133,83" fill="#20e8ff"/>
+    <polygon points="204,110 133,83 110,110" fill="#8030e8"/>
+    <polygon points="204,110 110,110 133,137" fill="#5c16b8"/>
+    <polygon points="110,204 133,137 110,110" fill="#c040ff"/>
+    <polygon points="110,204 110,110 87,137" fill="#9828d8"/>
+    <polygon points="16,110 87,137 110,110" fill="#0868a0"/>
+    <polygon points="16,110 110,110 87,83" fill="#10b0e8"/>
+    <ellipse cx="110" cy="110" rx="55" ry="17" fill="none" stroke="url(#grH1)" stroke-width="2.3" opacity=".7" transform="rotate(22,110,110)"/>
+    <circle cx="165" cy="110" r="3.5" fill="#c040ff" opacity=".9" transform="rotate(22,110,110)"/>
+    <circle cx="110" cy="110" r="24" fill="url(#gcH1)"/>
+    <circle cx="110" cy="110" r="9" fill="white" opacity=".88"/>
+  </svg>
+  CLARITY
+</h1>
 <div class="subtitle">MIMI · PERSONAL FINANCE</div>
 <div class="brand-line">by Whetū Digital · Aotearoa, New Zealand</div>
 
@@ -303,6 +346,14 @@
   <div class="control-group">
     <label class="ctrl-label">RESET PAID</label>
     <button class="btn" onclick="resetAllPaid()" style="padding:4px 12px;font-size:0.7rem;">New Period</button>
+  </div>
+  <div class="control-group" style="margin-left:auto;">
+    <label class="ctrl-label">SYNC</label>
+    <span class="sync-badge unset" id="syncBadge" onclick="openSyncModal()" title="Cloud sync settings">☁ SETUP SYNC</span>
+  </div>
+  <div class="control-group">
+    <label class="ctrl-label">HELP</label>
+    <a href="guide.html" target="_blank" class="btn" style="padding:4px 12px;font-size:0.7rem;text-decoration:none;">? Guide</a>
   </div>
 </div>
 
@@ -431,6 +482,26 @@
   </div>
 </div>
 
+<!-- Sync Setup Modal -->
+<div class="sync-overlay" id="syncOverlay">
+  <div class="sync-modal">
+    <h3>☁ CLOUD SYNC SETUP</h3>
+    <p>Sync your budget data across all devices for free using JSONBin.io.<br>
+    Create a free account at <strong>jsonbin.io</strong>, then create a new bin and paste the details below.</p>
+    <label>BIN ID</label>
+    <input type="text" id="syncBinInput" placeholder="e.g. 6618a3..." autocomplete="off" />
+    <label>MASTER KEY (starts with $2a...)</label>
+    <input type="password" id="syncKeyInput" placeholder="Your JSONBin master key" autocomplete="off" />
+    <p id="syncModalMsg" style="font-size:0.72rem;color:var(--accent);min-height:18px;margin-bottom:4px;"></p>
+    <div class="modal-btns">
+      <button class="btn" onclick="closeSyncModal()">CANCEL</button>
+      <button class="btn" style="background:rgba(255,85,119,0.15);color:#ff5577;border-color:rgba(255,85,119,0.3);" onclick="clearSync()">CLEAR</button>
+      <button class="btn primary" onclick="saveSyncSettings()">SAVE & SYNC</button>
+    </div>
+    <a class="sync-help-link" href="https://jsonbin.io" target="_blank" rel="noopener">→ Open JSONBin.io to get your credentials</a>
+  </div>
+</div>
+
 <!-- Copyright -->
 <div class="copyright-footer">
   © <span id="copyrightYear"></span> <strong>Whetū Digital</strong> · Aotearoa, New Zealand · whetudigital.co.nz
@@ -554,7 +625,79 @@ function load(){
   const saved=localStorage.getItem('clarityDashboard');
   if(saved){try{data=JSON.parse(saved);currentPeriod=data.period||'fortnightly';currentCurrency=data.currency||'AUD';}catch(e){data=JSON.parse(JSON.stringify(DEFAULT_DATA));}}
 }
-function save(){data.period=currentPeriod;data.currency=currentCurrency;localStorage.setItem('clarityDashboard',JSON.stringify(data));}
+function save(){data.period=currentPeriod;data.currency=currentCurrency;localStorage.setItem('clarityDashboard',JSON.stringify(data));syncSave();}
+
+// ─── JSONBIN.IO SYNC ──────────────────────────────────────────
+const SYNC_BIN_KEY='clarityBinId';
+const SYNC_API_KEY='clarityApiKey';
+let _syncBusy=false;
+
+function getSyncCreds(){return{binId:localStorage.getItem(SYNC_BIN_KEY),apiKey:localStorage.getItem(SYNC_API_KEY)};}
+
+function setSyncBadge(state,label){
+  const b=document.getElementById('syncBadge');if(!b)return;
+  b.className='sync-badge '+state;
+  const icons={synced:'✓',syncing:'↻',unset:'☁',error:'⚠'};
+  b.textContent=(icons[state]||'☁')+' '+label;
+}
+
+async function syncLoad(){
+  const{binId,apiKey}=getSyncCreds();
+  if(!binId||!apiKey){setSyncBadge('unset','SETUP SYNC');return;}
+  setSyncBadge('syncing','SYNCING...');
+  try{
+    const r=await fetch(`https://api.jsonbin.io/v3/b/${binId}/latest`,{headers:{'X-Master-Key':apiKey}});
+    if(!r.ok){setSyncBadge('error','SYNC ERROR');return;}
+    const j=await r.json();
+    const remote=j.record;
+    if(remote&&remote.sections){
+      data=remote;currentPeriod=data.period||'fortnightly';currentCurrency=data.currency||'AUD';
+      localStorage.setItem('clarityDashboard',JSON.stringify(data));
+      render();
+    }
+    setSyncBadge('synced','SYNCED');
+  }catch(e){setSyncBadge('error','OFFLINE');}
+}
+
+async function syncSave(){
+  const{binId,apiKey}=getSyncCreds();
+  if(!binId||!apiKey)return;
+  if(_syncBusy)return;_syncBusy=true;
+  setSyncBadge('syncing','SAVING...');
+  try{
+    const r=await fetch(`https://api.jsonbin.io/v3/b/${binId}`,{method:'PUT',headers:{'Content-Type':'application/json','X-Master-Key':apiKey},body:JSON.stringify(data)});
+    if(r.ok){setSyncBadge('synced','SYNCED');}
+    else{setSyncBadge('error','SYNC ERROR');}
+  }catch(e){setSyncBadge('error','OFFLINE');}
+  finally{_syncBusy=false;}
+}
+
+function openSyncModal(){
+  const{binId,apiKey}=getSyncCreds();
+  document.getElementById('syncBinInput').value=binId||'';
+  document.getElementById('syncKeyInput').value=apiKey||'';
+  document.getElementById('syncModalMsg').textContent='';
+  document.getElementById('syncOverlay').classList.add('open');
+}
+function closeSyncModal(){document.getElementById('syncOverlay').classList.remove('open');}
+function clearSync(){
+  localStorage.removeItem(SYNC_BIN_KEY);localStorage.removeItem(SYNC_API_KEY);
+  setSyncBadge('unset','SETUP SYNC');closeSyncModal();
+}
+async function saveSyncSettings(){
+  const binId=document.getElementById('syncBinInput').value.trim();
+  const apiKey=document.getElementById('syncKeyInput').value.trim();
+  const msg=document.getElementById('syncModalMsg');
+  if(!binId||!apiKey){msg.style.color='var(--red)';msg.textContent='Both fields are required.';return;}
+  msg.style.color='var(--accent)';msg.textContent='Testing connection...';
+  try{
+    const r=await fetch(`https://api.jsonbin.io/v3/b/${binId}/latest`,{headers:{'X-Master-Key':apiKey}});
+    if(!r.ok){msg.style.color='var(--red)';msg.textContent='Could not connect. Check your Bin ID and Key.';return;}
+    localStorage.setItem(SYNC_BIN_KEY,binId);localStorage.setItem(SYNC_API_KEY,apiKey);
+    msg.style.color='#00ff99';msg.textContent='Connected! Syncing now...';
+    setTimeout(()=>{closeSyncModal();syncLoad();},900);
+  }catch(e){msg.style.color='var(--red)';msg.textContent='Network error. Are you online?';}
+}
 
 // ─── PERIOD ───────────────────────────────────────────────────
 function setPeriod(p){
@@ -1037,7 +1180,7 @@ function pinError(msg){
   document.querySelector('.pin-box').classList.add('pin-shake');
   setTimeout(()=>document.querySelector('.pin-box').classList.remove('pin-shake'),400);
 }
-function unlockDashboard(){document.getElementById('pinGate').style.display='none';document.getElementById('appWrap').style.display='block';}
+function unlockDashboard(){document.getElementById('pinGate').style.display='none';document.getElementById('appWrap').style.display='block';syncLoad();}
 
 // ─── CHANGE PIN ───────────────────────────────────────────────
 function changePin(){document.getElementById('pinOldInput').value='';document.getElementById('pinNewInput').value='';document.getElementById('pinConfirmInput').value='';document.getElementById('pinChangeMsg').textContent='';document.getElementById('pinModal').classList.add('open');}
@@ -1080,11 +1223,14 @@ document.addEventListener('DOMContentLoaded',()=>{
 document.getElementById('copyrightYear').textContent=new Date().getFullYear();
 load();
 
+// Close sync overlay on background click
+document.getElementById('syncOverlay').addEventListener('click',e=>{if(e.target===document.getElementById('syncOverlay'))closeSyncModal();});
+
 // Check PIN
 const _storedPin=localStorage.getItem(PIN_KEY);
 if(_storedPin===null){
   // First time — set PIN flow
-  document.getElementById('pinMsg').textContent='Create a 4-digit PIN for Mimi';
+  document.getElementById('pinMsg').textContent='Create your 4-digit PIN';
   document.getElementById('pinSetupNote').textContent='You will be asked to confirm it once.';
 }
 

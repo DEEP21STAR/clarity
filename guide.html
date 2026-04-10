@@ -211,6 +211,7 @@ footer{
   <a href="#bills">✅ Bills</a>
   <a href="#editing">✏️ Edit</a>
   <a href="#iphone">📱 iPhone</a>
+  <a href="#sync">☁ Sync</a>
   <a href="#faq">❓ FAQ</a>
 </nav>
 
@@ -368,6 +369,36 @@ footer{
   </div>
 </section>
 
+<!-- ── SYNC ── -->
+<section class="section" id="sync">
+  <div class="step-badge">
+    <span class="step-icon">☁</span>
+    <span class="step-num">Step 7</span>
+  </div>
+  <h2>Sync across all your devices</h2>
+  <p class="lead">Want your data on both your laptop <strong>and</strong> your iPhone? Set up Cloud Sync — it's free and takes 2 minutes.</p>
+
+  <div class="highlight" style="background:rgba(16,216,255,.06);border-color:rgba(16,216,255,.2);margin-bottom:24px;">
+    <span class="highlight-icon">✓</span>
+    <span>Once set up, every change you make saves to the cloud automatically. Any device with your Clarity link will load the same data.</span>
+  </div>
+
+  <ul class="steps-list">
+    <li>Go to <strong>jsonbin.io</strong> and create a free account (no credit card needed)</li>
+    <li>Click <strong>"Create Bin"</strong> — name it "Clarity" — paste in <code style="background:rgba(255,255,255,.07);padding:1px 6px;border-radius:4px;font-size:.8em;">{}</code> as the content and save</li>
+    <li>Copy the <strong>Bin ID</strong> shown at the top (looks like: <code style="background:rgba(255,255,255,.07);padding:1px 6px;border-radius:4px;font-size:.8em;">6618a3...</code>)</li>
+    <li>Go to <strong>Account → API Keys</strong> — copy your <strong>Master Key</strong></li>
+    <li>Open Clarity, tap the <strong>☁ SETUP SYNC</strong> button at the top of your dashboard</li>
+    <li>Paste your Bin ID and Master Key → tap <strong>Save & Sync</strong> — done ✓</li>
+    <li>Repeat the last step on your other devices — they'll all share the same data from now on</li>
+  </ul>
+
+  <div class="highlight" style="background:rgba(192,64,255,.06);border-color:rgba(192,64,255,.25);margin-top:24px;">
+    <span class="highlight-icon">🔒</span>
+    <span>Your data is stored privately in your own JSONBin account. Whetū Digital cannot see your budget data.</span>
+  </div>
+</section>
+
 <!-- ── FAQ ── -->
 <section class="section" id="faq">
   <div class="step-badge">
@@ -382,7 +413,7 @@ footer{
     </details>
     <details>
       <summary>My laptop data doesn't show on my iPhone — is that normal?</summary>
-      <p class="faq-body">Yes, for now. Data saves per device. Use your iPhone as your main device — it's always with you. <strong>Cloud sync across all your devices is coming soon</strong> and will be automatic when it arrives.</p>
+      <p class="faq-body">Set up Cloud Sync (see the ☁ Sync section above) — it's free and takes 2 minutes. After that, all your devices share the same data automatically. The <strong>☁ SETUP SYNC</strong> button is at the top of your dashboard.</p>
     </details>
     <details>
       <summary>Is my data private? Who can see it?</summary>
