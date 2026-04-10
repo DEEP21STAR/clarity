@@ -18,7 +18,8 @@
   /* ── PIN GATE ── */
   .pin-gate{position:fixed;inset:0;background:var(--bg);z-index:1000;display:flex;align-items:center;justify-content:center;}
   .pin-box{text-align:center;padding:40px 32px;background:var(--panel);border:1px solid var(--border);border-radius:20px;min-width:300px;box-shadow:0 0 60px rgba(192,64,255,0.15);}
-  .pin-logo{font-size:2.2rem;color:var(--accent2);text-shadow:0 0 30px rgba(16,216,255,0.6);margin-bottom:8px;}
+  .pin-logo{display:flex;justify-content:center;margin-bottom:10px;filter:drop-shadow(0 0 10px rgba(16,216,255,0.55)) drop-shadow(0 0 24px rgba(192,64,255,0.3));animation:pinLogoGlow 3.5s ease-in-out infinite;}
+  @keyframes pinLogoGlow{0%,100%{filter:drop-shadow(0 0 8px rgba(16,216,255,.55)) drop-shadow(0 0 20px rgba(192,64,255,.28));}50%{filter:drop-shadow(0 0 18px rgba(16,216,255,.9)) drop-shadow(0 0 44px rgba(192,64,255,.55));}}
   .pin-title{font-size:1.4rem;font-weight:700;letter-spacing:4px;color:var(--accent2);margin-bottom:2px;}
   .pin-brand{font-size:0.65rem;color:var(--muted);letter-spacing:2px;margin-bottom:28px;}
   .pin-dots{display:flex;justify-content:center;gap:14px;margin-bottom:10px;}
@@ -221,7 +222,33 @@
 <!-- ── PIN GATE ── -->
 <div class="pin-gate" id="pinGate">
   <div class="pin-box">
-    <div class="pin-logo">◈</div>
+    <div class="pin-logo">
+      <svg viewBox="0 0 220 220" width="64" height="64" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <radialGradient id="gcPin" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stop-color="#fff"/>
+            <stop offset="38%" stop-color="#80ecff" stop-opacity=".8"/>
+            <stop offset="100%" stop-color="#c040ff" stop-opacity="0"/>
+          </radialGradient>
+          <linearGradient id="grPin" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#10d8ff"/>
+            <stop offset="100%" stop-color="#c040ff"/>
+          </linearGradient>
+        </defs>
+        <polygon points="110,16 87,83 110,110" fill="#0888b8"/>
+        <polygon points="110,16 110,110 133,83" fill="#20e8ff"/>
+        <polygon points="204,110 133,83 110,110" fill="#8030e8"/>
+        <polygon points="204,110 110,110 133,137" fill="#5c16b8"/>
+        <polygon points="110,204 133,137 110,110" fill="#c040ff"/>
+        <polygon points="110,204 110,110 87,137" fill="#9828d8"/>
+        <polygon points="16,110 87,137 110,110" fill="#0868a0"/>
+        <polygon points="16,110 110,110 87,83" fill="#10b0e8"/>
+        <ellipse cx="110" cy="110" rx="55" ry="17" fill="none" stroke="url(#grPin)" stroke-width="2.3" opacity=".7" transform="rotate(22,110,110)"/>
+        <circle cx="165" cy="110" r="3.5" fill="#c040ff" opacity=".9" transform="rotate(22,110,110)"/>
+        <circle cx="110" cy="110" r="24" fill="url(#gcPin)"/>
+        <circle cx="110" cy="110" r="9" fill="white" opacity=".88"/>
+      </svg>
+    </div>
     <h2 class="pin-title">CLARITY</h2>
     <div class="pin-brand">by Whetū Digital</div>
     <div class="pin-dots" id="pinDots">
