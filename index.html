@@ -743,6 +743,7 @@ function load(){
 function save(){data.period=currentPeriod;data.currency=currentCurrency;localStorage.setItem(DATA_KEY,JSON.stringify(data));if(!DEMO_MODE)syncSave();}
 
 // ─── SAVINGS GOALS ────────────────────────────────────────────
+const PERIOD_MULTIPLIERS={weekly:12/52,fortnightly:12/26,monthly:1,quarterly:3,yearly:12};
 function renderGoals(){
   if(!data.savingsGoals)data.savingsGoals=[];
   const grid=document.getElementById('goalsGrid');
