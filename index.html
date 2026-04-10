@@ -204,6 +204,18 @@
   .copyright-footer strong{color:var(--accent2);font-weight:600;}
 
   /* ── ANIMATIONS ── */
+  @keyframes swing3D{
+    0%  {transform:perspective(400px) rotateY(-14deg) rotateX(8deg);}
+    25% {transform:perspective(400px) rotateY(4deg)   rotateX(-5deg) translateY(-4px);}
+    50% {transform:perspective(400px) rotateY(14deg)  rotateX(8deg);}
+    75% {transform:perspective(400px) rotateY(-4deg)  rotateX(-3deg) translateY(4px);}
+    100%{transform:perspective(400px) rotateY(-14deg) rotateX(8deg);}
+  }
+  @keyframes scanSwipe{0%{top:-10%;opacity:0;}10%{opacity:.8;}90%{opacity:.6;}100%{top:110%;opacity:0;}}
+  .pin-logo{position:relative;animation:swing3D 7s ease-in-out infinite;}
+  .pin-logo::after{content:'';position:absolute;left:0;right:0;height:1.5px;top:0;
+    background:linear-gradient(90deg,transparent,rgba(16,216,255,.8),transparent);
+    animation:scanSwipe 4s ease-in-out infinite;pointer-events:none;}
   @keyframes titleGlow{0%,100%{text-shadow:0 0 20px rgba(0,207,255,0.5);}50%{text-shadow:0 0 40px rgba(0,207,255,0.9),0 0 70px rgba(0,207,255,0.25);}}
   @keyframes fadeSlideUp{from{opacity:0;transform:translateY(14px);}to{opacity:1;transform:translateY(0);}}
   @keyframes pulseHealthy{0%,100%{box-shadow:0 0 8px rgba(0,255,153,0.2);}50%{box-shadow:0 0 20px rgba(0,255,153,0.7);}}
@@ -242,6 +254,17 @@
   .add-goal-card:hover{border-color:var(--accent);background:rgba(16,216,255,.03);}
   .add-goal-icon{font-size:1.5rem;opacity:.4;}
   .add-goal-label{font-size:.62rem;letter-spacing:2px;color:var(--muted);text-transform:uppercase;}
+
+  /* ── DEMO BANNER ── */
+  .demo-banner{display:none;align-items:center;justify-content:center;gap:12px;
+    background:linear-gradient(90deg,rgba(255,170,0,.12),rgba(255,85,0,.08));
+    border-bottom:1px solid rgba(255,170,0,.3);padding:9px 20px;
+    font-size:.65rem;letter-spacing:1.5px;color:#ffaa00;text-transform:uppercase;}
+  .demo-banner.show{display:flex;}
+  .demo-badge{background:rgba(255,170,0,.15);border:1px solid rgba(255,170,0,.4);
+    border-radius:4px;padding:2px 8px;font-weight:700;}
+  .demo-link{color:var(--accent);text-decoration:none;border-bottom:1px solid rgba(16,216,255,.3);}
+  .demo-link:hover{border-bottom-color:var(--accent);}
 
   /* ── INSIGHTS ── */
   .insights-section{max-width:1200px;margin:0 auto 24px;padding:0 20px;}
@@ -341,6 +364,13 @@
 
 <!-- ── MAIN APP ── -->
 <div id="appWrap" style="display:none;">
+
+<!-- Demo banner (shown only in demo mode) -->
+<div class="demo-banner" id="demoBanner">
+  <span class="demo-badge">DEMO</span>
+  This is a sample version with example data — nothing saves permanently.
+  <a class="demo-link" href="index.html">→ Open real app</a>
+</div>
 
 <h1 style="display:flex;align-items:center;justify-content:center;gap:10px;">
   <svg viewBox="0 0 220 220" width="32" height="32" xmlns="http://www.w3.org/2000/svg" style="flex-shrink:0;">
@@ -586,6 +616,15 @@
 </div><!-- /appWrap -->
 
 <script>
+// ─── INSTANCE CONFIG (URL params: ?user=deep, ?demo=1) ────────
+const _p=new URLSearchParams(location.search);
+const _INST=_p.get('user')||'mimi';
+const DEMO_MODE=_p.get('demo')==='1';
+const DATA_KEY='clarity_data_'+_INST;
+const _SYNC_INST_BIN='clarity_bin_'+_INST;
+const _SYNC_INST_API='clarity_apikey_'+_INST;
+const _INST_CURRENCY={mimi:'AUD',deep:'NZD'}[_INST]||'AUD';
+
 // ─── CURRENCIES ───────────────────────────────────────────────
 const CURRENCIES = {
   AUD:{symbol:'A$',code:'AUD',decimals:2},NZD:{symbol:'$',code:'NZD',decimals:2},
@@ -694,10 +733,10 @@ function animateCounter(el,finalText,isPercent){
 
 // ─── LOAD / SAVE ──────────────────────────────────────────────
 function load(){
-  const saved=localStorage.getItem('clarityDashboard');
-  if(saved){try{data=JSON.parse(saved);currentPeriod=data.period||'fortnightly';currentCurrency=data.currency||'AUD';}catch(e){data=JSON.parse(JSON.stringify(DEFAULT_DATA));}}
+  const saved=localStorage.getItem(DATA_KEY);
+  if(saved){try{data=JSON.parse(saved);currentPeriod=data.period||'fortnightly';currentCurrency=data.currency||_INST_CURRENCY;}catch(e){data=JSON.parse(JSON.stringify(DEFAULT_DATA));}}
 }
-function save(){data.period=currentPeriod;data.currency=currentCurrency;localStorage.setItem('clarityDashboard',JSON.stringify(data));syncSave();}
+function save(){data.period=currentPeriod;data.currency=currentCurrency;localStorage.setItem(DATA_KEY,JSON.stringify(data));if(!DEMO_MODE)syncSave();}
 
 // ─── SAVINGS GOALS ────────────────────────────────────────────
 function renderGoals(){
@@ -831,8 +870,8 @@ function renderInsights(){
 }
 
 // ─── JSONBIN.IO SYNC ──────────────────────────────────────────
-const SYNC_BIN_KEY='clarityBinId';
-const SYNC_API_KEY='clarityApiKey';
+const SYNC_BIN_KEY=_SYNC_INST_BIN;
+const SYNC_API_KEY=_SYNC_INST_API;
 let _syncBusy=false;
 
 function getSyncCreds(){return{binId:localStorage.getItem(SYNC_BIN_KEY),apiKey:localStorage.getItem(SYNC_API_KEY)};}
@@ -855,7 +894,7 @@ async function syncLoad(){
     const remote=j.record;
     if(remote&&remote.sections){
       data=remote;currentPeriod=data.period||'fortnightly';currentCurrency=data.currency||'AUD';
-      localStorage.setItem('clarityDashboard',JSON.stringify(data));
+      localStorage.setItem(DATA_KEY,JSON.stringify(data));
       render();
     }
     setSyncBadge('synced','SYNCED');
@@ -1345,7 +1384,7 @@ function escHtml(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').
 
 // ─── PIN GATE ─────────────────────────────────────────────────
 let _pinBuffer=[];
-const PIN_KEY='clarityPin';
+const PIN_KEY='clarity_pin_'+_INST;
 
 function pinPress(d){
   if(_pinBuffer.length>=4)return;
@@ -1433,19 +1472,36 @@ document.getElementById('syncOverlay').addEventListener('click',e=>{if(e.target=
 document.getElementById('goalOverlay').addEventListener('click',e=>{if(e.target===document.getElementById('goalOverlay'))closeGoalModal();});
 document.getElementById('goalNameInput').addEventListener('keydown',e=>{if(e.key==='Enter')confirmAddGoal();});
 
-// Check PIN
-const _storedPin=localStorage.getItem(PIN_KEY);
-if(_storedPin===null){
-  // First time — set PIN flow
-  document.getElementById('pinMsg').textContent='Create your 4-digit PIN';
-  document.getElementById('pinSetupNote').textContent='You will be asked to confirm it once.';
+// ── Instance-specific UI labels ──
+if(_INST==='deep'){
+  document.querySelector('.subtitle').textContent='DEEP · PERSONAL FINANCE';
+  document.title='Clarity · Deep';
+  currentCurrency=_INST_CURRENCY;
+} else if(DEMO_MODE){
+  document.querySelector('.subtitle').textContent='DEMO · SAMPLE DATA';
+  document.title='Clarity · Demo';
+}
+
+// ── Demo mode: auto-unlock, show banner, disable sync ──
+if(DEMO_MODE){
+  document.getElementById('pinGate').style.display='none';
+  document.getElementById('appWrap').style.display='block';
+  document.getElementById('demoBanner').classList.add('show');
+  document.getElementById('syncBadge').style.display='none';
+  initCharts();render();
+} else {
+  // Check PIN
+  const _storedPin=localStorage.getItem(PIN_KEY);
+  if(_storedPin===null){
+    document.getElementById('pinMsg').textContent='Create your 4-digit PIN';
+    document.getElementById('pinSetupNote').textContent='You will be asked to confirm it once.';
+  }
 }
 
 document.querySelectorAll('.period-btn').forEach(b=>b.classList.remove('active'));
 document.querySelector(`.period-btn[onclick="setPeriod('${currentPeriod}')"]`).classList.add('active');
 document.getElementById('currencySelect').value=currentCurrency;
-initCharts();
-render();
+if(!DEMO_MODE){initCharts();render();}
 </script>
 </body>
 </html>
