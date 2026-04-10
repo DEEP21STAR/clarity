@@ -729,7 +729,7 @@ function animateCounter(el,finalText,isPercent){
   function step(now){
     const p=Math.min((now-t0)/dur,1),e=1-Math.pow(1-p,3),v=target*e;
     if(isPercent){el.textContent=v.toFixed(1)+'%';}
-    else{el.textContent=prefix+c.symbol+v.toFixed(c.decimals).replace(/\B(?=(\d{3})+(?!\d))/g,',')+' '+currentCurrency;}
+    else{el.textContent=prefix+c.symbol+v.toFixed(c.decimals).replace(/\B(?=(\d{3})+(?!\d))/g,',');}
     if(p<1)requestAnimationFrame(step);else el.textContent=finalText;
   }
   requestAnimationFrame(step);
