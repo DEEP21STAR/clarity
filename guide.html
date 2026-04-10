@@ -3,187 +3,226 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Clarity — Quick Guide</title>
+<title>Clarity — Help Guide</title>
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;600;700&display=swap" rel="stylesheet">
 <style>
 *{box-sizing:border-box;margin:0;padding:0;}
 :root{
-  --cyan:#10d8ff;--purple:#c040ff;--bg:#07070f;--panel:#0d0d1c;
-  --border:#18183a;--muted:#505090;--green:#00ff99;--orange:#ffaa00;
+  --bg:#07070f;--bg2:#0d0d1c;--bg3:#12122a;
+  --cyan:#10d8ff;--purple:#c040ff;--green:#00cc88;--orange:#ff9900;--red:#ff4466;
+  --text:#e8e8ff;--muted:#7070a0;--border:#1a1a38;
 }
-body{background:var(--bg);color:#f0f0ff;font-family:'Space Grotesk','Segoe UI',sans-serif;}
+body{background:var(--bg);color:var(--text);font-family:'Space Grotesk','Segoe UI',sans-serif;line-height:1.6;}
 
-/* ── HEADER ── */
-.header{
-  text-align:center;padding:52px 20px 48px;
-  border-bottom:1px solid var(--border);
-  background:radial-gradient(ellipse 70% 60% at 50% 0%,rgba(16,216,255,.05) 0,transparent 70%);
-}
-.header .mark{display:flex;justify-content:center;margin-bottom:18px;
-  filter:drop-shadow(0 0 14px rgba(16,216,255,.55));}
-.header h1{font-size:1.5rem;font-weight:700;letter-spacing:.12em;color:#fff;text-transform:uppercase;}
-.header .sub{font-size:.65rem;letter-spacing:.22em;color:var(--cyan);text-transform:uppercase;margin-top:5px;opacity:.65;}
-.header .welcome{
-  max-width:480px;margin:20px auto 0;
-  font-size:.9rem;color:#6060a0;line-height:1.7;
-}
-.header .welcome strong{color:#a0a0d0;}
-
-/* ── NAV CHIPS ── */
-.nav{
-  display:flex;gap:10px;flex-wrap:wrap;justify-content:center;
-  padding:28px 20px;border-bottom:1px solid var(--border);
-  position:sticky;top:0;background:rgba(7,7,15,.95);
-  backdrop-filter:blur(8px);z-index:10;
-}
-.nav a{
-  padding:7px 18px;border-radius:20px;font-size:.72rem;font-weight:600;
-  letter-spacing:.06em;text-decoration:none;
-  border:1px solid var(--border);color:#7070a0;
-  transition:all .2s;
-}
-.nav a:hover{border-color:var(--cyan);color:var(--cyan);}
-
-/* ── SECTIONS ── */
-.section{
-  max-width:720px;margin:0 auto;padding:56px 20px;
-  border-bottom:1px solid var(--border);
-}
-.section:last-of-type{border-bottom:none;}
-.step-badge{
-  display:inline-flex;align-items:center;gap:10px;
-  margin-bottom:16px;
-}
-.step-icon{font-size:1.8rem;}
-.step-num{
-  font-size:.58rem;letter-spacing:.25em;color:var(--muted);
-  text-transform:uppercase;
-}
-h2{font-size:1.25rem;font-weight:700;color:#fff;margin-bottom:10px;}
-.lead{font-size:.92rem;color:#7070a0;margin-bottom:28px;line-height:1.7;}
-
-/* ── CARDS ── */
-.cards{display:grid;gap:12px;}
-.cards-2{grid-template-columns:repeat(auto-fit,minmax(260px,1fr));}
-.card{
-  background:var(--panel);border:1px solid var(--border);
-  border-radius:16px;padding:20px 22px;
-}
-.card-icon{font-size:1.4rem;margin-bottom:10px;}
-.card h3{font-size:.88rem;font-weight:600;color:#fff;margin-bottom:6px;}
-.card p{font-size:.78rem;color:#6060a0;line-height:1.6;}
-.card.cyan{border-color:rgba(16,216,255,.2);}
-.card.purple{border-color:rgba(192,64,255,.2);}
-.card.green{border-color:rgba(0,255,153,.18);}
-
-/* ── HIGHLIGHT BOX ── */
-.highlight{
-  border-radius:14px;padding:16px 20px;margin:16px 0;
-  font-size:.84rem;line-height:1.65;
-  display:flex;gap:12px;align-items:flex-start;
-}
-.highlight.tip{background:rgba(16,216,255,.06);border:1px solid rgba(16,216,255,.18);color:#90c8d8;}
-.highlight.note{background:rgba(192,64,255,.06);border:1px solid rgba(192,64,255,.18);color:#b090c8;}
-.highlight.iphone{background:rgba(0,255,153,.05);border:1px solid rgba(0,255,153,.18);color:#80c8a0;}
-.highlight-icon{font-size:1.1rem;flex-shrink:0;margin-top:2px;}
-
-/* ── PERIOD DEMO ── */
-.period-row{display:flex;gap:8px;flex-wrap:wrap;margin:18px 0 10px;}
-.pbtn{padding:7px 16px;border-radius:20px;font-size:.74rem;font-weight:600;cursor:default;letter-spacing:.04em;}
-.pbtn.on{background:var(--cyan);color:#000;}
-.pbtn.off{border:1px solid var(--border);color:var(--muted);}
-.period-note{font-size:.76rem;color:#4040a0;}
-
-/* ── BILL ROW ── */
-.bill-demo{
-  background:#0a0a18;border:1px solid var(--border);
-  border-radius:12px;overflow:hidden;margin:18px 0;
-}
-.bill-row{
+/* ── TOP NAV ── */
+.top-nav{
   display:flex;align-items:center;justify-content:space-between;
-  padding:13px 18px;border-bottom:1px solid var(--border);font-size:.83rem;
+  padding:14px 28px;background:rgba(7,7,15,.95);
+  border-bottom:1px solid var(--border);position:sticky;top:0;z-index:100;
+  backdrop-filter:blur(12px);
 }
-.bill-row:last-child{border-bottom:none;}
-.bill-name{color:#c0c0e0;}
-.bill-right{display:flex;align-items:center;gap:14px;}
-.bill-amt{color:#fff;font-weight:600;}
-.paid{color:var(--green);font-size:.7rem;font-weight:600;}
-.unpaid{color:var(--muted);font-size:.7rem;}
+.nav-logo{display:flex;align-items:center;gap:10px;text-decoration:none;}
+.nav-logo-text{font-size:1rem;font-weight:700;letter-spacing:.12em;
+  background:linear-gradient(120deg,var(--cyan),var(--purple));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;}
+.nav-cta{background:linear-gradient(135deg,var(--cyan),var(--purple));
+  color:#fff;border:none;padding:8px 18px;border-radius:8px;
+  font-weight:700;font-size:.8rem;text-decoration:none;cursor:pointer;
+  letter-spacing:.05em;}
 
-/* ── NUMBERED LIST ── */
-.steps-list{list-style:none;padding:0;counter-reset:st;}
-.steps-list li{
-  counter-increment:st;display:flex;gap:16px;
-  padding:14px 0;border-bottom:1px solid rgba(24,24,58,.5);
-  font-size:.85rem;color:#8080b8;line-height:1.6;
-  align-items:flex-start;
-}
-.steps-list li:last-child{border-bottom:none;}
-.steps-list li::before{
-  content:counter(st);flex-shrink:0;
-  width:26px;height:26px;border-radius:50%;
-  background:rgba(0,255,153,.1);border:1px solid rgba(0,255,153,.22);
-  display:flex;align-items:center;justify-content:center;
-  font-size:.7rem;font-weight:700;color:var(--green);
-}
-.steps-list li strong{color:#fff;}
-
-/* ── HEALTH ── */
-.health-chips{display:flex;gap:10px;flex-wrap:wrap;margin:18px 0;}
-.hchip{display:inline-flex;align-items:center;gap:8px;padding:8px 18px;border-radius:20px;font-size:.8rem;font-weight:600;}
-.hchip.healthy{background:rgba(0,255,153,.1);border:1px solid rgba(0,255,153,.22);color:var(--green);}
-.hchip.warn{background:rgba(255,170,0,.1);border:1px solid rgba(255,170,0,.22);color:var(--orange);}
-.hchip.crit{background:rgba(255,85,119,.1);border:1px solid rgba(255,85,119,.22);color:#ff5577;}
-
-/* ── FAQ ── */
-details{
+/* ── HERO ── */
+.hero{
+  text-align:center;padding:80px 24px 64px;
+  background:radial-gradient(ellipse 80% 60% at 50% 0%,rgba(16,216,255,.08) 0%,transparent 70%);
   border-bottom:1px solid var(--border);
-  padding:16px 0;
 }
-details:last-child{border-bottom:none;}
-summary{
-  font-size:.88rem;font-weight:600;color:#d0d0f0;
-  cursor:pointer;list-style:none;display:flex;
-  justify-content:space-between;align-items:center;
-  padding-right:4px;
+.hero-pill{
+  display:inline-block;background:rgba(16,216,255,.1);
+  border:1px solid rgba(16,216,255,.25);border-radius:20px;
+  padding:4px 16px;font-size:.7rem;letter-spacing:.2em;color:var(--cyan);
+  text-transform:uppercase;margin-bottom:24px;
 }
-summary::-webkit-details-marker{display:none;}
-summary::after{content:'＋';color:var(--muted);font-size:.9rem;transition:transform .2s;}
-details[open] summary::after{content:'－';}
-.faq-body{font-size:.82rem;color:#6060a0;line-height:1.7;margin-top:12px;padding-right:20px;}
-.faq-body strong{color:#a0a0c0;}
+.hero h1{font-size:clamp(2rem,5vw,3.2rem);font-weight:700;margin-bottom:16px;
+  background:linear-gradient(135deg,#fff 40%,var(--cyan));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;}
+.hero-sub{font-size:1.05rem;color:var(--muted);max-width:560px;margin:0 auto 36px;}
+.hero-cards{display:flex;gap:16px;justify-content:center;flex-wrap:wrap;margin-top:40px;}
+.hero-card{
+  background:var(--bg2);border:1px solid var(--border);border-radius:14px;
+  padding:20px 24px;text-align:left;min-width:180px;max-width:220px;
+}
+.hero-card-icon{font-size:1.8rem;margin-bottom:10px;}
+.hero-card-title{font-size:.85rem;font-weight:700;color:var(--cyan);margin-bottom:6px;}
+.hero-card-text{font-size:.78rem;color:var(--muted);line-height:1.5;}
 
-/* ── CONTACT ── */
-.contact{
-  text-align:center;padding:48px 20px 64px;
-  background:radial-gradient(ellipse 60% 50% at 50% 100%,rgba(192,64,255,.05) 0,transparent 70%);
+/* ── SECTION LAYOUT ── */
+.guide-wrap{max-width:860px;margin:0 auto;padding:0 20px 80px;}
+.guide-section{padding:56px 0 0;}
+.section-num{
+  display:inline-flex;align-items:center;justify-content:center;
+  width:32px;height:32px;border-radius:50%;
+  background:linear-gradient(135deg,var(--cyan),var(--purple));
+  font-weight:700;font-size:.8rem;color:#fff;margin-bottom:12px;
 }
-.contact h2{font-size:1.15rem;color:#fff;margin-bottom:10px;}
-.contact p{font-size:.85rem;color:#5050a0;margin-bottom:6px;}
-.contact a{color:var(--cyan);text-decoration:none;}
+.section-title{font-size:1.3rem;font-weight:700;margin-bottom:6px;}
+.section-sub{font-size:.88rem;color:var(--muted);margin-bottom:28px;max-width:600px;}
+
+/* ── WINDOW FRAME ── */
+.window{
+  background:var(--bg2);border:1px solid var(--border);
+  border-radius:14px;overflow:hidden;margin-bottom:24px;
+}
+.window-bar{
+  background:var(--bg3);border-bottom:1px solid var(--border);
+  padding:10px 16px;display:flex;align-items:center;gap:8px;
+}
+.window-dot{width:10px;height:10px;border-radius:50%;}
+.window-dot.r{background:#ff5f57;}
+.window-dot.y{background:#febc2e;}
+.window-dot.g{background:#28c840;}
+.window-url{
+  flex:1;background:rgba(255,255,255,.05);border-radius:6px;
+  padding:4px 12px;font-size:.7rem;color:var(--muted);margin-left:8px;
+}
+.window-body{padding:20px 24px;}
+
+/* ── PIN MOCK ── */
+.pin-mock{
+  text-align:center;padding:32px 20px;
+  background:radial-gradient(ellipse 60% 50% at 50% 0%,rgba(16,216,255,.06),transparent);
+}
+.pin-dots{display:flex;gap:14px;justify-content:center;margin:20px 0 8px;}
+.pin-dot{width:14px;height:14px;border-radius:50%;border:2px solid #303060;}
+.pin-dot.on{background:var(--cyan);border-color:var(--cyan);box-shadow:0 0 8px var(--cyan);}
+.pin-label{font-size:.75rem;color:var(--muted);margin-bottom:20px;}
+.pin-pad{display:grid;grid-template-columns:repeat(3,56px);gap:8px;justify-content:center;margin:0 auto;}
+.pin-btn{
+  width:56px;height:48px;border-radius:10px;
+  background:rgba(255,255,255,.06);border:1px solid var(--border);
+  font-size:1rem;font-weight:600;color:var(--text);cursor:default;
+  display:flex;align-items:center;justify-content:center;
+}
+.pin-btn.active{background:rgba(16,216,255,.15);border-color:var(--cyan);}
+
+/* ── DASHBOARD MOCK ── */
+.dash-header{text-align:center;padding:20px 16px 14px;border-bottom:1px solid var(--border);}
+.dash-title-row{display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:2px;}
+.dash-title{font-size:1.1rem;font-weight:700;letter-spacing:.12em;
+  background:linear-gradient(120deg,var(--cyan),var(--purple));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;}
+.dash-sub{font-size:.65rem;color:var(--muted);letter-spacing:.08em;}
+.dash-toolbar{
+  display:flex;justify-content:space-between;align-items:center;
+  padding:10px 16px;border-bottom:1px solid var(--border);
+  font-size:.7rem;gap:8px;flex-wrap:wrap;
+}
+.dash-btn{
+  background:var(--bg3);border:1px solid var(--border);
+  border-radius:7px;padding:5px 12px;font-size:.68rem;color:var(--muted);
+  white-space:nowrap;
+}
+.dash-btn.active{background:rgba(16,216,255,.12);border-color:rgba(16,216,255,.4);color:var(--cyan);}
+.dash-btn.synced{border-color:rgba(0,204,136,.4);color:var(--green);}
+.period-row{display:flex;gap:6px;justify-content:center;padding:10px 16px;border-bottom:1px solid var(--border);flex-wrap:wrap;}
+.period-btn{
+  padding:5px 14px;border-radius:20px;font-size:.68rem;font-weight:600;
+  border:1px solid var(--border);color:var(--muted);
+}
+.period-btn.active{background:linear-gradient(135deg,var(--cyan),var(--purple));border-color:transparent;color:#fff;}
+.summary-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(100px,1fr));gap:1px;background:var(--border);}
+.summary-card{background:var(--bg2);padding:14px 16px;text-align:center;}
+.summary-label{font-size:.58rem;letter-spacing:.12em;color:var(--muted);margin-bottom:6px;text-transform:uppercase;}
+.summary-val{font-size:1rem;font-weight:700;}
+.summary-val.green{color:var(--green);}
+.summary-val.red{color:var(--red);}
+.summary-val.cyan{color:var(--cyan);}
+.summary-val.orange{color:var(--orange);}
+
+/* ── EXPENSE ROW MOCK ── */
+.expense-section{padding:14px 16px;border-bottom:1px solid var(--border);}
+.expense-header{font-size:.65rem;letter-spacing:.1em;color:var(--cyan);font-weight:600;text-transform:uppercase;margin-bottom:10px;}
+.expense-row{
+  display:flex;align-items:center;gap:10px;padding:8px 10px;
+  border-radius:8px;margin-bottom:6px;background:rgba(255,255,255,.03);
+}
+.expense-name{flex:1;font-size:.8rem;}
+.expense-freq{font-size:.65rem;color:var(--muted);background:var(--bg3);padding:2px 8px;border-radius:10px;white-space:nowrap;}
+.expense-amount{font-size:.85rem;font-weight:600;}
+.expense-paid-btn{
+  width:26px;height:26px;border-radius:50%;
+  background:rgba(255,255,255,.06);border:1px solid var(--border);
+  display:flex;align-items:center;justify-content:center;font-size:.7rem;cursor:default;
+  flex-shrink:0;
+}
+.expense-paid-btn.paid{background:rgba(0,204,136,.2);border-color:var(--green);color:var(--green);}
+
+/* ── GOAL MOCK ── */
+.goal-card{
+  background:var(--bg3);border:1px solid var(--border);border-radius:10px;
+  padding:14px 16px;margin-bottom:10px;
+}
+.goal-name{font-size:.82rem;font-weight:600;margin-bottom:8px;}
+.goal-amounts{display:flex;justify-content:space-between;font-size:.72rem;color:var(--muted);margin-bottom:8px;}
+.goal-bar-bg{background:rgba(255,255,255,.08);border-radius:4px;height:6px;}
+.goal-bar{background:linear-gradient(90deg,var(--cyan),var(--purple));border-radius:4px;height:6px;}
+
+/* ── STEPS ── */
+.steps{display:flex;flex-direction:column;gap:14px;margin-bottom:8px;}
+.step{display:flex;gap:16px;align-items:flex-start;}
+.step-num{
+  min-width:28px;height:28px;border-radius:50%;
+  background:linear-gradient(135deg,var(--cyan),var(--purple));
+  font-weight:700;font-size:.75rem;color:#fff;
+  display:flex;align-items:center;justify-content:center;flex-shrink:0;
+}
+.step-body{font-size:.88rem;color:var(--text);padding-top:4px;}
+.step-body strong{color:#fff;}
+.step-body .hint{font-size:.78rem;color:var(--muted);margin-top:4px;}
+
+/* ── CALLOUT ── */
+.callout{
+  background:rgba(16,216,255,.06);border:1px solid rgba(16,216,255,.2);
+  border-radius:10px;padding:14px 18px;margin:16px 0;
+  font-size:.83rem;color:var(--text);
+}
+.callout.tip{background:rgba(0,204,136,.06);border-color:rgba(0,204,136,.2);}
+.callout.warn{background:rgba(255,153,0,.06);border-color:rgba(255,153,0,.2);}
+.callout-icon{font-size:1rem;margin-right:8px;}
+
+/* ── LABEL POINTER ── */
+.label-row{display:flex;align-items:center;gap:10px;margin:10px 0;font-size:.8rem;color:var(--text);}
+.label-arrow{color:var(--cyan);font-size:1rem;}
+.label-badge{
+  background:rgba(16,216,255,.12);border:1px solid rgba(16,216,255,.3);
+  border-radius:6px;padding:2px 10px;font-size:.72rem;font-weight:600;color:var(--cyan);
+  white-space:nowrap;
+}
+
+/* ── DIVIDER ── */
+.guide-divider{border:none;border-top:1px solid var(--border);margin:0;}
 
 /* ── FOOTER ── */
-footer{
-  text-align:center;padding:24px;border-top:1px solid var(--border);
-  font-size:.58rem;letter-spacing:.18em;color:#303060;text-transform:uppercase;
+.guide-footer{
+  text-align:center;padding:48px 20px;border-top:1px solid var(--border);
+  background:var(--bg2);
+}
+.guide-footer p{font-size:.83rem;color:var(--muted);margin-bottom:8px;}
+.guide-footer a{color:var(--cyan);text-decoration:none;}
+
+@media(max-width:600px){
+  .summary-row{grid-template-columns:repeat(2,1fr);}
+  .hero h1{font-size:1.8rem;}
+  .dash-toolbar{font-size:.65rem;}
+  .top-nav{padding:12px 16px;}
 }
 </style>
 </head>
 <body>
 
-<!-- ── HEADER ── -->
-<div class="header">
-  <div class="mark">
-    <svg viewBox="0 0 220 220" width="58" height="58" xmlns="http://www.w3.org/2000/svg">
-      <defs>
-        <radialGradient id="gc" cx="50%" cy="50%" r="50%">
-          <stop offset="0%" stop-color="#fff"/><stop offset="38%" stop-color="#80ecff" stop-opacity=".8"/>
-          <stop offset="100%" stop-color="#c040ff" stop-opacity="0"/>
-        </radialGradient>
-        <linearGradient id="gr" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stop-color="#10d8ff"/><stop offset="100%" stop-color="#c040ff"/>
-        </linearGradient>
-      </defs>
+<!-- ── NAV ── -->
+<nav class="top-nav">
+  <a class="nav-logo" href="https://deep21star.github.io/clarity/">
+    <svg viewBox="0 0 220 220" width="26" height="26" xmlns="http://www.w3.org/2000/svg">
       <polygon points="110,16 87,83 110,110" fill="#0888b8"/>
       <polygon points="110,16 110,110 133,83" fill="#20e8ff"/>
       <polygon points="204,110 133,83 110,110" fill="#8030e8"/>
@@ -192,268 +231,376 @@ footer{
       <polygon points="110,204 110,110 87,137" fill="#9828d8"/>
       <polygon points="16,110 87,137 110,110" fill="#0868a0"/>
       <polygon points="16,110 110,110 87,83" fill="#10b0e8"/>
-      <ellipse cx="110" cy="110" rx="55" ry="17" fill="none" stroke="url(#gr)" stroke-width="2.3" opacity=".7" transform="rotate(22,110,110)"/>
-      <circle cx="165" cy="110" r="3.5" fill="#c040ff" opacity=".9" transform="rotate(22,110,110)"/>
-      <circle cx="110" cy="110" r="24" fill="url(#gc)"/>
-      <circle cx="110" cy="110" r="9" fill="white" opacity=".88"/>
+      <circle cx="110" cy="110" r="20" fill="rgba(255,255,255,.15)"/>
+      <circle cx="110" cy="110" r="8" fill="white" opacity=".88"/>
     </svg>
-  </div>
-  <h1>Clarity — Your Guide</h1>
-  <div class="sub">by Whetū Digital</div>
-  <p class="welcome">Hi Mimi! Everything you need to know, in one place.<br><strong>Takes 3 minutes to read.</strong> Bookmark this page.</p>
-</div>
-
-<!-- ── STICKY NAV ── -->
-<nav class="nav">
-  <a href="#login">🔐 PIN</a>
-  <a href="#dashboard">📊 Dashboard</a>
-  <a href="#periods">📅 Periods</a>
-  <a href="#bills">✅ Bills</a>
-  <a href="#editing">✏️ Edit</a>
-  <a href="#iphone">📱 iPhone</a>
-  <a href="#sync">☁ Sync</a>
-  <a href="#faq">❓ FAQ</a>
+    <span class="nav-logo-text">CLARITY · GUIDE</span>
+  </a>
+  <a class="nav-cta" href="https://deep21star.github.io/clarity/">Open Dashboard →</a>
 </nav>
 
-<!-- ── 1. PIN ── -->
-<section class="section" id="login">
-  <div class="step-badge">
-    <span class="step-icon">🔐</span>
-    <span class="step-num">Step 1</span>
-  </div>
-  <h2>Setting your PIN</h2>
-  <p class="lead">The first time you open Clarity, you create a 4-digit PIN. Every time after, you enter that PIN to unlock your dashboard.</p>
-  <div class="cards cards-2">
-    <div class="card cyan">
-      <div class="card-icon">1️⃣</div>
-      <h3>First time</h3>
-      <p>Tap four numbers. You'll be asked to tap them again to confirm. Done — your PIN is set.</p>
+<!-- ── HERO ── -->
+<section class="hero">
+  <div class="hero-pill">Help Guide · by Whetū Digital</div>
+  <h1>Hi Mimi 👋<br>Here's how Clarity works</h1>
+  <p class="hero-sub">Clarity is your personal finance dashboard. It keeps all your bills in one place, shows what you've spent, and helps you see where your money is going — in plain English, no spreadsheets needed.</p>
+
+  <div class="hero-cards">
+    <div class="hero-card">
+      <div class="hero-card-icon">📊</div>
+      <div class="hero-card-title">See everything at once</div>
+      <div class="hero-card-text">Your income, expenses, and balance — always up to date, on any device.</div>
     </div>
-    <div class="card">
-      <div class="card-icon">🔄</div>
-      <h3>Every time after</h3>
-      <p>Enter your PIN and your dashboard appears instantly with all your data.</p>
+    <div class="hero-card">
+      <div class="hero-card-icon">✓</div>
+      <div class="hero-card-title">Mark bills as paid</div>
+      <div class="hero-card-text">One tap when a bill is paid. Clarity tracks what's done so you don't have to.</div>
     </div>
-  </div>
-  <div class="highlight tip">
-    <span class="highlight-icon">💡</span>
-    <span>Pick something you'll remember easily — like the last 4 digits of your phone number. You can change it anytime inside the dashboard.</span>
-  </div>
-</section>
-
-<!-- ── 2. DASHBOARD ── -->
-<section class="section" id="dashboard">
-  <div class="step-badge">
-    <span class="step-icon">📊</span>
-    <span class="step-num">Step 2</span>
-  </div>
-  <h2>Your dashboard at a glance</h2>
-  <p class="lead">Once you're in, everything is laid out by category. Here's what to look at first.</p>
-
-  <div class="health-chips">
-    <span class="hchip healthy">✓ Healthy — income covers everything</span>
-    <span class="hchip warn">⚠ Watch It — getting close</span>
-    <span class="hchip crit">✗ Overspent — review now</span>
-  </div>
-  <p style="font-size:.78rem;color:#4040a0;margin-bottom:24px;">The badge at the top is your instant gut-check. Aim for green every pay period.</p>
-
-  <div class="cards cards-2">
-    <div class="card"><div class="card-icon">🏠</div><h3>Housing</h3><p>Your rent — the biggest number.</p></div>
-    <div class="card"><div class="card-icon">⚡</div><h3>Utilities</h3><p>Electricity, gas, water — shown as monthly averages.</p></div>
-    <div class="card"><div class="card-icon">📡</div><h3>Connected</h3><p>Internet, mobile phone plan.</p></div>
-    <div class="card"><div class="card-icon">🛡</div><h3>Insurance</h3><p>Car, contents — all your cover in one place.</p></div>
-    <div class="card"><div class="card-icon">🎵</div><h3>Subscriptions</h3><p>Spotify, Google storage, streaming.</p></div>
-    <div class="card"><div class="card-icon">🚗</div><h3>Transport</h3><p>Petrol, registration, roadside.</p></div>
-  </div>
-</section>
-
-<!-- ── 3. PERIODS ── -->
-<section class="section" id="periods">
-  <div class="step-badge">
-    <span class="step-icon">📅</span>
-    <span class="step-num">Step 3</span>
-  </div>
-  <h2>Switch time periods</h2>
-  <p class="lead">One tap to see your full financial picture in weekly, fortnightly, monthly or yearly amounts. All numbers convert automatically.</p>
-  <div class="period-row">
-    <span class="pbtn off">Weekly</span>
-    <span class="pbtn on">Fortnightly</span>
-    <span class="pbtn off">Monthly</span>
-    <span class="pbtn off">Quarterly</span>
-    <span class="pbtn off">Yearly</span>
-  </div>
-  <p class="period-note">Above: set to Fortnightly — perfect if that's when you get paid.</p>
-  <div class="highlight tip">
-    <span class="highlight-icon">💡</span>
-    <span>Switch to <strong>Fortnightly</strong> on pay day. Every number you see is exactly what comes out of that pay. Makes it real.</span>
-  </div>
-  <div class="highlight note">
-    <span class="highlight-icon">📌</span>
-    <span>Electricity and gas are billed quarterly. Clarity shows you the monthly average automatically, with a note of the real quarterly amount.</span>
-  </div>
-</section>
-
-<!-- ── 4. BILLS ── -->
-<section class="section" id="bills">
-  <div class="step-badge">
-    <span class="step-icon">✅</span>
-    <span class="step-num">Step 4</span>
-  </div>
-  <h2>Tracking what you've paid</h2>
-  <p class="lead">Each bill has a tick button. Tap it once you've paid — it turns green. At the start of a new pay period, tap <strong>"Reset All Paid"</strong> to start fresh.</p>
-  <div class="bill-demo">
-    <div class="bill-row">
-      <span class="bill-name">Rent</span>
-      <div class="bill-right"><span class="bill-amt">$1,912</span><span class="paid">✓ paid</span></div>
+    <div class="hero-card">
+      <div class="hero-card-icon">📱</div>
+      <div class="hero-card-title">Works on your phone</div>
+      <div class="hero-card-text">Open in Safari or Chrome. Add it to your home screen like a real app.</div>
     </div>
-    <div class="bill-row">
-      <span class="bill-name">Electricity (est.)</span>
-      <div class="bill-right"><span class="bill-amt">$78.69</span><span class="unpaid">○ tap to mark paid</span></div>
-    </div>
-    <div class="bill-row">
-      <span class="bill-name">Telstra Internet</span>
-      <div class="bill-right"><span class="bill-amt">$79.10</span><span class="unpaid">○ tap to mark paid</span></div>
+    <div class="hero-card">
+      <div class="hero-card-icon">🔒</div>
+      <div class="hero-card-title">Private &amp; secure</div>
+      <div class="hero-card-text">Protected by a 4-digit PIN. Your data stays on your device.</div>
     </div>
   </div>
-  <div class="highlight tip">
-    <span class="highlight-icon">💡</span>
-    <span>Use this every pay day. Takes 60 seconds. You'll always know what's been paid and what's still outstanding this cycle.</span>
-  </div>
 </section>
 
-<!-- ── 5. EDITING ── -->
-<section class="section" id="editing">
-  <div class="step-badge">
-    <span class="step-icon">✏️</span>
-    <span class="step-num">Step 5</span>
-  </div>
-  <h2>Updating your figures</h2>
-  <p class="lead">Got a new bill amount? Changed plans? Just tap the number and type the new one. It saves instantly.</p>
-  <div class="cards">
-    <div class="card green">
-      <div class="card-icon">🖊</div>
-      <h3>Change an amount</h3>
-      <p>Click any dollar amount → type the new figure → press Enter or click away. Done.</p>
+<div class="guide-wrap">
+
+<!-- ══ SECTION 1 ══ -->
+<div class="guide-section">
+  <div class="section-num">1</div>
+  <div class="section-title">Opening Clarity &amp; entering your PIN</div>
+  <div class="section-sub">Every time you open Clarity, you'll see a PIN screen. This keeps your financial info private.</div>
+
+  <div class="window">
+    <div class="window-bar">
+      <div class="window-dot r"></div><div class="window-dot y"></div><div class="window-dot g"></div>
+      <div class="window-url">deep21star.github.io/clarity</div>
     </div>
-    <div class="card green">
-      <div class="card-icon">➕</div>
-      <h3>Add a new expense</h3>
-      <p>Scroll to any category → click <strong>"+ Add item"</strong> at the bottom → name it and enter the amount.</p>
+    <div class="window-body">
+      <div class="pin-mock">
+        <svg viewBox="0 0 220 220" width="44" height="44" xmlns="http://www.w3.org/2000/svg" style="display:block;margin:0 auto 12px;">
+          <polygon points="110,16 87,83 110,110" fill="#0888b8"/><polygon points="110,16 110,110 133,83" fill="#20e8ff"/>
+          <polygon points="204,110 133,83 110,110" fill="#8030e8"/><polygon points="204,110 110,110 133,137" fill="#5c16b8"/>
+          <polygon points="110,204 133,137 110,110" fill="#c040ff"/><polygon points="110,204 110,110 87,137" fill="#9828d8"/>
+          <polygon points="16,110 87,137 110,110" fill="#0868a0"/><polygon points="16,110 110,110 87,83" fill="#10b0e8"/>
+          <circle cx="110" cy="110" r="20" fill="rgba(255,255,255,.15)"/><circle cx="110" cy="110" r="8" fill="white" opacity=".88"/>
+        </svg>
+        <div style="font-size:1.1rem;font-weight:700;letter-spacing:.12em;color:#10d8ff;margin-bottom:4px;">CLARITY</div>
+        <div style="font-size:.65rem;color:#7070a0;margin-bottom:16px;">by Whetū Digital</div>
+        <div class="pin-dots">
+          <div class="pin-dot on"></div><div class="pin-dot on"></div>
+          <div class="pin-dot on"></div><div class="pin-dot"></div>
+        </div>
+        <div class="pin-label">Enter your PIN</div>
+        <div class="pin-pad">
+          <div class="pin-btn">1</div><div class="pin-btn">2</div><div class="pin-btn">3</div>
+          <div class="pin-btn">4</div><div class="pin-btn">5</div><div class="pin-btn">6</div>
+          <div class="pin-btn active">7</div><div class="pin-btn">8</div><div class="pin-btn">9</div>
+          <div></div><div class="pin-btn">0</div><div class="pin-btn">⌫</div>
+        </div>
+      </div>
     </div>
   </div>
-  <div class="highlight note">
-    <span class="highlight-icon">📌</span>
-    <span>All changes save automatically. They'll be there next time you open Clarity on the same device.</span>
-  </div>
-</section>
 
-<!-- ── 6. IPHONE ── -->
-<section class="section" id="iphone">
-  <div class="step-badge">
-    <span class="step-icon">📱</span>
-    <span class="step-num">Step 6</span>
+  <div class="steps">
+    <div class="step">
+      <div class="step-num">1</div>
+      <div class="step-body"><strong>Tap the numbers</strong> to enter your 4-digit PIN. The dots at the top fill in as you type.
+        <div class="hint">First time? It will ask you to create a PIN — choose any 4 numbers you'll remember.</div>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">2</div>
+      <div class="step-body"><strong>Dashboard opens automatically</strong> once all 4 digits are entered. No confirm button needed.</div>
+    </div>
+    <div class="step">
+      <div class="step-num">3</div>
+      <div class="step-body"><strong>Wrong PIN?</strong> Tap ⌫ to delete the last digit and try again.</div>
+    </div>
   </div>
-  <h2>Install on your iPhone</h2>
-  <p class="lead">Add Clarity to your home screen so it opens like a real app — full screen, no browser bar, always one tap away.</p>
-  <ul class="steps-list">
-    <li>Open <strong>Safari</strong> on your iPhone (must be Safari, not Chrome)</li>
-    <li>Go to <strong>deep21star.github.io/clarity</strong></li>
-    <li>Tap the <strong>Share button</strong> — the square with an arrow pointing up, at the bottom of Safari</li>
-    <li>Scroll down and tap <strong>"Add to Home Screen"</strong></li>
-    <li>Name it <strong>"Clarity"</strong> → tap <strong>Add</strong></li>
-    <li>Find the icon on your home screen and tap it — opens full-screen like a real app ✓</li>
-  </ul>
-  <div class="highlight iphone">
-    <span class="highlight-icon">📱</span>
-    <span>Once installed, check it on pay day. Mark your bills, check your balance. Takes 60 seconds and keeps you in control of your money.</span>
-  </div>
-</section>
+</div>
 
-<!-- ── SYNC ── -->
-<section class="section" id="sync">
-  <div class="step-badge">
-    <span class="step-icon">☁</span>
-    <span class="step-num">Step 7</span>
-  </div>
-  <h2>Sync across all your devices</h2>
-  <p class="lead">Want your data on both your laptop <strong>and</strong> your iPhone? Set up Cloud Sync — it's free and takes 2 minutes.</p>
+<hr class="guide-divider" style="margin-top:48px;">
 
-  <div class="highlight" style="background:rgba(16,216,255,.06);border-color:rgba(16,216,255,.2);margin-bottom:24px;">
-    <span class="highlight-icon">✓</span>
-    <span>Once set up, every change you make saves to the cloud automatically. Any device with your Clarity link will load the same data.</span>
+<!-- ══ SECTION 2 ══ -->
+<div class="guide-section">
+  <div class="section-num">2</div>
+  <div class="section-title">Your dashboard at a glance</div>
+  <div class="section-sub">After you log in you'll see your summary — income, expenses, balance and health all in one row at the top.</div>
+
+  <div class="window">
+    <div class="window-bar">
+      <div class="window-dot r"></div><div class="window-dot y"></div><div class="window-dot g"></div>
+      <div class="window-url">deep21star.github.io/clarity</div>
+    </div>
+    <div class="window-body" style="padding:0;">
+      <div class="dash-header">
+        <div class="dash-title-row"><span style="font-size:1rem;">✦</span><span class="dash-title">CLARITY</span></div>
+        <div class="dash-sub">MIMI · PERSONAL FINANCE</div>
+      </div>
+      <div class="dash-toolbar">
+        <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">
+          <span style="font-size:.65rem;color:#7070a0;">CURRENCY</span>
+          <div class="dash-btn">AU AUD ▾</div>
+          <div class="dash-btn">RESET PAID</div>
+          <div class="dash-btn">New Period</div>
+        </div>
+        <div style="display:flex;gap:6px;">
+          <div class="dash-btn synced">✓ SYNCED</div>
+          <div class="dash-btn active">? Guide</div>
+        </div>
+      </div>
+      <div class="period-row">
+        <div class="period-btn">WEEKLY</div>
+        <div class="period-btn active">FORTNIGHTLY</div>
+        <div class="period-btn">MONTHLY</div>
+        <div class="period-btn">QUARTERLY</div>
+        <div class="period-btn">YEARLY</div>
+      </div>
+      <div class="summary-row">
+        <div class="summary-card"><div class="summary-label">Income</div><div class="summary-val green">A$3,200</div></div>
+        <div class="summary-card"><div class="summary-label">Expenses</div><div class="summary-val red">A$1,284</div></div>
+        <div class="summary-card"><div class="summary-label">Balance</div><div class="summary-val cyan">+A$1,916</div></div>
+        <div class="summary-card"><div class="summary-label">Savings %</div><div class="summary-val orange">59.9%</div></div>
+        <div class="summary-card"><div class="summary-label">Health</div><div class="summary-val green" style="font-size:.68rem;border:1px solid #00cc88;border-radius:20px;padding:2px 8px;display:inline-block;">GREAT ✓</div></div>
+      </div>
+    </div>
   </div>
 
-  <ul class="steps-list">
-    <li>Go to <strong>jsonbin.io</strong> and create a free account (no credit card needed)</li>
-    <li>Click <strong>"Create Bin"</strong> — name it "Clarity" — paste in <code style="background:rgba(255,255,255,.07);padding:1px 6px;border-radius:4px;font-size:.8em;">{}</code> as the content and save</li>
-    <li>Copy the <strong>Bin ID</strong> shown at the top (looks like: <code style="background:rgba(255,255,255,.07);padding:1px 6px;border-radius:4px;font-size:.8em;">6618a3...</code>)</li>
-    <li>Go to <strong>Account → API Keys</strong> — copy your <strong>Master Key</strong></li>
-    <li>Open Clarity, tap the <strong>☁ SETUP SYNC</strong> button at the top of your dashboard</li>
-    <li>Paste your Bin ID and Master Key → tap <strong>Save & Sync</strong> — done ✓</li>
-    <li>Repeat the last step on your other devices — they'll all share the same data from now on</li>
-  </ul>
+  <div class="label-row"><span class="label-arrow">→</span><span class="label-badge">INCOME</span><span style="color:var(--muted);">Your total earnings for the period</span></div>
+  <div class="label-row"><span class="label-arrow">→</span><span class="label-badge">EXPENSES</span><span style="color:var(--muted);">All your bills added up</span></div>
+  <div class="label-row"><span class="label-arrow">→</span><span class="label-badge">BALANCE</span><span style="color:var(--muted);">What's left over after expenses</span></div>
+  <div class="label-row"><span class="label-arrow">→</span><span class="label-badge">HEALTH</span><span style="color:var(--muted);">Your overall money health score</span></div>
 
-  <div class="highlight" style="background:rgba(192,64,255,.06);border-color:rgba(192,64,255,.25);margin-top:24px;">
-    <span class="highlight-icon">🔒</span>
-    <span>Your data is stored privately in your own JSONBin account. Whetū Digital cannot see your financial data.</span>
+  <div class="callout tip" style="margin-top:20px;">
+    <span class="callout-icon">💡</span><strong>Period buttons</strong> — tap WEEKLY, FORTNIGHTLY, MONTHLY etc. to see your totals recalculated for that timeframe. Your bills don't change — Clarity adjusts the maths automatically.
   </div>
-</section>
+</div>
 
-<!-- ── FAQ ── -->
-<section class="section" id="faq">
-  <div class="step-badge">
-    <span class="step-icon">❓</span>
-    <span class="step-num">FAQ</span>
-  </div>
-  <h2>Common questions</h2>
-  <div style="margin-top:20px;">
-    <details>
-      <summary>I forgot my PIN — what do I do?</summary>
-      <p class="faq-body">Message Deep at Whetū Digital and he'll reset it for you. A self-serve reset is coming in a future update.</p>
-    </details>
-    <details>
-      <summary>My laptop data doesn't show on my iPhone — is that normal?</summary>
-      <p class="faq-body">Set up Cloud Sync (see the ☁ Sync section above) — it's free and takes 2 minutes. After that, all your devices share the same data automatically. The <strong>☁ SETUP SYNC</strong> button is at the top of your dashboard.</p>
-    </details>
-    <details>
-      <summary>Is my data private? Who can see it?</summary>
-      <p class="faq-body">Your data is stored only in your browser on your device. No one else can see it. The PIN stops anyone who picks up your phone from getting in. Your actual bank account details are never stored in Clarity.</p>
-    </details>
-    <details>
-      <summary>My electricity bill changed — how do I update it?</summary>
-      <p class="faq-body">Click the amount in the Utilities section, type the new number, press Enter. It saves instantly. Update it whenever you get a new bill.</p>
-    </details>
-    <details>
-      <summary>Can I use this on my Android phone?</summary>
-      <p class="faq-body">Yes. Open Chrome on Android, go to the Clarity URL, and tap the three-dot menu → <strong>"Add to Home Screen"</strong>. Works just like the iPhone.</p>
-    </details>
-    <details>
-      <summary>How do I change the currency?</summary>
-      <p class="faq-body">There's a currency selector at the top of your dashboard. Tap it to switch between AUD, NZD, USD, GBP or EUR.</p>
-    </details>
-  </div>
-</section>
+<hr class="guide-divider" style="margin-top:48px;">
 
-<!-- ── CONTACT ── -->
-<div class="contact">
-  <svg viewBox="0 0 220 220" width="40" height="40" xmlns="http://www.w3.org/2000/svg" style="display:block;margin:0 auto 16px;filter:drop-shadow(0 0 10px rgba(16,216,255,.4));">
-    <defs>
-      <radialGradient id="gcC" cx="50%" cy="50%" r="50%">
-        <stop offset="0%" stop-color="#fff"/><stop offset="100%" stop-color="#c040ff" stop-opacity="0"/>
-      </radialGradient>
-    </defs>
+<!-- ══ SECTION 3 ══ -->
+<div class="guide-section">
+  <div class="section-num">3</div>
+  <div class="section-title">Adding your income</div>
+  <div class="section-sub">Tell Clarity how much you earn so it can show your real balance and savings rate.</div>
+
+  <div class="window">
+    <div class="window-bar">
+      <div class="window-dot r"></div><div class="window-dot y"></div><div class="window-dot g"></div>
+      <div class="window-url">deep21star.github.io/clarity — scroll down to INCOME section</div>
+    </div>
+    <div class="window-body" style="padding:0;">
+      <div class="expense-section">
+        <div class="expense-header">💰 Income</div>
+        <div class="expense-row">
+          <div class="expense-name">Salary</div>
+          <span class="expense-freq">Fortnightly</span>
+          <div class="expense-amount" style="color:#00cc88;">$3,200</div>
+          <div class="expense-paid-btn paid">✓</div>
+        </div>
+        <div class="expense-row" style="border:1px dashed rgba(16,216,255,.2);background:rgba(16,216,255,.03);">
+          <div class="expense-name" style="color:#7070a0;">+ Add income source</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="steps">
+    <div class="step"><div class="step-num">1</div><div class="step-body"><strong>Scroll down</strong> on the dashboard to find the <strong>Income</strong> section.</div></div>
+    <div class="step"><div class="step-num">2</div><div class="step-body"><strong>Tap "+ Add income source"</strong> — type the name (e.g. Salary) and your take-home amount.</div></div>
+    <div class="step"><div class="step-num">3</div><div class="step-body"><strong>Choose how often you get paid</strong> from the dropdown — Weekly, Fortnightly, Monthly etc.</div></div>
+    <div class="step"><div class="step-num">4</div><div class="step-body"><strong>Tap Save.</strong> Your Income card at the top will update immediately.</div></div>
+  </div>
+</div>
+
+<hr class="guide-divider" style="margin-top:48px;">
+
+<!-- ══ SECTION 4 ══ -->
+<div class="guide-section">
+  <div class="section-num">4</div>
+  <div class="section-title">Adding &amp; editing your bills</div>
+  <div class="section-sub">Each bill goes in once — Clarity remembers it every period. Tap any bill to edit the name or amount.</div>
+
+  <div class="window">
+    <div class="window-bar">
+      <div class="window-dot r"></div><div class="window-dot y"></div><div class="window-dot g"></div>
+      <div class="window-url">deep21star.github.io/clarity — scroll down to EXPENSES</div>
+    </div>
+    <div class="window-body" style="padding:0;">
+      <div class="expense-section">
+        <div class="expense-header">🏠 Housing</div>
+        <div class="expense-row">
+          <div class="expense-name">Rent</div>
+          <span class="expense-freq">Monthly</span>
+          <div class="expense-amount">$1,200</div>
+          <div class="expense-paid-btn">○</div>
+        </div>
+        <div class="expense-row">
+          <div class="expense-name">Power</div>
+          <span class="expense-freq">Monthly</span>
+          <div class="expense-amount">$140</div>
+          <div class="expense-paid-btn paid">✓</div>
+        </div>
+        <div class="expense-row">
+          <div class="expense-name">Internet</div>
+          <span class="expense-freq">Monthly</span>
+          <div class="expense-amount">$89</div>
+          <div class="expense-paid-btn">○</div>
+        </div>
+        <div class="expense-row" style="border:1px dashed rgba(16,216,255,.2);background:rgba(16,216,255,.03);">
+          <div class="expense-name" style="color:#7070a0;">+ Add expense</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="steps">
+    <div class="step"><div class="step-num">1</div><div class="step-body"><strong>To add a new bill</strong> — tap "+ Add expense" at the bottom of any section. Type the name, amount, and how often it comes out.</div></div>
+    <div class="step"><div class="step-num">2</div><div class="step-body"><strong>To edit an existing bill</strong> — tap on the bill name or amount. Change it and tap Save.</div></div>
+    <div class="step"><div class="step-num">3</div><div class="step-body"><strong>Frequency dropdown</strong> — set it to how often you actually pay the bill (Weekly, Fortnightly, Monthly, Quarterly, Yearly).
+      <div class="hint">Clarity uses this to show everything in the same period automatically.</div>
+    </div></div>
+  </div>
+
+  <div class="callout warn"><span class="callout-icon">⚠️</span>Always tap <strong>Save</strong> after making any changes — otherwise your edits won't be kept.</div>
+</div>
+
+<hr class="guide-divider" style="margin-top:48px;">
+
+<!-- ══ SECTION 5 ══ -->
+<div class="guide-section">
+  <div class="section-num">5</div>
+  <div class="section-title">Marking bills as paid</div>
+  <div class="section-sub">When you pay a bill, tap the circle beside it. It turns green. Use this as your payment checklist each period.</div>
+
+  <div class="window">
+    <div class="window-bar">
+      <div class="window-dot r"></div><div class="window-dot y"></div><div class="window-dot g"></div>
+      <div class="window-url">deep21star.github.io/clarity</div>
+    </div>
+    <div class="window-body" style="padding:0;">
+      <div class="expense-section">
+        <div class="expense-header">🏠 Housing</div>
+        <div class="expense-row">
+          <div class="expense-name">Rent</div>
+          <span class="expense-freq">Monthly</span>
+          <div class="expense-amount">$1,200</div>
+          <div class="expense-paid-btn" style="border-color:rgba(16,216,255,.3);color:#7070a0;font-size:.65rem;">○ tap</div>
+        </div>
+        <div class="expense-row" style="background:rgba(0,204,136,.05);">
+          <div class="expense-name">Power</div>
+          <span class="expense-freq">Monthly</span>
+          <div class="expense-amount" style="text-decoration:line-through;opacity:.5;">$140</div>
+          <div class="expense-paid-btn paid">✓</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="steps">
+    <div class="step"><div class="step-num">1</div><div class="step-body"><strong>Tap the circle ○</strong> on the right side of a bill to mark it paid. It turns <strong style="color:#00cc88;">green ✓</strong>.</div></div>
+    <div class="step"><div class="step-num">2</div><div class="step-body"><strong>Tap it again</strong> to undo if you made a mistake.</div></div>
+    <div class="step"><div class="step-num">3</div><div class="step-body"><strong>Starting a new period?</strong> Tap <strong>RESET PAID → New Period</strong> at the top. All the green ticks clear and you start fresh.</div></div>
+  </div>
+
+  <div class="callout tip"><span class="callout-icon">💡</span>Use the ticks as a fortnightly or monthly checklist. At a glance you can see which bills are still to pay.</div>
+</div>
+
+<hr class="guide-divider" style="margin-top:48px;">
+
+<!-- ══ SECTION 6 ══ -->
+<div class="guide-section">
+  <div class="section-num">6</div>
+  <div class="section-title">Savings goals</div>
+  <div class="section-sub">Track what you're saving towards — a holiday, car, emergency fund. Clarity shows your progress with a visual bar.</div>
+
+  <div class="window">
+    <div class="window-bar">
+      <div class="window-dot r"></div><div class="window-dot y"></div><div class="window-dot g"></div>
+      <div class="window-url">deep21star.github.io/clarity — scroll down to SAVINGS GOALS</div>
+    </div>
+    <div class="window-body">
+      <div style="font-size:.65rem;letter-spacing:.1em;color:var(--cyan);font-weight:600;text-transform:uppercase;margin-bottom:14px;">🎯 Savings Goals</div>
+      <div class="goal-card">
+        <div class="goal-name">Holiday Fund ✈️</div>
+        <div class="goal-amounts"><span>Saved: $1,200</span><span>Target: $3,000</span></div>
+        <div class="goal-bar-bg"><div class="goal-bar" style="width:40%;"></div></div>
+        <div style="font-size:.68rem;color:var(--cyan);margin-top:6px;">40% · $1,800 to go</div>
+      </div>
+      <div class="goal-card">
+        <div class="goal-name">Emergency Fund 🛡️</div>
+        <div class="goal-amounts"><span>Saved: $2,800</span><span>Target: $5,000</span></div>
+        <div class="goal-bar-bg"><div class="goal-bar" style="width:56%;"></div></div>
+        <div style="font-size:.68rem;color:var(--cyan);margin-top:6px;">56% · $2,200 to go</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="steps">
+    <div class="step"><div class="step-num">1</div><div class="step-body"><strong>Scroll down</strong> to the Savings Goals section.</div></div>
+    <div class="step"><div class="step-num">2</div><div class="step-body"><strong>Tap "+ Add Goal"</strong> — give it a name and set your target amount.</div></div>
+    <div class="step"><div class="step-num">3</div><div class="step-body"><strong>Update your saved amount</strong> whenever you add money to it. The progress bar fills up as you save.</div></div>
+  </div>
+</div>
+
+<hr class="guide-divider" style="margin-top:48px;">
+
+<!-- ══ SECTION 7 ══ -->
+<div class="guide-section">
+  <div class="section-num">7</div>
+  <div class="section-title">Syncing across your devices</div>
+  <div class="section-sub">Clarity can save your data to the cloud so it's the same on your phone and laptop. Free to set up.</div>
+
+  <div class="callout"><span class="callout-icon">☁️</span><strong>What sync does:</strong> Without sync, your data only lives on one device. With sync on, any change on your phone will appear on your laptop too — and vice versa.</div>
+
+  <div class="steps" style="margin-top:20px;">
+    <div class="step"><div class="step-num">1</div><div class="step-body"><strong>Tap SYNC</strong> at the top right of the dashboard.</div></div>
+    <div class="step"><div class="step-num">2</div><div class="step-body">Deep has set up your sync account. Ask him for your <strong>Bin ID</strong> and <strong>API Key</strong> if you need to enter them.</div></div>
+    <div class="step"><div class="step-num">3</div><div class="step-body">Once entered, the top right shows <strong style="color:#00cc88;">✓ SYNCED</strong>. Your data saves automatically from then on.</div></div>
+  </div>
+
+  <div class="callout tip"><span class="callout-icon">📱</span><strong>iPhone home screen tip:</strong> Open Clarity in Safari → tap the Share button (box with arrow) → tap "Add to Home Screen". It opens like a real app with no browser bar.</div>
+</div>
+
+<hr class="guide-divider" style="margin-top:48px;">
+
+<!-- ══ SECTION 8 ══ -->
+<div class="guide-section">
+  <div class="section-num">8</div>
+  <div class="section-title">Changing your PIN</div>
+  <div class="section-sub">You can change your PIN any time from within the dashboard.</div>
+
+  <div class="steps">
+    <div class="step"><div class="step-num">1</div><div class="step-body">On the dashboard, tap <strong>HELP</strong> (top right).</div></div>
+    <div class="step"><div class="step-num">2</div><div class="step-body">Find and tap <strong>Change PIN</strong>.</div></div>
+    <div class="step"><div class="step-num">3</div><div class="step-body">Enter your current PIN, then choose and confirm a new 4-digit PIN.</div></div>
+  </div>
+
+  <div class="callout warn"><span class="callout-icon">⚠️</span><strong>Write your PIN down somewhere safe</strong> when you first create it. If you forget it, message Deep at <a href="mailto:hello@whetudigital.co.nz" style="color:var(--cyan);">hello@whetudigital.co.nz</a> and he can reset it for you.</div>
+</div>
+
+</div><!-- /guide-wrap -->
+
+<!-- ── FOOTER ── -->
+<footer class="guide-footer">
+  <svg viewBox="0 0 220 220" width="32" height="32" xmlns="http://www.w3.org/2000/svg" style="display:block;margin:0 auto 12px;opacity:.6;">
     <polygon points="110,16 87,83 110,110" fill="#0888b8"/><polygon points="110,16 110,110 133,83" fill="#20e8ff"/>
     <polygon points="204,110 133,83 110,110" fill="#8030e8"/><polygon points="204,110 110,110 133,137" fill="#5c16b8"/>
     <polygon points="110,204 133,137 110,110" fill="#c040ff"/><polygon points="110,204 110,110 87,137" fill="#9828d8"/>
     <polygon points="16,110 87,137 110,110" fill="#0868a0"/><polygon points="16,110 110,110 87,83" fill="#10b0e8"/>
-    <circle cx="110" cy="110" r="22" fill="url(#gcC)"/><circle cx="110" cy="110" r="8" fill="white" opacity=".85"/>
+    <circle cx="110" cy="110" r="18" fill="rgba(255,255,255,.1)"/><circle cx="110" cy="110" r="7" fill="white" opacity=".7"/>
   </svg>
-  <h2>Need help? Just ask.</h2>
-  <p>Clarity is built and maintained by Whetū Digital.<br>If something doesn't look right, message Deep.</p>
-  <p style="margin-top:12px;"><a href="mailto:hello@whetudigital.co.nz">hello@whetudigital.co.nz</a></p>
-</div>
-
-<footer>© 2026 Whetū Digital · Aotearoa, New Zealand · Made with care for Mimi</footer>
+  <p>Need help? Message Deep at <a href="mailto:hello@whetudigital.co.nz">hello@whetudigital.co.nz</a></p>
+  <p style="margin-top:6px;font-size:.75rem;">Clarity is built by <a href="https://whetudigital.co.nz">Whetū Digital</a> · Aotearoa, New Zealand</p>
+  <p style="margin-top:20px;"><a class="nav-cta" href="https://deep21star.github.io/clarity/">Open My Dashboard →</a></p>
+</footer>
 
 </body>
 </html>
