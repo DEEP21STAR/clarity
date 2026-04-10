@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Clarity — Welcome Email Draft</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;600;700&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:#07070f;color:#f0f0ff;font-family:'Space Grotesk','Segoe UI',sans-serif;padding:40px 20px;}
+.page-title{text-align:center;font-size:0.65rem;letter-spacing:3px;color:#505090;text-transform:uppercase;margin-bottom:40px;}
+
+/* ── EMAIL PREVIEW CARD ── */
+.email-card{
+  max-width:640px;margin:0 auto 60px;
+  border:1px solid #18183a;border-radius:16px;overflow:hidden;
+}
+.email-meta{
+  background:#0d0d1c;padding:18px 24px;border-bottom:1px solid #18183a;
+  font-size:0.75rem;color:#6060a0;line-height:2;
+}
+.email-meta strong{color:#a0a0d0;display:inline-block;width:50px;}
+.email-body{background:#ffffff;color:#1a1a2e;}
+
+/* ── EMAIL HTML (rendered as it would appear) ── */
+.em{font-family:'Helvetica Neue',Arial,sans-serif;font-size:15px;line-height:1.65;color:#1a1a2e;background:#ffffff;max-width:600px;margin:0 auto;}
+.em-header{background:linear-gradient(135deg,#07070f 0%,#0d0d2a 100%);padding:40px 32px 32px;text-align:center;}
+.em-header .em-logo-name{color:#ffffff;font-size:22px;font-weight:700;letter-spacing:0.08em;margin-top:16px;}
+.em-header .em-tagline{color:#10d8ff;font-size:11px;letter-spacing:0.25em;text-transform:uppercase;margin-top:6px;opacity:0.8;}
+.em-body{padding:36px 32px;}
+.em-body h2{font-size:20px;font-weight:700;color:#1a1a2e;margin-bottom:16px;}
+.em-body p{margin-bottom:14px;color:#3a3a5a;font-size:15px;}
+.em-body strong{color:#1a1a2e;}
+.em-body a{color:#0088cc;text-decoration:none;}
+.em-body a:hover{text-decoration:underline;}
+.em-cta{display:block;background:linear-gradient(135deg,#0898cf 0%,#8030c0 100%);color:#ffffff !important;text-align:center;padding:14px 28px;border-radius:8px;font-weight:700;font-size:15px;letter-spacing:0.04em;text-decoration:none !important;margin:24px 0;}
+.em-steps{background:#f5f5ff;border-radius:10px;padding:22px 24px;margin:20px 0;}
+.em-steps h3{font-size:13px;letter-spacing:0.15em;text-transform:uppercase;color:#6060a0;margin-bottom:14px;}
+.em-step{display:flex;gap:14px;align-items:flex-start;margin-bottom:12px;font-size:14px;}
+.em-step:last-child{margin-bottom:0;}
+.em-step-num{background:linear-gradient(135deg,#10d8ff,#c040ff);color:#fff;font-weight:700;font-size:12px;width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;min-width:24px;}
+.em-step-text{color:#3a3a5a;padding-top:2px;}
+.em-links{background:#f0f0fa;border-radius:10px;padding:20px 24px;margin:20px 0;}
+.em-links h3{font-size:13px;letter-spacing:0.15em;text-transform:uppercase;color:#6060a0;margin-bottom:14px;}
+.em-link-row{display:flex;align-items:center;gap:12px;margin-bottom:10px;font-size:14px;color:#3a3a5a;}
+.em-link-row:last-child{margin-bottom:0;}
+.em-link-icon{font-size:18px;}
+.em-divider{border:none;border-top:1px solid #e8e8f0;margin:24px 0;}
+.em-footer{background:#f8f8ff;padding:24px 32px;border-top:1px solid #e8e8f0;}
+.em-sig{font-size:14px;color:#3a3a5a;line-height:1.7;}
+.em-sig-name{font-weight:700;font-size:15px;color:#1a1a2e;}
+.em-sig-title{font-size:12px;color:#8080a0;letter-spacing:0.05em;}
+.em-sig-brand{display:flex;align-items:center;gap:10px;margin:12px 0 10px;}
+.em-sig-brand-text{font-weight:700;font-size:14px;color:#07070f;letter-spacing:0.05em;}
+.em-sig-brand-tagline{font-size:11px;color:#8080a0;}
+.em-sig-divider{width:1px;height:36px;background:linear-gradient(#10d8ff,#c040ff);margin:0 4px;}
+.em-sig-links{font-size:12px;}
+.em-sig-links a{color:#0088cc;text-decoration:none;margin-right:14px;}
+
+/* ── SIGNATURE PREVIEW (standalone) ── */
+.sig-section{max-width:640px;margin:0 auto 60px;}
+.sig-section-title{font-size:0.6rem;letter-spacing:3px;color:#505090;text-transform:uppercase;margin-bottom:20px;}
+.sig-preview{background:#ffffff;border-radius:12px;padding:24px 28px;border:1px solid #18183a;}
+
+/* ── SOURCE CODE VIEW ── */
+.code-block{
+  background:#0a0a18;border:1px solid #18183a;border-radius:10px;
+  padding:20px;margin:16px 0;overflow-x:auto;
+}
+.code-block pre{font-family:'Courier New',monospace;font-size:0.75rem;color:#a0c8ff;white-space:pre-wrap;line-height:1.6;}
+.section-header{
+  max-width:640px;margin:0 auto 20px;
+  font-size:0.6rem;letter-spacing:3px;color:#505090;text-transform:uppercase;
+  padding-top:20px;border-top:1px solid #18183a;
+}
+</style>
+</head>
+<body>
+
+<div class="page-title">Whetū Digital — Email Draft for Review · Clarity Welcome Pack</div>
+
+<!-- ══════════════════════════════════════════════════════════════ -->
+<!-- EMAIL PREVIEW                                                   -->
+<!-- ══════════════════════════════════════════════════════════════ -->
+<div class="email-card">
+  <div class="email-meta">
+    <strong>TO:</strong> Mimi<br>
+    <strong>FROM:</strong> Deep · Whetū Digital &lt;hello@whetudigital.co.nz&gt;<br>
+    <strong>SUBJECT:</strong> ✨ Clarity is ready for you — your personal finance dashboard
+  </div>
+
+  <!-- EMAIL RENDERED PREVIEW -->
+  <div class="email-body">
+    <div class="em">
+
+      <!-- Header -->
+      <div class="em-header">
+        <!-- Logo mark (inline SVG — no external images needed) -->
+        <svg viewBox="0 0 220 220" width="52" height="52" xmlns="http://www.w3.org/2000/svg" style="display:block;margin:0 auto;">
+          <defs>
+            <radialGradient id="gcE" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="#fff"/><stop offset="38%" stop-color="#80ecff" stop-opacity=".8"/><stop offset="100%" stop-color="#c040ff" stop-opacity="0"/></radialGradient>
+            <linearGradient id="grE" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#10d8ff"/><stop offset="100%" stop-color="#c040ff"/></linearGradient>
+          </defs>
+          <polygon points="110,16 87,83 110,110" fill="#0888b8"/>
+          <polygon points="110,16 110,110 133,83" fill="#20e8ff"/>
+          <polygon points="204,110 133,83 110,110" fill="#8030e8"/>
+          <polygon points="204,110 110,110 133,137" fill="#5c16b8"/>
+          <polygon points="110,204 133,137 110,110" fill="#c040ff"/>
+          <polygon points="110,204 110,110 87,137" fill="#9828d8"/>
+          <polygon points="16,110 87,137 110,110" fill="#0868a0"/>
+          <polygon points="16,110 110,110 87,83" fill="#10b0e8"/>
+          <ellipse cx="110" cy="110" rx="55" ry="17" fill="none" stroke="url(#grE)" stroke-width="2.3" opacity=".7" transform="rotate(22,110,110)"/>
+          <circle cx="165" cy="110" r="3.5" fill="#c040ff" opacity=".9" transform="rotate(22,110,110)"/>
+          <circle cx="110" cy="110" r="24" fill="url(#gcE)"/>
+          <circle cx="110" cy="110" r="9" fill="white" opacity=".88"/>
+        </svg>
+        <div class="em-logo-name">CLARITY</div>
+        <div class="em-tagline">by Whetū Digital</div>
+      </div>
+
+      <!-- Body -->
+      <div class="em-body">
+        <h2>Hi Mimi 👋</h2>
+        <p>
+          Your personal finance dashboard is ready — and I've set it up specially for you.
+          <strong>Clarity</strong> gives you a clear picture of your bills, expenses, and spending every month,
+          all in one place. No spreadsheets, no confusion.
+        </p>
+        <p>Tap the button below to open it on any device — laptop, iPhone, or Android:</p>
+
+        <a class="em-cta" href="https://deep21star.github.io/clarity/">→ Open My Clarity Dashboard</a>
+
+        <div class="em-steps">
+          <h3>Getting Started — 3 Steps</h3>
+          <div class="em-step">
+            <div class="em-step-num">1</div>
+            <div class="em-step-text"><strong>Set your PIN</strong> — first time only. Choose any 4 digits you'll remember. This protects your data.</div>
+          </div>
+          <div class="em-step">
+            <div class="em-step-num">2</div>
+            <div class="em-step-text"><strong>Check your bills</strong> — I've already added your regular expenses. Tap any amount to update it.</div>
+          </div>
+          <div class="em-step">
+            <div class="em-step-num">3</div>
+            <div class="em-step-text"><strong>Mark bills as paid</strong> — tap the ✓ button beside each bill when you pay it. Clarity tracks what's done for the period.</div>
+          </div>
+        </div>
+
+        <div class="em-links">
+          <h3>Your Links</h3>
+          <div class="em-link-row">
+            <span class="em-link-icon">📊</span>
+            <span><strong>Dashboard:</strong> <a href="https://deep21star.github.io/clarity/">deep21star.github.io/clarity</a></span>
+          </div>
+          <div class="em-link-row">
+            <span class="em-link-icon">📖</span>
+            <span><strong>Help Guide:</strong> <a href="https://deep21star.github.io/clarity/guide.html">deep21star.github.io/clarity/guide.html</a></span>
+          </div>
+          <div class="em-link-row">
+            <span class="em-link-icon">📱</span>
+            <span><strong>iPhone tip:</strong> Open in Safari → Share → Add to Home Screen. Runs like a real app.</span>
+          </div>
+          <div class="em-link-row">
+            <span class="em-link-icon">☁</span>
+            <span><strong>Sync across devices:</strong> The guide has a step-by-step setup — free, takes 2 minutes.</span>
+          </div>
+        </div>
+
+        <p style="font-size:13px;color:#7070a0;">
+          Your data is stored privately and securely. I can't see your financial data — it's yours.
+          If anything looks off or you'd like something changed, just message me.
+        </p>
+
+        <hr class="em-divider">
+
+        <p style="font-size:13px;color:#5050a0;">
+          Clarity is built by Whetū Digital — a small digital services studio based in Aotearoa, New Zealand.
+          It will keep improving over time. Future updates include push notifications, bank import, and an AI money coach.
+        </p>
+      </div>
+
+      <!-- Footer / Signature -->
+      <div class="em-footer">
+        <div class="em-sig">
+          <div class="em-sig-name">Deep</div>
+          <div class="em-sig-title">FOUNDER · WHETŪ DIGITAL</div>
+          <div class="em-sig-brand">
+            <svg viewBox="0 0 220 220" width="28" height="28" xmlns="http://www.w3.org/2000/svg">
+              <polygon points="110,16 87,83 110,110" fill="#0888b8"/>
+              <polygon points="110,16 110,110 133,83" fill="#20e8ff"/>
+              <polygon points="204,110 133,83 110,110" fill="#8030e8"/>
+              <polygon points="204,110 110,110 133,137" fill="#5c16b8"/>
+              <polygon points="110,204 133,137 110,110" fill="#c040ff"/>
+              <polygon points="110,204 110,110 87,137" fill="#9828d8"/>
+              <polygon points="16,110 87,137 110,110" fill="#0868a0"/>
+              <polygon points="16,110 110,110 87,83" fill="#10b0e8"/>
+              <circle cx="110" cy="110" r="18" fill="url(#gcE)"/>
+              <circle cx="110" cy="110" r="7" fill="white" opacity=".88"/>
+            </svg>
+            <div class="em-sig-divider"></div>
+            <div>
+              <div class="em-sig-brand-text">Whetū Digital</div>
+              <div class="em-sig-brand-tagline">Aotearoa · New Zealand</div>
+            </div>
+          </div>
+          <div class="em-sig-links">
+            <a href="mailto:hello@whetudigital.co.nz">hello@whetudigital.co.nz</a>
+            <a href="https://whetudigital.co.nz">whetudigital.co.nz</a>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /em -->
+  </div><!-- /email-body -->
+</div><!-- /email-card -->
+
+
+<!-- ══════════════════════════════════════════════════════════════ -->
+<!-- STANDALONE EMAIL SIGNATURE                                      -->
+<!-- ══════════════════════════════════════════════════════════════ -->
+<div class="sig-section">
+  <div class="sig-section-title">Email Signature (standalone — paste into Gmail / Outlook)</div>
+  <div class="sig-preview">
+    <div class="em-sig" style="font-family:'Helvetica Neue',Arial,sans-serif;">
+      <div class="em-sig-name" style="font-family:'Helvetica Neue',Arial,sans-serif;">Deep</div>
+      <div class="em-sig-title" style="font-family:'Helvetica Neue',Arial,sans-serif;font-size:11px;color:#8080a0;letter-spacing:0.08em;margin-bottom:10px;">FOUNDER · WHETŪ DIGITAL</div>
+      <table cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;">
+        <tr>
+          <td style="padding-right:14px;vertical-align:middle;">
+            <svg viewBox="0 0 220 220" width="36" height="36" xmlns="http://www.w3.org/2000/svg">
+              <defs>
+                <radialGradient id="gcSig" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="#fff"/><stop offset="38%" stop-color="#80ecff" stop-opacity=".8"/><stop offset="100%" stop-color="#c040ff" stop-opacity="0"/></radialGradient>
+              </defs>
+              <polygon points="110,16 87,83 110,110" fill="#0888b8"/>
+              <polygon points="110,16 110,110 133,83" fill="#20e8ff"/>
+              <polygon points="204,110 133,83 110,110" fill="#8030e8"/>
+              <polygon points="204,110 110,110 133,137" fill="#5c16b8"/>
+              <polygon points="110,204 133,137 110,110" fill="#c040ff"/>
+              <polygon points="110,204 110,110 87,137" fill="#9828d8"/>
+              <polygon points="16,110 87,137 110,110" fill="#0868a0"/>
+              <polygon points="16,110 110,110 87,83" fill="#10b0e8"/>
+              <circle cx="110" cy="110" r="22" fill="url(#gcSig)"/>
+              <circle cx="110" cy="110" r="8" fill="white" opacity=".88"/>
+            </svg>
+          </td>
+          <td style="border-left:2px solid transparent;background:linear-gradient(#07070f,#07070f) padding-box,linear-gradient(#10d8ff,#c040ff) border-box;padding-left:14px;vertical-align:middle;">
+            <div style="font-family:'Helvetica Neue',Arial,sans-serif;font-weight:700;font-size:14px;color:#07070f;letter-spacing:0.05em;">Whetū Digital</div>
+            <div style="font-family:'Helvetica Neue',Arial,sans-serif;font-size:11px;color:#8080a0;">Aotearoa · New Zealand</div>
+          </td>
+        </tr>
+      </table>
+      <div style="margin-top:10px;font-family:'Helvetica Neue',Arial,sans-serif;font-size:12px;">
+        <a href="mailto:hello@whetudigital.co.nz" style="color:#0088cc;text-decoration:none;margin-right:16px;">hello@whetudigital.co.nz</a>
+        <a href="https://whetudigital.co.nz" style="color:#0088cc;text-decoration:none;">whetudigital.co.nz</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ══════════════════════════════════════════════════════════════ -->
+<!-- PLAIN TEXT VERSION (fallback copy for iMessage / WhatsApp)    -->
+<!-- ══════════════════════════════════════════════════════════════ -->
+<div class="sig-section" style="margin-top:20px;">
+  <div class="sig-section-title">Plain Text Version (iMessage / WhatsApp / SMS)</div>
+  <div class="code-block">
+    <pre>Hi Mimi 👋
+
+Your Clarity dashboard is ready! It's your personal finance hub — tracks all your bills, shows what's paid and what's due, works on any device.
+
+📊 Dashboard: https://deep21star.github.io/clarity/
+📖 Help Guide: https://deep21star.github.io/clarity/guide.html
+
+Getting started:
+1. Open the link above
+2. Create your 4-digit PIN (first time only)
+3. Your bills are already set up — just tap to mark them paid each period
+
+📱 iPhone tip: Open in Safari → Share → Add to Home Screen. Opens like a real app.
+
+☁ Sync tip: The Help Guide has a step-by-step to sync across all your devices for free.
+
+Any questions — just message me!
+
+— Deep
+Whetū Digital · hello@whetudigital.co.nz</pre>
+  </div>
+</div>
+
+
+<!-- ══════════════════════════════════════════════════════════════ -->
+<!-- NOTES FOR DEEP                                                  -->
+<!-- ══════════════════════════════════════════════════════════════ -->
+<div class="sig-section" style="margin-top:20px;">
+  <div class="sig-section-title">Notes for Deep — Before Sending</div>
+  <div style="background:#0a0a18;border:1px solid #18183a;border-radius:10px;padding:22px;font-size:0.82rem;line-height:1.9;color:#7070b0;">
+    <p style="margin-bottom:10px;">☐ <strong style="color:#c0c0e0;">Set the PIN first</strong> — go to the dashboard, enter any PIN when prompted, then change it to Mimi's preferred PIN via Settings → Change PIN. Or just leave it for her to create on first use.</p>
+    <p style="margin-bottom:10px;">☐ <strong style="color:#c0c0e0;">Set up JSONBin sync</strong> (optional, but recommended) — create the JSONBin account yourself and enter the credentials into the dashboard. Then when Mimi opens it on her iPhone, she just needs to do the same sync setup step. Or share the credentials with her in the plain text message above.</p>
+    <p style="margin-bottom:10px;">☐ <strong style="color:#c0c0e0;">Rename C:\BUDGET → C:\CLARITY</strong> in File Explorer (Claude can't rename it while session is active).</p>
+    <p style="margin-bottom:10px;">☐ <strong style="color:#c0c0e0;">whetudigital.co.nz domain</strong> — not yet registered. Either register it before sending (~$30/yr), or replace the URL with a placeholder in the email.</p>
+    <p>☐ <strong style="color:#c0c0e0;">Send method</strong> — copy the HTML email into Gmail's compose window in "rich text" mode for the best result. Or use the plain text version for iMessage/WhatsApp.</p>
+  </div>
+</div>
+
+</body>
+</html>

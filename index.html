@@ -216,6 +216,46 @@
   .panel-animate{animation:fadeSlideUp 0.4s ease both;}
   .nzd{font-size:0.62rem;color:var(--muted);margin-left:2px;}
 
+  /* ── SAVINGS GOALS ── */
+  .goals-section{max-width:1200px;margin:0 auto 24px;padding:0 20px;}
+  .goals-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;}
+  .goals-title{font-size:0.6rem;letter-spacing:2.5px;color:var(--muted);text-transform:uppercase;}
+  .goals-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:14px;}
+  .goal-card{background:var(--panel2);border:1px solid var(--border);border-radius:12px;padding:18px;position:relative;}
+  .goal-name{font-size:0.7rem;letter-spacing:1.5px;color:var(--muted);text-transform:uppercase;margin-bottom:8px;}
+  .goal-amounts{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:10px;}
+  .goal-current{font-size:1.05rem;font-weight:700;color:#fff;}
+  .goal-of{font-size:0.72rem;color:var(--muted);}
+  .goal-bar{height:7px;background:rgba(255,255,255,0.06);border-radius:4px;overflow:hidden;margin-bottom:8px;}
+  .goal-bar-fill{height:100%;border-radius:4px;background:linear-gradient(90deg,#10d8ff,#c040ff);transition:width 0.8s cubic-bezier(.22,1,.36,1);}
+  .goal-bar-fill.done{background:linear-gradient(90deg,#00ff99,#10d8ff);}
+  .goal-footer{display:flex;justify-content:space-between;align-items:center;}
+  .goal-pct{font-size:0.65rem;letter-spacing:1px;color:var(--accent);}
+  .goal-pct.done{color:#00ff99;}
+  .goal-remaining{font-size:0.65rem;color:var(--muted);}
+  .goal-edit-row{display:flex;gap:6px;margin-top:12px;}
+  .goal-input{flex:1;background:var(--input-bg);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:0.78rem;padding:5px 8px;font-family:inherit;outline:none;}
+  .goal-input:focus{border-color:var(--accent);}
+  .goal-del{position:absolute;top:12px;right:12px;background:none;border:none;color:var(--muted);font-size:0.8rem;cursor:pointer;padding:2px 6px;border-radius:4px;transition:color .2s;}
+  .goal-del:hover{color:#ff5577;}
+  .add-goal-card{background:transparent;border:1px dashed var(--border);border-radius:12px;padding:18px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;cursor:pointer;transition:border-color .2s,background .2s;min-height:130px;}
+  .add-goal-card:hover{border-color:var(--accent);background:rgba(16,216,255,.03);}
+  .add-goal-icon{font-size:1.5rem;opacity:.4;}
+  .add-goal-label{font-size:.62rem;letter-spacing:2px;color:var(--muted);text-transform:uppercase;}
+
+  /* ── INSIGHTS ── */
+  .insights-section{max-width:1200px;margin:0 auto 24px;padding:0 20px;}
+  .insights-title{font-size:0.6rem;letter-spacing:2.5px;color:var(--muted);text-transform:uppercase;margin-bottom:16px;}
+  .insights-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px;}
+  .insight-card{background:var(--panel2);border:1px solid var(--border);border-radius:10px;padding:16px 18px;}
+  .insight-card.good{border-color:rgba(0,255,153,.2);}
+  .insight-card.warn{border-color:rgba(255,170,0,.2);}
+  .insight-card.bad{border-color:rgba(255,85,119,.2);}
+  .insight-icon{font-size:1.3rem;margin-bottom:8px;}
+  .insight-label{font-size:.58rem;letter-spacing:1.5px;color:var(--muted);text-transform:uppercase;margin-bottom:4px;}
+  .insight-value{font-size:.95rem;font-weight:700;color:#fff;margin-bottom:4px;}
+  .insight-desc{font-size:.7rem;color:var(--muted);line-height:1.55;}
+
   /* ── SYNC BADGE ── */
   .sync-badge{display:inline-flex;align-items:center;gap:5px;font-size:0.65rem;letter-spacing:1px;padding:4px 10px;border-radius:20px;border:1px solid var(--border);background:rgba(255,255,255,0.04);cursor:pointer;transition:border-color 0.2s,background 0.2s;white-space:nowrap;}
   .sync-badge:hover{border-color:var(--accent);background:rgba(16,216,255,0.08);}
@@ -403,6 +443,38 @@
   </div>
 </div>
 
+<!-- Insights Strip -->
+<div class="insights-section">
+  <div class="insights-title">FINANCIAL INSIGHTS</div>
+  <div class="insights-grid" id="insightsGrid"></div>
+</div>
+
+<!-- Savings Goals -->
+<div class="goals-section">
+  <div class="goals-header">
+    <div class="goals-title">SAVINGS GOALS</div>
+  </div>
+  <div class="goals-grid" id="goalsGrid"></div>
+</div>
+
+<!-- Goal Name Modal -->
+<div class="sync-overlay" id="goalOverlay">
+  <div class="sync-modal">
+    <h3>✦ NEW SAVINGS GOAL</h3>
+    <p>Set a savings target and track your progress towards it.</p>
+    <label>GOAL NAME</label>
+    <input type="text" id="goalNameInput" placeholder="e.g. Emergency Fund, Holiday, Car..." />
+    <label>TARGET AMOUNT</label>
+    <input type="number" id="goalTargetInput" placeholder="5000" min="1" step="any" />
+    <label>CURRENTLY SAVED</label>
+    <input type="number" id="goalSavedInput" placeholder="0" min="0" step="any" />
+    <div class="modal-btns">
+      <button class="btn" onclick="closeGoalModal()">CANCEL</button>
+      <button class="btn primary" onclick="confirmAddGoal()">ADD GOAL</button>
+    </div>
+  </div>
+</div>
+
 <!-- CSV Import Panel -->
 <div class="csv-panel" id="csvPanel">
   <div class="csv-panel-title">📂 IMPORT BANK CSV</div>
@@ -486,7 +558,7 @@
 <div class="sync-overlay" id="syncOverlay">
   <div class="sync-modal">
     <h3>☁ CLOUD SYNC SETUP</h3>
-    <p>Sync your budget data across all devices for free using JSONBin.io.<br>
+    <p>Sync your financial data across all devices for free using JSONBin.io.<br>
     Create a free account at <strong>jsonbin.io</strong>, then create a new bin and paste the details below.</p>
     <label>BIN ID</label>
     <input type="text" id="syncBinInput" placeholder="e.g. 6618a3..." autocomplete="off" />
@@ -626,6 +698,137 @@ function load(){
   if(saved){try{data=JSON.parse(saved);currentPeriod=data.period||'fortnightly';currentCurrency=data.currency||'AUD';}catch(e){data=JSON.parse(JSON.stringify(DEFAULT_DATA));}}
 }
 function save(){data.period=currentPeriod;data.currency=currentCurrency;localStorage.setItem('clarityDashboard',JSON.stringify(data));syncSave();}
+
+// ─── SAVINGS GOALS ────────────────────────────────────────────
+function renderGoals(){
+  if(!data.savingsGoals)data.savingsGoals=[];
+  const grid=document.getElementById('goalsGrid');
+  const sym=CURRENCIES[currentCurrency]?.symbol||'$';
+  const mul=PERIOD_MULTIPLIERS[currentPeriod]||1;
+  let html='';
+  data.savingsGoals.forEach((g,i)=>{
+    const pct=Math.min(100,g.target>0?Math.round((g.saved/g.target)*100):0);
+    const remaining=Math.max(0,g.target-g.saved);
+    const done=pct>=100;
+    html+=`<div class="goal-card panel-animate">
+      <button class="goal-del" onclick="deleteGoal(${i})" title="Remove">✕</button>
+      <div class="goal-name">${g.name}</div>
+      <div class="goal-amounts">
+        <span class="goal-current">${sym}${fmtN(g.saved)}</span>
+        <span class="goal-of">of ${sym}${fmtN(g.target)}</span>
+      </div>
+      <div class="goal-bar"><div class="goal-bar-fill${done?' done':''}" style="width:${pct}%"></div></div>
+      <div class="goal-footer">
+        <span class="goal-pct${done?' done':''}">${done?'✓ REACHED':''+pct+'% THERE'}</span>
+        <span class="goal-remaining">${done?'':sym+fmtN(remaining)+' to go'}</span>
+      </div>
+      <div class="goal-edit-row">
+        <input class="goal-input" type="number" value="${g.saved}" min="0" placeholder="Saved so far"
+          onchange="updateGoalSaved(${i},this.value)" title="Update saved amount"/>
+        <span style="font-size:.65rem;color:var(--muted);align-self:center;white-space:nowrap;">saved</span>
+      </div>
+    </div>`;
+  });
+  html+=`<div class="add-goal-card" onclick="openGoalModal()">
+    <div class="add-goal-icon">＋</div>
+    <div class="add-goal-label">Add Goal</div>
+  </div>`;
+  grid.innerHTML=html;
+}
+function fmtN(n){return Number(n).toLocaleString('en-AU',{minimumFractionDigits:0,maximumFractionDigits:0});}
+function openGoalModal(){
+  document.getElementById('goalNameInput').value='';
+  document.getElementById('goalTargetInput').value='';
+  document.getElementById('goalSavedInput').value='0';
+  document.getElementById('goalOverlay').classList.add('open');
+  setTimeout(()=>document.getElementById('goalNameInput').focus(),80);
+}
+function closeGoalModal(){document.getElementById('goalOverlay').classList.remove('open');}
+function confirmAddGoal(){
+  const name=document.getElementById('goalNameInput').value.trim();
+  const target=parseFloat(document.getElementById('goalTargetInput').value)||0;
+  const saved=parseFloat(document.getElementById('goalSavedInput').value)||0;
+  if(!name||target<=0)return;
+  if(!data.savingsGoals)data.savingsGoals=[];
+  data.savingsGoals.push({id:'goal_'+Date.now(),name,target,saved});
+  save();renderGoals();closeGoalModal();
+}
+function updateGoalSaved(idx,val){
+  if(!data.savingsGoals)return;
+  data.savingsGoals[idx].saved=parseFloat(val)||0;
+  save();renderGoals();
+}
+function deleteGoal(idx){
+  if(!data.savingsGoals)return;
+  data.savingsGoals.splice(idx,1);
+  save();renderGoals();
+}
+
+// ─── FINANCIAL INSIGHTS ────────────────────────────────────────
+function renderInsights(){
+  const grid=document.getElementById('insightsGrid');
+  if(!grid)return;
+  const sym=CURRENCIES[currentCurrency]?.symbol||'$';
+  const mul=PERIOD_MULTIPLIERS[currentPeriod]||1;
+
+  let totalIncome=0,totalExpense=0,paidCount=0,totalBills=0;
+  let housingExp=0,subExp=0,debtExp=0;
+
+  data.sections.forEach(sec=>{
+    sec.rows.forEach(row=>{
+      const amt=toMonthly(row.amount||0,row.freq||'monthly')*mul;
+      if(sec.type==='income'){totalIncome+=amt;}
+      else{
+        totalExpense+=amt;totalBills++;
+        if(row.paid)paidCount++;
+        const lab=(sec.label||'').toLowerCase();
+        if(lab.includes('housing')||lab.includes('rent'))housingExp+=amt;
+        if(lab.includes('subscript'))subExp+=amt;
+        if(lab.includes('debt')||lab.includes('credit'))debtExp+=amt;
+      }
+    });
+  });
+
+  const balance=totalIncome-totalExpense;
+  const savingPct=totalIncome>0?Math.round((balance/totalIncome)*100):0;
+  const housingPct=totalIncome>0?Math.round((housingExp/totalIncome)*100):0;
+  const paidPct=totalBills>0?Math.round((paidCount/totalBills)*100):0;
+
+  const insights=[];
+
+  // Savings rate
+  if(savingPct>=20)insights.push({icon:'🟢',label:'Savings Rate',value:savingPct+'%',desc:'Excellent. You\'re saving more than the recommended 20% of income.',cls:'good'});
+  else if(savingPct>=10)insights.push({icon:'🟡',label:'Savings Rate',value:savingPct+'%',desc:'On track. Aim for 20% to build a stronger safety net.',cls:'warn'});
+  else if(savingPct>=0)insights.push({icon:'🔴',label:'Savings Rate',value:savingPct+'%',desc:'Tight. Try to find one expense to reduce this period.',cls:'bad'});
+  else insights.push({icon:'🔴',label:'Savings Rate',value:savingPct+'%',desc:'Spending exceeds income this period — review your expenses.',cls:'bad'});
+
+  // Housing ratio
+  if(housingPct>0){
+    if(housingPct<=30)insights.push({icon:'🏠',label:'Housing Cost',value:housingPct+'% of income',desc:'Within the healthy 30% guideline.',cls:'good'});
+    else if(housingPct<=40)insights.push({icon:'🏠',label:'Housing Cost',value:housingPct+'% of income',desc:'A little high. Consider whether other expenses can be trimmed.',cls:'warn'});
+    else insights.push({icon:'🏠',label:'Housing Cost',value:housingPct+'% of income',desc:'Above 40% of income — this limits your financial flexibility.',cls:'bad'});
+  }
+
+  // Bills paid progress
+  if(totalBills>0){
+    const pcls=paidPct===100?'good':paidPct>=50?'warn':'bad';
+    insights.push({icon:'✅',label:'Bills Paid',value:paidCount+' / '+totalBills,desc:paidPct===100?'All bills marked paid this period!':''+paidPct+'% done — '+( totalBills-paidCount)+' bill'+(totalBills-paidCount!==1?'s':'')+' still to go.',cls:pcls});
+  }
+
+  // Net position
+  const balLabel=balance>=0?sym+fmtN(balance)+' surplus':sym+fmtN(Math.abs(balance))+' deficit';
+  insights.push({icon:balance>=0?'💚':'❌',label:'Net '+currentPeriod.charAt(0).toUpperCase()+currentPeriod.slice(1),value:balLabel,desc:balance>=0?'Income covers all expenses this period.':'Expenses exceed income. Review and adjust.',cls:balance>=0?'good':'bad'});
+
+  // Subscriptions
+  if(subExp>0)insights.push({icon:'📱',label:'Subscriptions',value:sym+fmtN(subExp)+' '+currentPeriod,desc:subExp*12>600?'Over '+sym+'600/yr in subscriptions. Worth reviewing.':'Reasonable subscription spend.',cls:subExp*12>600?'warn':'good'});
+
+  grid.innerHTML=insights.map(ins=>`<div class="insight-card ${ins.cls}">
+    <div class="insight-icon">${ins.icon}</div>
+    <div class="insight-label">${ins.label}</div>
+    <div class="insight-value">${ins.value}</div>
+    <div class="insight-desc">${ins.desc}</div>
+  </div>`).join('');
+}
 
 // ─── JSONBIN.IO SYNC ──────────────────────────────────────────
 const SYNC_BIN_KEY='clarityBinId';
@@ -862,6 +1065,8 @@ function render(){
   }));
 
   updateCharts(sectionTotals,totalIncome,totalExpense,balance);
+  renderInsights();
+  renderGoals();
   _firstRender=false;
 }
 
@@ -1223,8 +1428,10 @@ document.addEventListener('DOMContentLoaded',()=>{
 document.getElementById('copyrightYear').textContent=new Date().getFullYear();
 load();
 
-// Close sync overlay on background click
+// Close overlay on background click
 document.getElementById('syncOverlay').addEventListener('click',e=>{if(e.target===document.getElementById('syncOverlay'))closeSyncModal();});
+document.getElementById('goalOverlay').addEventListener('click',e=>{if(e.target===document.getElementById('goalOverlay'))closeGoalModal();});
+document.getElementById('goalNameInput').addEventListener('keydown',e=>{if(e.key==='Enter')confirmAddGoal();});
 
 // Check PIN
 const _storedPin=localStorage.getItem(PIN_KEY);
