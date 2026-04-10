@@ -1,0 +1,1071 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Clarity — by Whetū Digital</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+  :root {
+    --bg: #10101f; --panel: #181830; --panel2: #1e1e3a; --border: #2a2a50;
+    --accent: #c040ff; --accent2: #10d8ff; --green: #00ff99; --red: #ff5577;
+    --orange: #ffaa00; --text: #f0f0ff; --muted: #8080b8; --input-bg: #141428;
+    --glow: 0 0 14px rgba(192,64,255,0.35); --glow2: 0 0 14px rgba(16,216,255,0.35);
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{background:var(--bg);color:var(--text);font-family:'Segoe UI',Consolas,monospace;min-height:100vh;padding:20px;}
+
+  /* ── PIN GATE ── */
+  .pin-gate{position:fixed;inset:0;background:var(--bg);z-index:1000;display:flex;align-items:center;justify-content:center;}
+  .pin-box{text-align:center;padding:40px 32px;background:var(--panel);border:1px solid var(--border);border-radius:20px;min-width:300px;box-shadow:0 0 60px rgba(192,64,255,0.15);}
+  .pin-logo{font-size:2.2rem;color:var(--accent2);text-shadow:0 0 30px rgba(16,216,255,0.6);margin-bottom:8px;}
+  .pin-title{font-size:1.4rem;font-weight:700;letter-spacing:4px;color:var(--accent2);margin-bottom:2px;}
+  .pin-brand{font-size:0.65rem;color:var(--muted);letter-spacing:2px;margin-bottom:28px;}
+  .pin-dots{display:flex;justify-content:center;gap:14px;margin-bottom:10px;}
+  .pin-dot{width:14px;height:14px;border-radius:50%;border:2px solid var(--muted);transition:all 0.15s;}
+  .pin-dot.filled{background:var(--accent2);border-color:var(--accent2);box-shadow:0 0 10px rgba(16,216,255,0.6);}
+  .pin-msg{font-size:0.75rem;color:var(--muted);letter-spacing:1px;margin-bottom:22px;min-height:18px;}
+  .pin-msg.error{color:var(--red);}
+  .pin-pad{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:18px;}
+  .pin-btn{padding:14px;border:1px solid var(--border);border-radius:10px;background:var(--panel2);color:var(--text);font-size:1.1rem;cursor:pointer;transition:all 0.15s;}
+  .pin-btn:hover{border-color:var(--accent2);background:rgba(16,216,255,0.08);}
+  .pin-btn:active{transform:scale(0.93);}
+  .pin-btn.del{color:var(--muted);}
+  .pin-setup-note{font-size:0.65rem;color:var(--muted);opacity:0.6;margin-top:4px;}
+  @keyframes pinShake{0%,100%{transform:translateX(0)}20%{transform:translateX(-8px)}40%{transform:translateX(8px)}60%{transform:translateX(-6px)}80%{transform:translateX(6px)}}
+  .pin-shake{animation:pinShake 0.4s ease;}
+
+  /* ── TYPOGRAPHY ── */
+  h1{text-align:center;font-size:1.6rem;font-weight:700;letter-spacing:3px;color:var(--accent2);text-shadow:0 0 20px rgba(0,207,255,0.5);padding:16px 0 4px;}
+  .subtitle{text-align:center;font-size:0.75rem;color:var(--muted);letter-spacing:2px;margin-bottom:4px;}
+  .brand-line{text-align:center;font-size:0.62rem;color:var(--muted);letter-spacing:1px;opacity:0.5;margin-bottom:20px;}
+
+  /* ── TOP CONTROLS ── */
+  .top-controls{display:flex;justify-content:center;gap:12px;margin-bottom:14px;flex-wrap:wrap;}
+  .control-group{display:flex;align-items:center;gap:8px;background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:6px 14px;}
+  .ctrl-label{font-size:0.65rem;letter-spacing:2px;color:var(--muted);}
+  .ctrl-select{background:var(--input-bg);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:0.82rem;padding:4px 8px;cursor:pointer;outline:none;font-family:inherit;transition:border-color 0.2s;}
+  .ctrl-select:hover,.ctrl-select:focus{border-color:var(--accent);}
+
+  /* ── PERIOD TOGGLE ── */
+  .period-bar{display:flex;justify-content:center;gap:8px;margin-bottom:20px;flex-wrap:wrap;}
+  .period-btn{padding:7px 18px;border:1px solid var(--border);border-radius:20px;background:var(--panel);color:var(--muted);cursor:pointer;font-size:0.78rem;letter-spacing:1px;transition:all 0.2s;}
+  .period-btn.active{background:var(--accent);border-color:var(--accent);color:#fff;box-shadow:var(--glow);}
+
+  /* ── ALERT BANNER ── */
+  .alert-banner{display:none;max-width:1200px;margin:0 auto 16px;padding:11px 20px;border-radius:10px;font-size:0.82rem;font-weight:600;letter-spacing:0.5px;border:1px solid rgba(255,85,119,0.5);background:rgba(255,85,119,0.1);color:var(--red);text-align:center;}
+  .alert-banner.visible{display:block;}
+
+  /* ── SUMMARY BAR ── */
+  .summary{max-width:1200px;margin:0 auto 16px;background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:14px 20px;display:flex;align-items:center;flex-wrap:wrap;}
+  .sum-block{flex:1;min-width:120px;text-align:center;padding:6px;}
+  .sum-block+.sum-block{border-left:1px solid var(--border);}
+  .sum-label{font-size:0.62rem;letter-spacing:2px;color:var(--muted);margin-bottom:4px;}
+  .sum-value{font-size:1.3rem;font-weight:700;letter-spacing:1px;}
+  .sum-value.income{color:var(--green);text-shadow:0 0 10px rgba(0,255,136,0.4);}
+  .sum-value.expense{color:var(--red);text-shadow:0 0 10px rgba(255,68,102,0.4);}
+  .sum-value.balance{color:var(--accent2);text-shadow:0 0 10px rgba(0,207,255,0.4);}
+  .sum-value.savings{color:var(--orange);text-shadow:0 0 10px rgba(255,149,0,0.4);}
+
+  /* ── PROGRESS BAR ── */
+  .progress-wrap{max-width:1200px;margin:0 auto 20px;padding:0 4px;}
+  .progress-track{height:5px;background:var(--panel2);border-radius:3px;overflow:hidden;}
+  .progress-fill{height:100%;border-radius:3px;transition:width 0.5s ease;background:linear-gradient(90deg,var(--green),var(--red));}
+  .progress-labels{display:flex;justify-content:space-between;font-size:0.62rem;color:var(--muted);margin-top:4px;}
+
+  /* ── CHARTS ── */
+  .charts-section{max-width:1200px;margin:0 auto 24px;}
+  .charts-title{font-size:0.65rem;letter-spacing:3px;color:var(--muted);text-align:center;margin-bottom:12px;}
+  .charts-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;}
+  @media(max-width:900px){.charts-grid{grid-template-columns:1fr 1fr;}}
+  @media(max-width:600px){.charts-grid{grid-template-columns:1fr;}}
+  .chart-panel{background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:16px;position:relative;}
+  .chart-panel-title{font-size:0.62rem;letter-spacing:2px;color:var(--muted);margin-bottom:12px;text-align:center;}
+  .chart-canvas-wrap{position:relative;height:200px;}
+
+  /* ── GRID ── */
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;max-width:1200px;margin:0 auto 20px;}
+  @media(max-width:760px){.grid{grid-template-columns:1fr;}}
+
+  /* ── SECTION PANEL ── */
+  .section-panel{background:var(--panel);border:1px solid var(--border);border-radius:12px;overflow:hidden;}
+  .section-panel.income-panel{border-color:rgba(0,255,136,0.2);}
+  .section-panel.expense-panel{border-color:rgba(255,68,102,0.15);}
+  .section-panel.debt-panel{border-color:rgba(255,100,0,0.3);background:rgba(255,80,0,0.03);}
+  .section-header{display:flex;align-items:center;padding:11px 14px;border-bottom:1px solid var(--border);gap:8px;}
+  .section-header.income-hdr{border-bottom-color:rgba(0,255,136,0.15);}
+  .section-header.expense-hdr{border-bottom-color:rgba(255,68,102,0.1);}
+  .section-header.debt-hdr{border-bottom-color:rgba(255,100,0,0.2);}
+  .section-icon{font-size:1rem;width:22px;text-align:center;}
+  .section-title{flex:1;font-size:0.68rem;font-weight:700;letter-spacing:2px;color:var(--muted);}
+  .section-total{font-size:0.95rem;font-weight:700;color:var(--accent2);min-width:80px;text-align:right;}
+  .section-total.income-total{color:var(--green);}
+  .section-total.expense-total{color:var(--red);}
+  .section-total.debt-total{color:#ff7700;}
+  .dot{width:6px;height:6px;border-radius:50%;display:inline-block;margin-right:6px;}
+  .dot.income{background:var(--green);box-shadow:0 0 6px var(--green);}
+  .dot.expense{background:var(--red);box-shadow:0 0 6px var(--red);}
+  .dot.debt{background:#ff7700;box-shadow:0 0 6px #ff7700;}
+
+  /* ── CATEGORY BAR ── */
+  .cat-bar-wrap{padding:0 14px 8px;border-bottom:1px solid rgba(30,30,58,0.5);}
+  .cat-bar-track{height:3px;background:var(--panel2);border-radius:2px;overflow:hidden;margin-top:4px;}
+  .cat-bar-fill{height:100%;border-radius:2px;transition:width 0.5s ease;}
+  .cat-bar-fill.income-bar{background:linear-gradient(90deg,#00cc77,#00ff99);}
+  .cat-bar-fill.expense-bar{background:linear-gradient(90deg,#cc3355,#ff5577);}
+  .cat-bar-label{display:flex;justify-content:space-between;font-size:0.6rem;color:var(--muted);margin-top:2px;}
+
+  /* ── ROWS ── */
+  .row{display:flex;align-items:center;padding:6px 14px;border-bottom:1px solid rgba(30,30,58,0.5);gap:7px;transition:background 0.15s;}
+  .row:hover{background:rgba(184,0,255,0.04);}
+  .row:last-child{border-bottom:none;}
+  .row-name{flex:1;font-size:0.83rem;color:var(--text);cursor:pointer;padding:2px 4px;border-radius:4px;transition:background 0.15s;}
+  .row-name-wrap{flex:1;min-width:0;}
+  .row-hint{font-size:0.6rem;color:var(--muted);opacity:0.7;margin-top:1px;font-style:italic;}
+  .row-name:hover{background:rgba(255,255,255,0.05);}
+  .row-name input{background:var(--input-bg);border:1px solid var(--accent);border-radius:4px;color:var(--text);font-size:0.83rem;font-family:inherit;padding:2px 6px;width:100%;outline:none;}
+  .row-amount{width:100px;text-align:right;font-size:0.88rem;font-weight:600;color:var(--text);cursor:pointer;padding:2px 4px;border-radius:4px;transition:background 0.15s;}
+  .row-amount:hover{background:rgba(255,255,255,0.05);}
+  .row-amount input{background:var(--input-bg);border:1px solid var(--accent);border-radius:4px;color:var(--text);font-size:0.88rem;font-family:inherit;padding:2px 6px;width:100%;text-align:right;outline:none;}
+  .row-original{font-size:0.62rem;color:var(--muted);text-align:right;margin-top:1px;}
+  .row-period-select{width:88px;background:var(--input-bg);border:1px solid var(--border);border-radius:6px;color:var(--muted);font-size:0.7rem;padding:3px 5px;cursor:pointer;outline:none;font-family:inherit;transition:border-color 0.2s;}
+  .row-period-select:hover,.row-period-select:focus{border-color:var(--accent);color:var(--text);}
+
+  /* ── PAID STATUS ── */
+  .row-paid{width:22px;height:22px;display:flex;align-items:center;justify-content:center;cursor:pointer;border-radius:50%;transition:all 0.15s;font-size:0.8rem;flex-shrink:0;}
+  .row-paid.unpaid{color:var(--muted);opacity:0.5;}
+  .row-paid.unpaid:hover{opacity:1;color:var(--green);}
+  .row-paid.paid-ok{color:var(--green);}
+  .row-paid.overdue{color:var(--red);animation:pulseCritical 2s infinite;}
+
+  /* ── DUE DATE ── */
+  .row-due{font-size:0.6rem;color:var(--muted);text-align:right;margin-top:2px;cursor:pointer;}
+  .row-due.due-soon{color:var(--orange);}
+  .row-due.overdue{color:var(--red);}
+  .row-due:hover{color:var(--accent);}
+
+  /* ── DELETE ── */
+  .row-del{width:20px;height:20px;display:flex;align-items:center;justify-content:center;color:var(--muted);cursor:pointer;border-radius:4px;font-size:0.8rem;opacity:0;transition:opacity 0.15s;}
+  .row:hover .row-del{opacity:1;}
+  .row-del:hover{color:var(--red);background:rgba(255,68,102,0.1);}
+
+  /* ── ADD ROW ── */
+  .add-row-btn{display:flex;align-items:center;gap:6px;padding:7px 14px;font-size:0.72rem;color:var(--muted);cursor:pointer;transition:color 0.2s;border-top:1px solid rgba(30,30,58,0.5);}
+  .add-row-btn:hover{color:var(--accent);}
+
+  /* ── HEALTH BADGE ── */
+  .health-badge{display:inline-flex;align-items:center;gap:6px;padding:4px 14px;border-radius:20px;font-size:0.72rem;font-weight:700;letter-spacing:2px;border:1px solid;}
+  .health-badge.healthy{color:var(--green);border-color:rgba(0,255,153,0.35);background:rgba(0,255,153,0.08);}
+  .health-badge.warning{color:var(--orange);border-color:rgba(255,170,0,0.35);background:rgba(255,170,0,0.08);}
+  .health-badge.critical{color:var(--red);border-color:rgba(255,85,119,0.4);background:rgba(255,85,119,0.1);}
+  .sum-block.health-block{border-left:1px solid var(--border);}
+
+  /* ── TIP LINE ── */
+  .tip-line{text-align:center;font-size:0.68rem;color:var(--muted);letter-spacing:0.5px;margin-bottom:14px;padding:6px 20px;background:rgba(192,64,255,0.05);border:1px solid rgba(192,64,255,0.12);border-radius:8px;max-width:700px;margin-left:auto;margin-right:auto;}
+
+  /* ── FOOTER ── */
+  .footer{max-width:1200px;margin:0 auto;display:flex;justify-content:center;gap:10px;padding:8px 0 16px;flex-wrap:wrap;}
+  .btn{padding:8px 18px;border-radius:8px;border:1px solid var(--border);background:var(--panel);color:var(--muted);font-size:0.73rem;letter-spacing:1px;cursor:pointer;transition:all 0.2s;font-family:inherit;}
+  .btn:hover{border-color:var(--accent);color:var(--accent);}
+  .btn.primary{background:var(--accent);border-color:var(--accent);color:#fff;box-shadow:var(--glow);}
+  .btn.primary:hover{opacity:0.85;}
+  .btn.danger:hover{border-color:var(--red);color:var(--red);}
+  .btn.csv-btn{border-color:var(--accent2);color:var(--accent2);}
+  .btn.csv-btn:hover{background:rgba(16,216,255,0.08);}
+
+  /* ── CSV IMPORT PANEL ── */
+  .csv-panel{max-width:1200px;margin:0 auto 20px;background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:20px;display:none;}
+  .csv-panel.open{display:block;}
+  .csv-panel-title{font-size:0.68rem;letter-spacing:2px;color:var(--muted);margin-bottom:14px;}
+  .csv-drop-zone{border:2px dashed var(--border);border-radius:10px;padding:30px 20px;text-align:center;cursor:pointer;transition:all 0.2s;margin-bottom:14px;}
+  .csv-drop-zone:hover,.csv-drop-zone.drag-over{border-color:var(--accent2);background:rgba(16,216,255,0.05);}
+  .csv-drop-icon{font-size:2rem;margin-bottom:8px;}
+  .csv-drop-text{font-size:0.85rem;color:var(--text);margin-bottom:4px;}
+  .csv-drop-sub{font-size:0.68rem;color:var(--muted);}
+  .csv-preview-table{width:100%;border-collapse:collapse;font-size:0.75rem;margin-bottom:12px;max-height:240px;overflow-y:auto;display:block;}
+  .csv-preview-table th{background:var(--panel2);color:var(--muted);padding:5px 10px;text-align:left;font-size:0.65rem;letter-spacing:1px;position:sticky;top:0;}
+  .csv-preview-table td{padding:5px 10px;border-bottom:1px solid var(--border);color:var(--text);}
+  .csv-preview-table .cat-tag{font-size:0.62rem;color:var(--accent2);background:rgba(16,216,255,0.1);border-radius:4px;padding:1px 6px;}
+  .csv-import-note{font-size:0.68rem;color:var(--muted);margin-bottom:10px;}
+
+  /* ── MODAL ── */
+  .modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:100;align-items:center;justify-content:center;}
+  .modal-overlay.open{display:flex;}
+  .modal{background:var(--panel2);border:1px solid var(--accent);border-radius:14px;padding:22px;min-width:300px;box-shadow:var(--glow);}
+  .modal h3{font-size:0.78rem;letter-spacing:2px;color:var(--accent);margin-bottom:14px;}
+  .modal input,.modal select{width:100%;background:var(--input-bg);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:0.88rem;padding:7px 10px;margin-bottom:9px;font-family:inherit;outline:none;}
+  .modal input:focus,.modal select:focus{border-color:var(--accent);}
+  .modal-btns{display:flex;gap:8px;margin-top:4px;}
+  .modal-btns .btn{flex:1;text-align:center;}
+
+  /* ── COPYRIGHT ── */
+  .copyright-footer{max-width:1200px;margin:6px auto 20px;text-align:center;font-size:0.65rem;color:var(--muted);letter-spacing:0.5px;padding:8px 20px;border-top:1px solid var(--border);opacity:0.7;}
+  .copyright-footer strong{color:var(--accent2);font-weight:600;}
+
+  /* ── ANIMATIONS ── */
+  @keyframes titleGlow{0%,100%{text-shadow:0 0 20px rgba(0,207,255,0.5);}50%{text-shadow:0 0 40px rgba(0,207,255,0.9),0 0 70px rgba(0,207,255,0.25);}}
+  @keyframes fadeSlideUp{from{opacity:0;transform:translateY(14px);}to{opacity:1;transform:translateY(0);}}
+  @keyframes pulseHealthy{0%,100%{box-shadow:0 0 8px rgba(0,255,153,0.2);}50%{box-shadow:0 0 20px rgba(0,255,153,0.7);}}
+  @keyframes pulseWarning{0%,100%{box-shadow:0 0 8px rgba(255,170,0,0.2);}50%{box-shadow:0 0 20px rgba(255,170,0,0.7);}}
+  @keyframes pulseCritical{0%,100%{box-shadow:0 0 8px rgba(255,85,119,0.3);}50%{box-shadow:0 0 22px rgba(255,85,119,0.8);}}
+  h1{animation:titleGlow 4s ease-in-out infinite;}
+  .health-badge.healthy{animation:pulseHealthy 3s ease-in-out infinite;}
+  .health-badge.warning{animation:pulseWarning 3s ease-in-out infinite;}
+  .health-badge.critical{animation:pulseCritical 2s ease-in-out infinite;}
+  .panel-animate{animation:fadeSlideUp 0.4s ease both;}
+  .nzd{font-size:0.62rem;color:var(--muted);margin-left:2px;}
+</style>
+</head>
+<body>
+
+<!-- ── PIN GATE ── -->
+<div class="pin-gate" id="pinGate">
+  <div class="pin-box">
+    <div class="pin-logo">◈</div>
+    <h2 class="pin-title">CLARITY</h2>
+    <div class="pin-brand">by Whetū Digital</div>
+    <div class="pin-dots" id="pinDots">
+      <span class="pin-dot" id="pd0"></span>
+      <span class="pin-dot" id="pd1"></span>
+      <span class="pin-dot" id="pd2"></span>
+      <span class="pin-dot" id="pd3"></span>
+    </div>
+    <p class="pin-msg" id="pinMsg">Enter your PIN</p>
+    <div class="pin-pad">
+      <button class="pin-btn" onclick="pinPress('1')">1</button>
+      <button class="pin-btn" onclick="pinPress('2')">2</button>
+      <button class="pin-btn" onclick="pinPress('3')">3</button>
+      <button class="pin-btn" onclick="pinPress('4')">4</button>
+      <button class="pin-btn" onclick="pinPress('5')">5</button>
+      <button class="pin-btn" onclick="pinPress('6')">6</button>
+      <button class="pin-btn" onclick="pinPress('7')">7</button>
+      <button class="pin-btn" onclick="pinPress('8')">8</button>
+      <button class="pin-btn" onclick="pinPress('9')">9</button>
+      <button class="pin-btn" style="visibility:hidden"></button>
+      <button class="pin-btn" onclick="pinPress('0')">0</button>
+      <button class="pin-btn del" onclick="pinDel()">⌫</button>
+    </div>
+    <p class="pin-setup-note" id="pinSetupNote"></p>
+  </div>
+</div>
+
+<!-- ── MAIN APP ── -->
+<div id="appWrap" style="display:none;">
+
+<h1>◈ CLARITY</h1>
+<div class="subtitle">MIMI · PERSONAL FINANCE</div>
+<div class="brand-line">by Whetū Digital · Aotearoa, New Zealand</div>
+
+<div class="tip-line">Enter each bill amount · set the dropdown to how often you pay it · use the period buttons to view totals in any timeframe</div>
+
+<!-- Controls -->
+<div class="top-controls">
+  <div class="control-group">
+    <label class="ctrl-label">CURRENCY</label>
+    <select id="currencySelect" class="ctrl-select" onchange="setCurrency(this.value)">
+      <option value="AUD">🇦🇺 AUD</option>
+      <option value="NZD">🇳🇿 NZD</option>
+      <option value="USD">🇺🇸 USD</option>
+      <option value="GBP">🇬🇧 GBP</option>
+      <option value="EUR">🇪🇺 EUR</option>
+      <option value="JPY">🇯🇵 JPY</option>
+      <option value="CAD">🇨🇦 CAD</option>
+      <option value="SGD">🇸🇬 SGD</option>
+    </select>
+  </div>
+  <div class="control-group">
+    <label class="ctrl-label">RESET PAID</label>
+    <button class="btn" onclick="resetAllPaid()" style="padding:4px 12px;font-size:0.7rem;">New Period</button>
+  </div>
+</div>
+
+<!-- Period Toggle -->
+<div class="period-bar">
+  <button class="period-btn" onclick="setPeriod('weekly')">WEEKLY</button>
+  <button class="period-btn active" onclick="setPeriod('fortnightly')">FORTNIGHTLY</button>
+  <button class="period-btn" onclick="setPeriod('monthly')">MONTHLY</button>
+  <button class="period-btn" onclick="setPeriod('quarterly')">QUARTERLY</button>
+  <button class="period-btn" onclick="setPeriod('yearly')">YEARLY</button>
+</div>
+
+<!-- Alert Banner -->
+<div class="alert-banner" id="alertBanner"></div>
+
+<!-- Summary Bar -->
+<div class="summary" id="summary">
+  <div class="sum-block"><div class="sum-label">INCOME</div><div class="sum-value income" id="sumIncome">$0.00</div></div>
+  <div class="sum-block"><div class="sum-label">EXPENSES</div><div class="sum-value expense" id="sumExpense">$0.00</div></div>
+  <div class="sum-block"><div class="sum-label">BALANCE</div><div class="sum-value balance" id="sumBalance">$0.00</div></div>
+  <div class="sum-block"><div class="sum-label">SAVINGS %</div><div class="sum-value savings" id="sumSavingsPct">0%</div></div>
+  <div class="sum-block health-block"><div class="sum-label">HEALTH</div><div id="healthBadge"><span class="health-badge warning">— —</span></div></div>
+</div>
+
+<!-- Progress Bar -->
+<div class="progress-wrap">
+  <div class="progress-track"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
+  <div class="progress-labels"><span>EXPENSES vs INCOME</span><span id="progressLabel">0%</span></div>
+</div>
+
+<!-- Charts -->
+<div class="charts-section">
+  <div class="charts-title">OVERVIEW · CHARTS</div>
+  <div class="charts-grid">
+    <div class="chart-panel">
+      <div class="chart-panel-title">SPENDING BY CATEGORY</div>
+      <div class="chart-canvas-wrap"><canvas id="donutChart"></canvas></div>
+    </div>
+    <div class="chart-panel">
+      <div class="chart-panel-title">INCOME vs EXPENSES</div>
+      <div class="chart-canvas-wrap"><canvas id="barChart"></canvas></div>
+    </div>
+    <div class="chart-panel">
+      <div class="chart-panel-title">BALANCE FORECAST · 6 MONTHS</div>
+      <div class="chart-canvas-wrap"><canvas id="lineChart"></canvas></div>
+    </div>
+  </div>
+</div>
+
+<!-- CSV Import Panel -->
+<div class="csv-panel" id="csvPanel">
+  <div class="csv-panel-title">📂 IMPORT BANK CSV</div>
+  <div class="csv-drop-zone" id="csvDropZone" onclick="document.getElementById('csvFileInput').click()">
+    <div class="csv-drop-icon">📂</div>
+    <div class="csv-drop-text">Drop your bank CSV here or click to browse</div>
+    <div class="csv-drop-sub">Supports ANZ, CBA, Westpac, NAB · columns: Date, Description, Debit, Credit, Balance</div>
+  </div>
+  <input type="file" id="csvFileInput" accept=".csv" style="display:none" onchange="handleCsvFile(this.files[0])">
+  <div id="csvPreviewWrap" style="display:none;">
+    <div class="csv-import-note" id="csvImportNote"></div>
+    <div style="overflow-x:auto;max-height:240px;overflow-y:auto;">
+      <table class="csv-preview-table" id="csvPreviewTable">
+        <thead><tr><th>DATE</th><th>DESCRIPTION</th><th>AMOUNT</th><th>AUTO-CATEGORY</th></tr></thead>
+        <tbody id="csvPreviewBody"></tbody>
+      </table>
+    </div>
+    <div style="display:flex;gap:10px;margin-top:10px;">
+      <button class="btn csv-btn" onclick="confirmCsvImport()">IMPORT TRANSACTIONS</button>
+      <button class="btn" onclick="cancelCsvImport()">CANCEL</button>
+    </div>
+  </div>
+</div>
+
+<!-- Main Grid -->
+<div class="grid" id="mainGrid"></div>
+
+<!-- Footer -->
+<div class="footer">
+  <button class="btn primary" onclick="openAddSection()">+ ADD SECTION</button>
+  <button class="btn csv-btn" onclick="toggleCsvPanel()">📂 IMPORT CSV</button>
+  <button class="btn" onclick="exportData()">EXPORT JSON</button>
+  <button class="btn" onclick="importData()">IMPORT JSON</button>
+  <button class="btn danger" onclick="resetData()">RESET</button>
+  <button class="btn" onclick="changePin()">🔒 CHANGE PIN</button>
+</div>
+
+<!-- Add Section Modal -->
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal">
+    <h3>ADD SECTION</h3>
+    <input type="text" id="newSectionName" placeholder="Section name (e.g. Transport)" />
+    <select id="newSectionType"><option value="expense">Expense</option><option value="income">Income</option></select>
+    <input type="text" id="newSectionIcon" placeholder="Icon emoji (e.g. 🚗)" />
+    <div class="modal-btns">
+      <button class="btn" onclick="closeModal()">CANCEL</button>
+      <button class="btn primary" onclick="confirmAddSection()">ADD</button>
+    </div>
+  </div>
+</div>
+
+<!-- Due Date Modal -->
+<div class="modal-overlay" id="dueDateModal">
+  <div class="modal">
+    <h3>SET DUE DATE</h3>
+    <input type="number" id="dueDayInput" placeholder="Day of month (1–31)" min="1" max="31" />
+    <div class="modal-btns">
+      <button class="btn" onclick="closeDueModal()">CANCEL</button>
+      <button class="btn" onclick="clearDueDate()" style="color:var(--muted)">CLEAR</button>
+      <button class="btn primary" onclick="saveDueDate()">SAVE</button>
+    </div>
+  </div>
+</div>
+
+<!-- Change PIN Modal -->
+<div class="modal-overlay" id="pinModal">
+  <div class="modal">
+    <h3>CHANGE PIN</h3>
+    <input type="password" id="pinOldInput" placeholder="Current PIN" maxlength="4" inputmode="numeric" />
+    <input type="password" id="pinNewInput" placeholder="New PIN (4 digits)" maxlength="4" inputmode="numeric" />
+    <input type="password" id="pinConfirmInput" placeholder="Confirm new PIN" maxlength="4" inputmode="numeric" />
+    <p id="pinChangeMsg" style="font-size:0.72rem;color:var(--red);min-height:18px;margin-bottom:8px;"></p>
+    <div class="modal-btns">
+      <button class="btn" onclick="closePinModal()">CANCEL</button>
+      <button class="btn primary" onclick="savePinChange()">SAVE</button>
+    </div>
+  </div>
+</div>
+
+<!-- Copyright -->
+<div class="copyright-footer">
+  © <span id="copyrightYear"></span> <strong>Whetū Digital</strong> · Aotearoa, New Zealand · whetudigital.co.nz
+  <span style="margin:0 8px;opacity:0.4;">·</span>
+  Built with care for <strong id="clientName">Mimi</strong>
+</div>
+
+<input type="file" id="importFile" accept=".json" style="display:none" onchange="handleImport(event)">
+
+</div><!-- /appWrap -->
+
+<script>
+// ─── CURRENCIES ───────────────────────────────────────────────
+const CURRENCIES = {
+  AUD:{symbol:'A$',code:'AUD',decimals:2},NZD:{symbol:'$',code:'NZD',decimals:2},
+  USD:{symbol:'$',code:'USD',decimals:2},GBP:{symbol:'£',code:'GBP',decimals:2},
+  EUR:{symbol:'€',code:'EUR',decimals:2},JPY:{symbol:'¥',code:'JPY',decimals:0},
+  CAD:{symbol:'$',code:'CAD',decimals:2},SGD:{symbol:'S$',code:'SGD',decimals:2},
+};
+let currentCurrency='AUD';
+
+function fmt(n){
+  const c=CURRENCIES[currentCurrency]||CURRENCIES.AUD;
+  const abs=Math.abs(n).toFixed(c.decimals).replace(/\B(?=(\d{3})+(?!\d))/g,',');
+  return c.symbol+abs;
+}
+function setCurrency(code){currentCurrency=code;save();render();}
+
+// ─── PERIOD HELPERS ───────────────────────────────────────────
+// Store amounts as monthly internally, display in chosen period
+function toMonthly(amount,period){
+  if(period==='weekly')    return amount*(52/12);
+  if(period==='fortnightly') return amount*(26/12);
+  if(period==='quarterly') return amount/3;
+  if(period==='yearly')    return amount/12;
+  return amount; // monthly
+}
+function fromMonthly(monthly,target){
+  if(target==='weekly')    return monthly/(52/12);
+  if(target==='fortnightly') return monthly/(26/12);
+  if(target==='quarterly') return monthly*3;
+  if(target==='yearly')    return monthly*12;
+  return monthly; // monthly
+}
+
+// ─── DEFAULT DATA (MIMI — PRE-FILLED) ────────────────────────
+const DEFAULT_DATA = {
+  period:'fortnightly', currency:'AUD',
+  sections:[
+    {id:'income',label:'INCOME',type:'income',icon:'💰',rows:[
+      {id:'salary',name:'Salary / Wages',amount:0,period:'fortnightly',hint:'Add your fortnightly take-home pay',dueDay:null,paid:false}
+    ]},
+    {id:'housing',label:'HOUSING',type:'expense',icon:'🏠',rows:[
+      {id:'rent',name:'Rent',amount:1912,period:'monthly',hint:'',dueDay:1,paid:false}
+    ]},
+    {id:'utilities',label:'UTILITIES',type:'expense',icon:'⚡',rows:[
+      {id:'electricity',name:'Electricity',amount:78.69,period:'monthly',hint:'billed quarterly · $236.06 per quarter',dueDay:null,paid:false},
+      {id:'gas',name:'Gas – Home',amount:66.28,period:'monthly',hint:'billed quarterly · $198.83 per quarter',dueDay:null,paid:false},
+      {id:'water',name:'Water',amount:0,period:'monthly',hint:'currently in credit ✓ · $58.88 cr',dueDay:null,paid:true}
+    ]},
+    {id:'connectivity',label:'CONNECTIVITY',type:'expense',icon:'📡',rows:[
+      {id:'internet',name:'Telstra Internet Premium',amount:79.10,period:'monthly',hint:'',dueDay:null,paid:false},
+      {id:'mobile',name:'Mobile Plan (est.)',amount:50,period:'monthly',hint:'~$40–60/mo · current plan ends June 2026',dueDay:null,paid:false}
+    ]},
+    {id:'insurance',label:'INSURANCE',type:'expense',icon:'🛡️',rows:[
+      {id:'car_ins',name:'Car Insurance',amount:154.32,period:'monthly',hint:'',dueDay:null,paid:false},
+      {id:'contents_ins',name:'Contents Insurance',amount:57.33,period:'monthly',hint:'',dueDay:null,paid:false}
+    ]},
+    {id:'subscriptions',label:'SUBSCRIPTIONS',type:'expense',icon:'📱',rows:[
+      {id:'spotify',name:'Spotify',amount:15.99,period:'monthly',hint:'',dueDay:null,paid:false},
+      {id:'gstorage',name:'Google Storage (est.)',amount:4,period:'monthly',hint:'confirm exact amount — $3–5/mo',dueDay:null,paid:false}
+    ]},
+    {id:'transport',label:'TRANSPORT',type:'expense',icon:'🚗',rows:[
+      {id:'petrol',name:'Petrol (est.)',amount:65,period:'weekly',hint:'estimate · $50–80/wk average',dueDay:null,paid:false},
+      {id:'rego',name:'VicRoads Registration',amount:83.33,period:'monthly',hint:'billed quarterly · $250 per quarter',dueDay:null,paid:false}
+    ]},
+    {id:'living',label:'LIVING',type:'expense',icon:'🛒',rows:[
+      {id:'groceries',name:'Groceries',amount:0,period:'weekly',hint:'',dueDay:null,paid:false},
+      {id:'dining',name:'Dining / Takeaways',amount:0,period:'weekly',hint:'',dueDay:null,paid:false},
+      {id:'health',name:'Health / Pharmacy',amount:0,period:'monthly',hint:'',dueDay:null,paid:false},
+      {id:'personal',name:'Personal / Beauty',amount:0,period:'monthly',hint:'',dueDay:null,paid:false}
+    ]},
+    {id:'savings',label:'SAVINGS',type:'expense',icon:'🏦',rows:[
+      {id:'savings_tf',name:'Savings Transfer',amount:0,period:'fortnightly',hint:'',dueDay:null,paid:false}
+    ]},
+    {id:'debt',label:'DEBT / CREDIT',type:'expense',icon:'💳',rows:[
+      {id:'gem_visa',name:'GEM Visa',amount:0,period:'monthly',hint:'balance $1,354.75 · set your repayment amount',dueDay:null,paid:false},
+      {id:'hsbc',name:'HSBC',amount:0,period:'monthly',hint:'set balance and repayment amount',dueDay:null,paid:false},
+      {id:'overdraft',name:'Overdraft',amount:0,period:'monthly',hint:'set repayment amount',dueDay:null,paid:false}
+    ]}
+  ]
+};
+
+// ─── STATE ────────────────────────────────────────────────────
+let data=JSON.parse(JSON.stringify(DEFAULT_DATA));
+let currentPeriod='fortnightly';
+let _firstRender=true;
+let _dueEditSec=null,_dueEditRow=null;
+let _csvParsed=[];
+
+// ─── COUNTER ANIMATION ────────────────────────────────────────
+function animateCounter(el,finalText,isPercent){
+  const match=finalText.match(/[\d,]+\.?\d*/);
+  if(!match){el.textContent=finalText;return;}
+  const target=parseFloat(match[0].replace(/,/g,''));
+  if(isNaN(target)||target===0){el.textContent=finalText;return;}
+  const prefix=finalText.startsWith('+')?'+':(finalText.startsWith('-')?'-':'');
+  const c=CURRENCIES[currentCurrency]||CURRENCIES.AUD;
+  const t0=performance.now(),dur=900;
+  function step(now){
+    const p=Math.min((now-t0)/dur,1),e=1-Math.pow(1-p,3),v=target*e;
+    if(isPercent){el.textContent=v.toFixed(1)+'%';}
+    else{el.textContent=prefix+c.symbol+v.toFixed(c.decimals).replace(/\B(?=(\d{3})+(?!\d))/g,',')+' '+currentCurrency;}
+    if(p<1)requestAnimationFrame(step);else el.textContent=finalText;
+  }
+  requestAnimationFrame(step);
+}
+
+// ─── LOAD / SAVE ──────────────────────────────────────────────
+function load(){
+  const saved=localStorage.getItem('clarityDashboard');
+  if(saved){try{data=JSON.parse(saved);currentPeriod=data.period||'fortnightly';currentCurrency=data.currency||'AUD';}catch(e){data=JSON.parse(JSON.stringify(DEFAULT_DATA));}}
+}
+function save(){data.period=currentPeriod;data.currency=currentCurrency;localStorage.setItem('clarityDashboard',JSON.stringify(data));}
+
+// ─── PERIOD ───────────────────────────────────────────────────
+function setPeriod(p){
+  currentPeriod=p;save();
+  document.querySelectorAll('.period-btn').forEach(b=>b.classList.remove('active'));
+  document.querySelector(`.period-btn[onclick="setPeriod('${p}')"]`).classList.add('active');
+  render();
+}
+
+// ─── RENDER ───────────────────────────────────────────────────
+function render(){
+  const grid=document.getElementById('mainGrid');
+  grid.innerHTML='';
+  let totalIncome=0,totalExpense=0;
+
+  const sectionTotals=data.sections.map(sec=>({
+    id:sec.id,type:sec.type,
+    total:sec.rows.reduce((sum,row)=>sum+fromMonthly(toMonthly(row.amount,row.period),currentPeriod),0)
+  }));
+  data.sections.forEach((sec,i)=>{
+    const t=sectionTotals[i].total;
+    if(sec.type==='income')totalIncome+=t;else totalExpense+=t;
+  });
+
+  const today=new Date().getDate();
+
+  data.sections.forEach((sec,i)=>{
+    const panel=document.createElement('div');
+    const isDebt=sec.id==='debt'||sec.type==='debt';
+    const panelClass=isDebt?'debt-panel':(sec.type==='income'?'income-panel':'expense-panel');
+    panel.className=`section-panel ${panelClass}`;
+    if(_firstRender){panel.classList.add('panel-animate');panel.style.animationDelay=`${i*50}ms`;}
+
+    const secTotal=sectionTotals[i].total;
+    const barPct=totalIncome>0?Math.min(100,(secTotal/totalIncome)*100):0;
+    const barClass=sec.type==='income'?'income-bar':'expense-bar';
+    const barLabel=totalIncome>0?barPct.toFixed(1)+'% of income':'set income to see %';
+
+    const hdr=document.createElement('div');
+    const hdrClass=isDebt?'debt-hdr':(sec.type==='income'?'income-hdr':'expense-hdr');
+    hdr.className=`section-header ${hdrClass}`;
+    const totalClass=isDebt?'debt-total':(sec.type==='income'?'income-total':'expense-total');
+    const dotClass=isDebt?'debt':sec.type;
+    hdr.innerHTML=`
+      <span class="section-icon">${sec.icon}</span>
+      <span class="section-title"><span class="dot ${dotClass}"></span>${sec.label}</span>
+      <span class="section-total ${totalClass}">${fmt(secTotal)}<span class="nzd">${currentCurrency}</span></span>
+      <span class="row-del" onclick="deleteSection('${sec.id}')" title="Delete section">✕</span>`;
+    panel.appendChild(hdr);
+
+    const barWrap=document.createElement('div');
+    barWrap.className='cat-bar-wrap';
+    barWrap.innerHTML=`<div class="cat-bar-track"><div class="cat-bar-fill ${barClass}" style="width:0%" data-target="${barPct.toFixed(2)}%"></div></div><div class="cat-bar-label"><span></span><span>${barLabel}</span></div>`;
+    panel.appendChild(barWrap);
+
+    sec.rows.forEach(row=>{
+      const rowEl=document.createElement('div');
+      rowEl.className='row';
+      const monthly=toMonthly(row.amount,row.period);
+      const displayed=fromMonthly(monthly,currentPeriod);
+      const pLabel={weekly:'wk',fortnightly:'fn',monthly:'mo',quarterly:'qtr',yearly:'yr'};
+      const showOrig=row.period!==currentPeriod&&row.amount>0;
+      const origHint=showOrig?`<div class="row-original">${fmt(row.amount)}/${pLabel[row.period]}</div>`:'';
+
+      // Paid status
+      let paidClass='unpaid',paidIcon='○';
+      if(row.paid){paidClass='paid-ok';paidIcon='✓';}
+      else if(row.dueDay&&row.dueDay<today&&row.amount>0){paidClass='overdue';paidIcon='!';}
+
+      // Due date display
+      let dueHtml='';
+      if(row.dueDay){
+        const suffix=['th','st','nd','rd'];
+        const v=row.dueDay%100;
+        const sfx=(v>=11&&v<=13)?'th':(suffix[row.dueDay%10]||'th');
+        const isPast=row.dueDay<today&&!row.paid;
+        const isSoon=row.dueDay>=today&&row.dueDay<=today+4&&!row.paid;
+        const dClass=isPast?'overdue':isSoon?'due-soon':'';
+        dueHtml=`<div class="row-due ${dClass}" onclick="openDueModal('${sec.id}','${row.id}')" title="Click to change due date">Due ${row.dueDay}${sfx}</div>`;
+      }else{
+        dueHtml=`<div class="row-due" onclick="openDueModal('${sec.id}','${row.id}')" title="Set due date">+ due date</div>`;
+      }
+
+      const hintHtml=row.hint?`<div class="row-hint">${escHtml(row.hint)}</div>`:'';
+
+      rowEl.innerHTML=`
+        <span class="row-paid ${paidClass}" onclick="togglePaid('${sec.id}','${row.id}')" title="${row.paid?'Mark unpaid':'Mark paid'}">${paidIcon}</span>
+        <div class="row-name-wrap">
+          <span class="row-name" onclick="editName(this,'${sec.id}','${row.id}')">${escHtml(row.name)}</span>
+          ${hintHtml}
+        </div>
+        <div>
+          <span class="row-amount" onclick="editAmount(this,'${sec.id}','${row.id}',${displayed.toFixed(4)})">${fmt(displayed)}${origHint}</span>
+          ${dueHtml}
+        </div>
+        <select class="row-period-select" onchange="changeRowPeriod('${sec.id}','${row.id}',this.value)">
+          <option value="weekly" ${row.period==='weekly'?'selected':''}>Weekly</option>
+          <option value="fortnightly" ${row.period==='fortnightly'?'selected':''}>Fortnightly</option>
+          <option value="monthly" ${row.period==='monthly'?'selected':''}>Monthly</option>
+          <option value="quarterly" ${row.period==='quarterly'?'selected':''}>Quarterly</option>
+          <option value="yearly" ${row.period==='yearly'?'selected':''}>Yearly</option>
+        </select>
+        <span class="row-del" onclick="deleteRow('${sec.id}','${row.id}')">✕</span>`;
+      panel.appendChild(rowEl);
+    });
+
+    const addBtn=document.createElement('div');
+    addBtn.className='add-row-btn';
+    addBtn.innerHTML='<span>+</span><span>Add item</span>';
+    addBtn.onclick=()=>addRow(sec.id);
+    panel.appendChild(addBtn);
+    grid.appendChild(panel);
+  });
+
+  // Summary
+  const balance=totalIncome-totalExpense;
+  const savingsPct=totalIncome>0?Math.max(0,(balance/totalIncome)*100):0;
+  const expensePct=totalIncome>0?Math.min(100,(totalExpense/totalIncome)*100):0;
+  const incomeText=fmt(totalIncome)+' '+currentCurrency;
+  const expenseText=fmt(totalExpense)+' '+currentCurrency;
+  const balanceText=(balance>=0?'+':'-')+fmt(balance)+' '+currentCurrency;
+  const savingsText=savingsPct.toFixed(1)+'%';
+
+  if(_firstRender){
+    animateCounter(document.getElementById('sumIncome'),incomeText,false);
+    animateCounter(document.getElementById('sumExpense'),expenseText,false);
+    animateCounter(document.getElementById('sumBalance'),balanceText,false);
+    animateCounter(document.getElementById('sumSavingsPct'),savingsText,true);
+  }else{
+    document.getElementById('sumIncome').textContent=incomeText;
+    document.getElementById('sumExpense').textContent=expenseText;
+    document.getElementById('sumBalance').textContent=balanceText;
+    document.getElementById('sumSavingsPct').textContent=savingsText;
+  }
+  document.getElementById('sumBalance').style.color=balance>=0?'var(--green)':'var(--red)';
+  document.getElementById('progressFill').style.width=expensePct+'%';
+  document.getElementById('progressLabel').textContent=expensePct.toFixed(1)+'%';
+
+  // Health badge
+  const badge=document.getElementById('healthBadge');
+  if(totalIncome===0) badge.innerHTML=`<span class="health-badge warning">NO INCOME SET</span>`;
+  else if(savingsPct>=20) badge.innerHTML=`<span class="health-badge healthy">✓ HEALTHY</span>`;
+  else if(savingsPct>=5)  badge.innerHTML=`<span class="health-badge warning">⚠ WARNING</span>`;
+  else if(balance>=0)     badge.innerHTML=`<span class="health-badge warning">⚠ TIGHT</span>`;
+  else                    badge.innerHTML=`<span class="health-badge critical">✕ DEFICIT</span>`;
+
+  // Alert banner
+  const banner=document.getElementById('alertBanner');
+  if(totalIncome>0&&totalExpense>totalIncome){
+    const over=totalExpense-totalIncome;
+    banner.textContent=`⚠ Expenses exceed income by ${fmt(over)} ${currentCurrency} — you are spending more than you earn.`;
+    banner.className='alert-banner visible';
+  }else if(totalIncome>0&&savingsPct<5&&balance>=0){
+    banner.textContent=`⚡ Less than 5% of income remaining — consider reducing expenses to build a buffer.`;
+    banner.className='alert-banner visible';
+    banner.style.cssText='display:block;border-color:rgba(255,170,0,0.5);background:rgba(255,170,0,0.08);color:var(--orange);';
+  }else{banner.className='alert-banner';banner.style.cssText='';}
+
+  // Animate bars
+  requestAnimationFrame(()=>requestAnimationFrame(()=>{
+    document.querySelectorAll('.cat-bar-fill[data-target]').forEach(b=>b.style.width=b.getAttribute('data-target'));
+  }));
+
+  updateCharts(sectionTotals,totalIncome,totalExpense,balance);
+  _firstRender=false;
+}
+
+// ─── CHARTS ───────────────────────────────────────────────────
+let donutChartInst=null,barChartInst=null,lineChartInst=null;
+const CHART_COLORS=['#c040ff','#10d8ff','#00ff99','#ffaa00','#ff5577','#ff7700','#7777ff','#00ddcc','#ff3300','#aaff00'];
+
+function initCharts(){
+  const chartOpts={responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}}};
+  const gridColor='rgba(42,42,80,0.8)';
+
+  // Donut
+  donutChartInst=new Chart(document.getElementById('donutChart').getContext('2d'),{
+    type:'doughnut',data:{labels:[],datasets:[{data:[],backgroundColor:CHART_COLORS,borderColor:'#10101f',borderWidth:2,hoverOffset:6}]},
+    options:{...chartOpts,cutout:'65%',plugins:{legend:{display:true,position:'right',labels:{color:'#8080b8',font:{size:9},boxWidth:10,padding:8}}}}
+  });
+
+  // Bar
+  barChartInst=new Chart(document.getElementById('barChart').getContext('2d'),{
+    type:'bar',data:{labels:['Monthly'],datasets:[
+      {label:'Income',data:[0],backgroundColor:'rgba(0,255,153,0.7)',borderRadius:5},
+      {label:'Expenses',data:[0],backgroundColor:'rgba(255,85,119,0.7)',borderRadius:5}
+    ]},
+    options:{...chartOpts,scales:{x:{ticks:{color:'#8080b8',font:{size:9}},grid:{color:gridColor}},y:{ticks:{color:'#8080b8',font:{size:9},callback:v=>'$'+v.toLocaleString()},grid:{color:gridColor}}},plugins:{legend:{display:true,labels:{color:'#8080b8',font:{size:9},boxWidth:10}}}}
+  });
+
+  // Line — 6 month balance forecast
+  const months=['Now','Mo 1','Mo 2','Mo 3','Mo 4','Mo 5','Mo 6'];
+  lineChartInst=new Chart(document.getElementById('lineChart').getContext('2d'),{
+    type:'line',data:{labels:months,datasets:[{label:'Projected Balance',data:Array(7).fill(0),borderColor:'#10d8ff',backgroundColor:'rgba(16,216,255,0.08)',borderWidth:2,pointBackgroundColor:'#10d8ff',pointRadius:3,fill:true,tension:0.4}]},
+    options:{...chartOpts,scales:{x:{ticks:{color:'#8080b8',font:{size:9}},grid:{color:gridColor}},y:{ticks:{color:'#8080b8',font:{size:9},callback:v=>'$'+v.toLocaleString()},grid:{color:gridColor}}},plugins:{legend:{display:false}}}
+  });
+}
+
+function updateCharts(sectionTotals,totalIncome,totalExpense,balance){
+  if(!donutChartInst)return;
+
+  // Monthly equivalents for charts
+  const mFactor={weekly:52/12,fortnightly:26/12,monthly:1,quarterly:1/3,yearly:1/12}[currentPeriod]||1;
+
+  // Donut — expense sections only
+  const expSecs=data.sections.filter(s=>s.type!=='income');
+  const donutLabels=expSecs.map(s=>s.label);
+  const donutData=expSecs.map(s=>Math.max(0,s.rows.reduce((sum,r)=>sum+fromMonthly(toMonthly(r.amount,r.period),currentPeriod),0)));
+  donutChartInst.data.labels=donutLabels;
+  donutChartInst.data.datasets[0].data=donutData;
+  donutChartInst.update();
+
+  // Bar — income vs expense in current period
+  barChartInst.data.datasets[0].data=[totalIncome];
+  barChartInst.data.datasets[1].data=[totalExpense];
+  const pLabel={weekly:'Weekly',fortnightly:'Fortnightly',monthly:'Monthly',quarterly:'Quarterly',yearly:'Yearly'}[currentPeriod];
+  barChartInst.data.labels=[pLabel];
+  barChartInst.update();
+
+  // Line — 6-month balance projection
+  const monthlyInc=fromMonthly(totalIncome*mFactor,'monthly');
+  const monthlyExp=fromMonthly(totalExpense*mFactor,'monthly');
+  const monthlySurplus=monthlyInc-monthlyExp;
+  const lineData=[0];
+  for(let m=1;m<=6;m++) lineData.push(lineData[m-1]+monthlySurplus);
+  lineChartInst.data.datasets[0].data=lineData;
+  lineChartInst.data.datasets[0].borderColor=monthlySurplus>=0?'#10d8ff':'#ff5577';
+  lineChartInst.data.datasets[0].backgroundColor=monthlySurplus>=0?'rgba(16,216,255,0.08)':'rgba(255,85,119,0.08)';
+  lineChartInst.update();
+}
+
+// ─── PAID TOGGLE ──────────────────────────────────────────────
+function togglePaid(secId,rowId){
+  const row=getRow(secId,rowId);
+  if(row){row.paid=!row.paid;save();render();}
+}
+function resetAllPaid(){
+  data.sections.forEach(s=>s.rows.forEach(r=>r.paid=false));
+  save();render();
+}
+
+// ─── DUE DATE MODAL ───────────────────────────────────────────
+function openDueModal(secId,rowId){
+  _dueEditSec=secId;_dueEditRow=rowId;
+  const row=getRow(secId,rowId);
+  document.getElementById('dueDayInput').value=row&&row.dueDay?row.dueDay:'';
+  document.getElementById('dueDateModal').classList.add('open');
+}
+function closeDueModal(){document.getElementById('dueDateModal').classList.remove('open');}
+function saveDueDate(){
+  const v=parseInt(document.getElementById('dueDayInput').value);
+  const row=getRow(_dueEditSec,_dueEditRow);
+  if(row&&v>=1&&v<=31){row.dueDay=v;save();render();}
+  closeDueModal();
+}
+function clearDueDate(){
+  const row=getRow(_dueEditSec,_dueEditRow);
+  if(row){row.dueDay=null;save();render();}
+  closeDueModal();
+}
+
+// ─── INLINE EDIT ──────────────────────────────────────────────
+function editName(el,secId,rowId){
+  const row=getRow(secId,rowId);if(!row)return;
+  const input=document.createElement('input');
+  input.value=row.name;el.innerHTML='';el.appendChild(input);input.focus();input.select();
+  const commit=()=>{const v=input.value.trim();if(v)row.name=v;save();render();};
+  input.onblur=commit;input.onkeydown=e=>{if(e.key==='Enter')commit();if(e.key==='Escape')render();};
+}
+function editAmount(el,secId,rowId,displayedVal){
+  const row=getRow(secId,rowId);if(!row)return;
+  const input=document.createElement('input');
+  input.type='number';input.min='0';input.step='0.01';input.value=displayedVal.toFixed(2);
+  el.innerHTML='';el.appendChild(input);input.focus();input.select();
+  const commit=()=>{
+    const dAmt=parseFloat(input.value)||0;
+    const monthly=toMonthly(dAmt,currentPeriod);
+    row.amount=fromMonthly(monthly,row.period);
+    save();render();
+  };
+  input.onblur=commit;input.onkeydown=e=>{if(e.key==='Enter')commit();if(e.key==='Escape')render();};
+}
+function changeRowPeriod(secId,rowId,newPeriod){
+  const row=getRow(secId,rowId);if(!row)return;
+  const monthly=toMonthly(row.amount,row.period);
+  row.period=newPeriod;row.amount=fromMonthly(monthly,newPeriod);
+  save();render();
+}
+
+// ─── ADD / DELETE ─────────────────────────────────────────────
+function addRow(secId){
+  const sec=data.sections.find(s=>s.id===secId);if(!sec)return;
+  sec.rows.push({id:'r_'+Date.now(),name:'New item',amount:0,period:currentPeriod,hint:'',dueDay:null,paid:false});
+  save();render();
+  setTimeout(()=>{const rows=document.querySelectorAll('.row');const last=rows[rows.length-2];if(last){const n=last.querySelector('.row-name');if(n)n.click();}},60);
+}
+function deleteRow(secId,rowId){
+  const sec=data.sections.find(s=>s.id===secId);if(!sec)return;
+  sec.rows=sec.rows.filter(r=>r.id!==rowId);save();render();
+}
+function deleteSection(secId){
+  if(!confirm('Delete this section?'))return;
+  data.sections=data.sections.filter(s=>s.id!==secId);save();render();
+}
+
+// ─── ADD SECTION MODAL ────────────────────────────────────────
+function openAddSection(){document.getElementById('newSectionName').value='';document.getElementById('newSectionIcon').value='';document.getElementById('modalOverlay').classList.add('open');document.getElementById('newSectionName').focus();}
+function closeModal(){document.getElementById('modalOverlay').classList.remove('open');}
+function confirmAddSection(){
+  const name=document.getElementById('newSectionName').value.trim();
+  const type=document.getElementById('newSectionType').value;
+  const icon=document.getElementById('newSectionIcon').value.trim()||(type==='income'?'💰':'📋');
+  if(!name)return;
+  data.sections.push({id:'s_'+Date.now(),label:name.toUpperCase(),type,icon,rows:[]});
+  save();render();closeModal();
+}
+
+// ─── CSV IMPORT ───────────────────────────────────────────────
+const CSV_KEYWORDS={
+  income:['salary','wages','payroll','pay','income','centrelink','dividend','interest earned'],
+  housing:['rent','real estate','property','agent'],
+  utilities:['agl','origin','energyaustralia','red energy','powershop','yarra','city west water','south east water','citipower','powercor','jemena','ausnet','gas','electricity','water'],
+  connectivity:['telstra','optus','vodafone','tpg','aussie broadband','iinet','internode','mobile','internet','broadband','nbn'],
+  insurance:['racv','nrma','allianz','budget direct','youi','aami','bupa','medibank','ahm','insurance','insure'],
+  subscriptions:['netflix','disney','spotify','apple','google','amazon prime','youtube','foxtel','stan','binge','kayo','icloud','adobe','microsoft'],
+  transport:['bp','shell','coles express','ampol','7-eleven','petrol','fuel','mobil','uber','ola','didi','taxi','vicroads','myki','ptv','train','tram','bus'],
+  living:['woolworths','coles','aldi','iga','costco','chemist','priceline','supermarket','groceries','pharmacy','liquor','bottle'],
+  dining:['mcdonald','kfc','hungry','domino','pizza','hungry jacks','subway','cafe','restaurant','uber eats','menulog','doordash','deliveroo'],
+  savings:['savings','transfer','deposit'],
+  debt:['gem','hsbc','credit card','afterpay','zip','klarna','laybuy','latitude','humm','flexigroup']
+};
+function csvCategorise(desc){
+  const d=desc.toLowerCase();
+  for(const[cat,kws]of Object.entries(CSV_KEYWORDS)){for(const kw of kws){if(d.includes(kw))return cat;}}
+  return 'other';
+}
+function toggleCsvPanel(){
+  const p=document.getElementById('csvPanel');
+  p.classList.toggle('open');
+  if(p.classList.contains('open'))p.scrollIntoView({behavior:'smooth',block:'start'});
+}
+function cancelCsvImport(){document.getElementById('csvPreviewWrap').style.display='none';_csvParsed=[];}
+function handleCsvFile(file){
+  if(!file)return;
+  const reader=new FileReader();
+  reader.onload=e=>{
+    const text=e.target.result;
+    parseCsv(text);
+  };
+  reader.readAsText(file);
+}
+function parseCsv(text){
+  const lines=text.trim().split('\n').map(l=>l.trim()).filter(l=>l);
+  if(lines.length<2){alert('CSV appears empty or invalid.');return;}
+  const headers=lines[0].split(',').map(h=>h.replace(/"/g,'').trim().toLowerCase());
+  // Detect column positions
+  const dateIdx=headers.findIndex(h=>h.includes('date'));
+  const descIdx=headers.findIndex(h=>h.includes('descri')||h.includes('narrat')||h.includes('detail')||h.includes('transact'));
+  const debitIdx=headers.findIndex(h=>h.includes('debit')||h.includes('withdrawal'));
+  const creditIdx=headers.findIndex(h=>h.includes('credit')||h.includes('deposit'));
+  const amtIdx=headers.findIndex(h=>h==='amount'||h==='value');
+
+  if(dateIdx<0&&descIdx<0){alert('Could not detect column structure. Expected: Date, Description, Debit, Credit');return;}
+
+  _csvParsed=[];
+  for(let i=1;i<lines.length;i++){
+    const cols=splitCsvLine(lines[i]);
+    const dateRaw=dateIdx>=0?(cols[dateIdx]||'').replace(/"/g,'').trim():'';
+    const desc=descIdx>=0?(cols[descIdx]||'').replace(/"/g,'').trim():'';
+    let amount=0;
+    if(amtIdx>=0){amount=parseFloat((cols[amtIdx]||'0').replace(/[^0-9.\-]/g,''))||0;}
+    else{
+      const debit=parseFloat((cols[debitIdx]||'0').replace(/[^0-9.]/g,''))||0;
+      const credit=parseFloat((cols[creditIdx]||'0').replace(/[^0-9.]/g,''))||0;
+      amount=credit>0?credit:-debit;
+    }
+    if(!desc&&amount===0)continue;
+    const cat=csvCategorise(desc);
+    _csvParsed.push({date:dateRaw,desc,amount,cat});
+  }
+
+  // Show preview
+  const tbody=document.getElementById('csvPreviewBody');
+  tbody.innerHTML='';
+  const c=CURRENCIES[currentCurrency]||CURRENCIES.AUD;
+  _csvParsed.slice(0,50).forEach(row=>{
+    const tr=document.createElement('tr');
+    const col=row.amount>=0?'var(--green)':'var(--red)';
+    tr.innerHTML=`<td>${escHtml(row.date)}</td><td>${escHtml(row.desc.substring(0,40))}</td><td style="color:${col}">${row.amount>=0?'+':''}${c.symbol}${Math.abs(row.amount).toFixed(2)}</td><td><span class="cat-tag">${row.cat}</span></td>`;
+    tbody.appendChild(tr);
+  });
+  const note=_csvParsed.length>50?`Showing first 50 of ${_csvParsed.length} transactions.`:`${_csvParsed.length} transactions detected.`;
+  document.getElementById('csvImportNote').textContent=note+' Auto-categorised — verify before importing.';
+  document.getElementById('csvPreviewWrap').style.display='block';
+}
+function splitCsvLine(line){
+  const result=[];let cur='',inQ=false;
+  for(let i=0;i<line.length;i++){
+    const ch=line[i];
+    if(ch==='"'){inQ=!inQ;}
+    else if(ch===','&&!inQ){result.push(cur);cur='';}
+    else{cur+=ch;}
+  }
+  result.push(cur);return result;
+}
+function confirmCsvImport(){
+  // Add income transactions to income section, expenses to respective sections
+  _csvParsed.forEach(row=>{
+    const sec=data.sections.find(s=>s.id===row.cat)||data.sections.find(s=>s.id==='living');
+    if(!sec)return;
+    // Only add if amount is non-zero
+    if(Math.abs(row.amount)<0.01)return;
+    sec.rows.push({id:'csv_'+Date.now()+'_'+Math.random().toString(36).slice(2,6),name:row.desc.substring(0,40),amount:Math.abs(row.amount),period:'monthly',hint:`imported · ${row.date}`,dueDay:null,paid:true});
+  });
+  save();render();
+  document.getElementById('csvPreviewWrap').style.display='none';
+  document.getElementById('csvPanel').classList.remove('open');
+  _csvParsed=[];
+  alert(`Imported ${_csvParsed.length||'transactions'} — review and adjust amounts/periods as needed.`);
+}
+
+// ─── EXPORT / IMPORT / RESET ──────────────────────────────────
+function exportData(){
+  const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);
+  a.download='clarity_backup_'+new Date().toISOString().slice(0,10)+'.json';a.click();
+}
+function importData(){document.getElementById('importFile').click();}
+function handleImport(e){
+  const file=e.target.files[0];if(!file)return;
+  const reader=new FileReader();
+  reader.onload=ev=>{try{data=JSON.parse(ev.target.result);currentPeriod=data.period||'fortnightly';save();render();document.querySelectorAll('.period-btn').forEach(b=>b.classList.remove('active'));document.querySelector(`.period-btn[onclick="setPeriod('${currentPeriod}')"]`).classList.add('active');}catch(err){alert('Invalid JSON file');}};
+  reader.readAsText(file);e.target.value='';
+}
+function resetData(){if(!confirm('Reset all data to defaults?'))return;data=JSON.parse(JSON.stringify(DEFAULT_DATA));currentPeriod='fortnightly';save();render();}
+
+// ─── HELPERS ─────────────────────────────────────────────────
+function getRow(secId,rowId){const sec=data.sections.find(s=>s.id===secId);return sec?sec.rows.find(r=>r.id===rowId):null;}
+function escHtml(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+
+// ─── PIN GATE ─────────────────────────────────────────────────
+let _pinBuffer=[];
+const PIN_KEY='clarityPin';
+
+function pinPress(d){
+  if(_pinBuffer.length>=4)return;
+  _pinBuffer.push(d);
+  updatePinDots();
+  if(_pinBuffer.length===4)setTimeout(verifyPin,120);
+}
+function pinDel(){
+  if(_pinBuffer.length>0)_pinBuffer.pop();
+  updatePinDots();document.getElementById('pinMsg').textContent='Enter your PIN';document.getElementById('pinMsg').className='pin-msg';
+}
+function updatePinDots(){
+  for(let i=0;i<4;i++){const d=document.getElementById('pd'+i);d.className='pin-dot'+(i<_pinBuffer.length?' filled':'');}
+}
+function verifyPin(){
+  const stored=localStorage.getItem(PIN_KEY);
+  const entered=_pinBuffer.join('');
+  if(stored===null){
+    // First time — set PIN
+    if(_pinBuffer.length===4){
+      if(!_pinBuffer._confirm){
+        _pinBuffer._confirm=entered;_pinBuffer=[];updatePinDots();
+        document.getElementById('pinMsg').textContent='Confirm your new PIN';return;
+      }else{
+        if(_pinBuffer._confirm===entered){localStorage.setItem(PIN_KEY,entered);unlockDashboard();}
+        else{pinError('PINs did not match — try again');_pinBuffer._confirm=null;}
+      }
+    }
+  }else{
+    if(entered===stored){unlockDashboard();}
+    else{pinError('Incorrect PIN');}
+  }
+}
+function pinError(msg){
+  _pinBuffer=[];updatePinDots();
+  const el=document.getElementById('pinMsg');el.textContent=msg;el.className='pin-msg error';
+  document.querySelector('.pin-box').classList.add('pin-shake');
+  setTimeout(()=>document.querySelector('.pin-box').classList.remove('pin-shake'),400);
+}
+function unlockDashboard(){document.getElementById('pinGate').style.display='none';document.getElementById('appWrap').style.display='block';}
+
+// ─── CHANGE PIN ───────────────────────────────────────────────
+function changePin(){document.getElementById('pinOldInput').value='';document.getElementById('pinNewInput').value='';document.getElementById('pinConfirmInput').value='';document.getElementById('pinChangeMsg').textContent='';document.getElementById('pinModal').classList.add('open');}
+function closePinModal(){document.getElementById('pinModal').classList.remove('open');}
+function savePinChange(){
+  const old=document.getElementById('pinOldInput').value;
+  const newP=document.getElementById('pinNewInput').value;
+  const conf=document.getElementById('pinConfirmInput').value;
+  const stored=localStorage.getItem(PIN_KEY)||'';
+  if(old!==stored){document.getElementById('pinChangeMsg').textContent='Current PIN incorrect.';return;}
+  if(!/^\d{4}$/.test(newP)){document.getElementById('pinChangeMsg').textContent='PIN must be exactly 4 digits.';return;}
+  if(newP!==conf){document.getElementById('pinChangeMsg').textContent='New PINs do not match.';return;}
+  localStorage.setItem(PIN_KEY,newP);closePinModal();
+  alert('PIN updated successfully.');
+}
+
+// ─── CSV DROP ZONE EVENTS ────────────────────────────────────
+document.addEventListener('DOMContentLoaded',()=>{
+  const zone=document.getElementById('csvDropZone');
+  if(zone){
+    zone.addEventListener('dragover',e=>{e.preventDefault();zone.classList.add('drag-over');});
+    zone.addEventListener('dragleave',()=>zone.classList.remove('drag-over'));
+    zone.addEventListener('drop',e=>{e.preventDefault();zone.classList.remove('drag-over');const f=e.dataTransfer.files[0];if(f)handleCsvFile(f);});
+  }
+  document.getElementById('modalOverlay').addEventListener('click',e=>{if(e.target===document.getElementById('modalOverlay'))closeModal();});
+  document.getElementById('dueDateModal').addEventListener('click',e=>{if(e.target===document.getElementById('dueDateModal'))closeDueModal();});
+  document.getElementById('pinModal').addEventListener('click',e=>{if(e.target===document.getElementById('pinModal'))closePinModal();});
+  document.addEventListener('keydown',e=>{
+    if(e.key==='Escape'){closeModal();closeDueModal();closePinModal();}
+    if(document.getElementById('pinGate').style.display!=='none'){
+      if(e.key>='0'&&e.key<='9')pinPress(e.key);
+      if(e.key==='Backspace')pinDel();
+    }
+  });
+  document.getElementById('newSectionName').addEventListener('keydown',e=>{if(e.key==='Enter')confirmAddSection();});
+  document.getElementById('dueDayInput').addEventListener('keydown',e=>{if(e.key==='Enter')saveDueDate();});
+});
+
+// ─── INIT ─────────────────────────────────────────────────────
+document.getElementById('copyrightYear').textContent=new Date().getFullYear();
+load();
+
+// Check PIN
+const _storedPin=localStorage.getItem(PIN_KEY);
+if(_storedPin===null){
+  // First time — set PIN flow
+  document.getElementById('pinMsg').textContent='Create a 4-digit PIN for Mimi';
+  document.getElementById('pinSetupNote').textContent='You will be asked to confirm it once.';
+}
+
+document.querySelectorAll('.period-btn').forEach(b=>b.classList.remove('active'));
+document.querySelector(`.period-btn[onclick="setPeriod('${currentPeriod}')"]`).classList.add('active');
+document.getElementById('currencySelect').value=currentCurrency;
+initCharts();
+render();
+</script>
+</body>
+</html>
