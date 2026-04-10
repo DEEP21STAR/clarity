@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Clarity — How to Use Your Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;600;700&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --cyan:#10d8ff;--purple:#c040ff;--bg:#07070f;--panel:#0d0d1c;
+  --panel2:#111125;--border:#18183a;--muted:#505090;--text:#f0f0ff;
+  --green:#00ff99;--orange:#ffaa00;
+}
+body{background:var(--bg);color:var(--text);font-family:'Space Grotesk','Segoe UI',sans-serif;line-height:1.75;}
+.page{max-width:760px;margin:0 auto;padding:48px 20px 100px;}
+
+/* HEADER */
+.guide-header{text-align:center;padding:48px 0 56px;border-bottom:1px solid var(--border);margin-bottom:56px;}
+.guide-header .mark{display:flex;justify-content:center;margin-bottom:20px;filter:drop-shadow(0 0 14px rgba(16,216,255,.5));}
+.guide-title{font-size:1.6rem;font-weight:700;letter-spacing:.08em;color:#fff;text-transform:uppercase;}
+.guide-sub{font-size:.72rem;letter-spacing:.22em;color:var(--cyan);text-transform:uppercase;margin-top:6px;opacity:.7;}
+.guide-welcome{font-size:.95rem;color:#8080b8;margin-top:20px;max-width:500px;margin-left:auto;margin-right:auto;}
+
+/* STEP SECTIONS */
+.step{margin-bottom:52px;}
+.step-num{
+  display:inline-flex;align-items:center;justify-content:center;
+  width:32px;height:32px;border-radius:50%;
+  background:linear-gradient(135deg,rgba(16,216,255,.15),rgba(192,64,255,.15));
+  border:1px solid rgba(16,216,255,.25);
+  font-size:.75rem;font-weight:700;color:var(--cyan);
+  margin-bottom:12px;
+}
+.step-title{font-size:1.15rem;font-weight:700;color:#fff;margin-bottom:8px;}
+.step-desc{font-size:.88rem;color:#9090c0;margin-bottom:20px;line-height:1.7;}
+
+/* CALLOUT BOXES */
+.callout{
+  border-radius:14px;padding:18px 22px;margin:16px 0;
+  font-size:.85rem;line-height:1.6;
+}
+.callout-tip{background:rgba(16,216,255,.06);border:1px solid rgba(16,216,255,.2);color:#b0d8e8;}
+.callout-tip::before{content:'💡 Tip  ';font-weight:700;color:var(--cyan);}
+.callout-note{background:rgba(192,64,255,.06);border:1px solid rgba(192,64,255,.2);color:#c0b0d0;}
+.callout-note::before{content:'📌 Note  ';font-weight:700;color:var(--purple);}
+.callout-iphone{background:rgba(0,255,153,.05);border:1px solid rgba(0,255,153,.2);color:#a0c8b0;}
+.callout-iphone::before{content:'📱 iPhone  ';font-weight:700;color:var(--green);}
+
+/* VISUAL MOCKUPS */
+.mock{
+  background:var(--panel);border:1px solid var(--border);border-radius:16px;
+  padding:24px;margin:20px 0;font-size:.82rem;
+}
+.mock-label{font-size:.55rem;letter-spacing:.25em;color:var(--muted);text-transform:uppercase;margin-bottom:14px;}
+.period-btns{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0;}
+.pbtn{padding:6px 14px;border-radius:20px;font-size:.75rem;cursor:default;}
+.pbtn-active{background:var(--cyan);color:#000;font-weight:600;}
+.pbtn-inactive{border:1px solid var(--border);color:var(--muted);}
+.row-demo{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:10px 0;border-bottom:1px solid var(--border);
+  font-size:.82rem;
+}
+.row-demo:last-child{border-bottom:none;}
+.row-name{color:#c0c0e0;}
+.row-amount{color:#fff;font-weight:600;}
+.row-paid-y{color:var(--green);font-size:.7rem;}
+.row-paid-n{color:var(--muted);font-size:.7rem;}
+.health-badge{
+  display:inline-block;padding:6px 18px;border-radius:20px;font-size:.78rem;font-weight:600;
+  background:rgba(0,255,153,.12);color:var(--green);border:1px solid rgba(0,255,153,.25);
+}
+.health-warn{background:rgba(255,170,0,.12);color:var(--orange);border:1px solid rgba(255,170,0,.25);}
+
+/* FAQ */
+.faq{margin-top:12px;}
+.faq-item{border-bottom:1px solid var(--border);padding:18px 0;}
+.faq-item:last-child{border-bottom:none;}
+.faq-q{font-size:.9rem;font-weight:600;color:#fff;margin-bottom:8px;}
+.faq-a{font-size:.83rem;color:#8080b8;line-height:1.65;}
+
+/* INSTALL STEPS (iPhone) */
+.install-steps{counter-reset:istep;}
+.install-step{
+  display:flex;gap:16px;align-items:flex-start;
+  padding:14px 0;border-bottom:1px solid rgba(24,24,58,.6);
+}
+.install-step:last-child{border-bottom:none;}
+.install-step::before{
+  counter-increment:istep;content:counter(istep);
+  flex-shrink:0;width:28px;height:28px;border-radius:50%;
+  background:rgba(0,255,153,.1);border:1px solid rgba(0,255,153,.25);
+  display:flex;align-items:center;justify-content:center;
+  font-size:.72rem;font-weight:700;color:var(--green);
+}
+.install-step-text{font-size:.84rem;color:#9090c0;line-height:1.6;}
+.install-step-text strong{color:#fff;}
+
+/* CONTACT */
+.contact-card{
+  background:var(--panel);border:1px solid var(--border);border-radius:16px;
+  padding:28px;text-align:center;margin-top:40px;
+}
+.contact-card p{font-size:.85rem;color:#7070a0;margin-bottom:12px;}
+.contact-card a{color:var(--cyan);text-decoration:none;}
+
+/* FOOTER */
+footer{
+  margin-top:60px;padding-top:24px;border-top:1px solid var(--border);
+  text-align:center;font-size:.6rem;letter-spacing:.18em;color:var(--muted);text-transform:uppercase;
+}
+
+/* TOC */
+.toc{
+  background:var(--panel2);border:1px solid var(--border);border-radius:16px;
+  padding:24px 28px;margin-bottom:52px;
+}
+.toc-title{font-size:.6rem;letter-spacing:.25em;color:var(--muted);text-transform:uppercase;margin-bottom:16px;}
+.toc ul{list-style:none;padding:0;}
+.toc li{padding:5px 0;border-bottom:1px solid rgba(24,24,58,.5);}
+.toc li:last-child{border-bottom:none;}
+.toc a{font-size:.85rem;color:#8080c0;text-decoration:none;display:flex;align-items:center;gap:10px;}
+.toc a:hover{color:var(--cyan);}
+.toc a::before{content:'→';color:var(--border);font-size:.7rem;}
+</style>
+</head>
+<body>
+<div class="page">
+
+<!-- HEADER -->
+<div class="guide-header">
+  <div class="mark">
+    <svg viewBox="0 0 220 220" width="60" height="60" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <radialGradient id="gcG" cx="50%" cy="50%" r="50%">
+          <stop offset="0%" stop-color="#fff"/><stop offset="40%" stop-color="#80ecff" stop-opacity=".8"/>
+          <stop offset="100%" stop-color="#c040ff" stop-opacity="0"/>
+        </radialGradient>
+        <linearGradient id="grG" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stop-color="#10d8ff"/><stop offset="100%" stop-color="#c040ff"/>
+        </linearGradient>
+      </defs>
+      <polygon points="110,16 87,83 110,110" fill="#0888b8"/>
+      <polygon points="110,16 110,110 133,83" fill="#20e8ff"/>
+      <polygon points="204,110 133,83 110,110" fill="#8030e8"/>
+      <polygon points="204,110 110,110 133,137" fill="#5c16b8"/>
+      <polygon points="110,204 133,137 110,110" fill="#c040ff"/>
+      <polygon points="110,204 110,110 87,137" fill="#9828d8"/>
+      <polygon points="16,110 87,137 110,110" fill="#0868a0"/>
+      <polygon points="16,110 110,110 87,83" fill="#10b0e8"/>
+      <ellipse cx="110" cy="110" rx="55" ry="17" fill="none" stroke="url(#grG)" stroke-width="2.3" opacity=".7" transform="rotate(22,110,110)"/>
+      <circle cx="165" cy="110" r="3.5" fill="#c040ff" opacity=".9" transform="rotate(22,110,110)"/>
+      <circle cx="110" cy="110" r="24" fill="url(#gcG)"/>
+      <circle cx="110" cy="110" r="9" fill="white" opacity=".88"/>
+    </svg>
+  </div>
+  <div class="guide-title">Clarity — Your Guide</div>
+  <div class="guide-sub">by Whetū Digital</div>
+  <p class="guide-welcome">Welcome, Mimi! This guide will walk you through everything you need to know about your personal finance dashboard. It takes about 5 minutes to read — and you'll feel confident using it straight away.</p>
+</div>
+
+<!-- TABLE OF CONTENTS -->
+<div class="toc">
+  <div class="toc-title">What's in this guide</div>
+  <ul>
+    <li><a href="#pin">Setting up your PIN</a></li>
+    <li><a href="#dashboard">Reading your dashboard</a></li>
+    <li><a href="#periods">Switching time periods (weekly, fortnightly, monthly...)</a></li>
+    <li><a href="#bills">Tracking your bills — marking as paid</a></li>
+    <li><a href="#editing">Editing your budget figures</a></li>
+    <li><a href="#csv">Importing transactions from your bank</a></li>
+    <li><a href="#install">Installing on your iPhone (makes it feel like a real app)</a></li>
+    <li><a href="#faq">FAQ — common questions</a></li>
+  </ul>
+</div>
+
+<!-- STEP 1 — PIN -->
+<div class="step" id="pin">
+  <div class="step-num">1</div>
+  <div class="step-title">Setting up your PIN</div>
+  <p class="step-desc">The very first time you open Clarity, you'll see the PIN screen. No data has been saved yet — this is where you create your personal access code.</p>
+  <div class="mock">
+    <div class="mock-label">What you'll see</div>
+    <div style="text-align:center;padding:16px 0;">
+      <div style="font-size:1.1rem;font-weight:700;letter-spacing:.2em;color:#10d8ff;margin-bottom:4px;">CLARITY</div>
+      <div style="font-size:.6rem;letter-spacing:.12em;color:#7070a0;margin-bottom:20px;">by Whetū Digital</div>
+      <div style="display:flex;justify-content:center;gap:12px;margin-bottom:10px;">
+        <div style="width:12px;height:12px;border-radius:50%;border:2px solid #4040a0;"></div>
+        <div style="width:12px;height:12px;border-radius:50%;border:2px solid #4040a0;"></div>
+        <div style="width:12px;height:12px;border-radius:50%;border:2px solid #4040a0;"></div>
+        <div style="width:12px;height:12px;border-radius:50%;border:2px solid #4040a0;"></div>
+      </div>
+      <div style="font-size:.72rem;color:#5050a0;">Create a 4-digit PIN</div>
+    </div>
+  </div>
+  <div class="callout callout-tip">Tap four numbers on the keypad. You'll be asked to confirm them once. After that, you'll need your PIN every time you open Clarity.</div>
+  <div class="callout callout-note">Your PIN is stored only on this device. If you want to use Clarity on your iPhone AND your laptop, you'll set a PIN on each device separately. Keep them the same to avoid confusion!</div>
+</div>
+
+<!-- STEP 2 — DASHBOARD -->
+<div class="step" id="dashboard">
+  <div class="step-num">2</div>
+  <div class="step-title">Reading your dashboard</div>
+  <p class="step-desc">Once you enter your PIN, your dashboard appears. It's split into easy sections — here's what each part means.</p>
+
+  <div class="mock">
+    <div class="mock-label">Health Badge</div>
+    <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center;">
+      <span class="health-badge">✓ Healthy</span>
+      <span style="font-size:.8rem;color:#7070a0;">Your income covers your expenses with money left over.</span>
+    </div>
+    <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin-top:12px;">
+      <span class="health-badge health-warn">⚠ Watch It</span>
+      <span style="font-size:.8rem;color:#7070a0;">Expenses are getting close to your income. Time to review.</span>
+    </div>
+  </div>
+
+  <div class="callout callout-tip">The health badge at the top is your quick gut-check. Green = good. Orange = review. Red = action needed.</div>
+
+  <h3 style="color:var(--cyan);font-size:.9rem;margin:24px 0 10px;">The sections in your dashboard:</h3>
+  <div class="mock">
+    <div style="display:flex;flex-direction:column;gap:10px;font-size:.83rem;">
+      <div style="display:flex;gap:12px;align-items:center;padding:8px 0;border-bottom:1px solid var(--border);">
+        <span style="font-size:1.1rem;">🏠</span><div><strong style="color:#fff;">Housing</strong> <span style="color:#7070a0;">— Rent and any housing costs</span></div>
+      </div>
+      <div style="display:flex;gap:12px;align-items:center;padding:8px 0;border-bottom:1px solid var(--border);">
+        <span style="font-size:1.1rem;">⚡</span><div><strong style="color:#fff;">Utilities</strong> <span style="color:#7070a0;">— Electricity, gas, water</span></div>
+      </div>
+      <div style="display:flex;gap:12px;align-items:center;padding:8px 0;border-bottom:1px solid var(--border);">
+        <span style="font-size:1.1rem;">📡</span><div><strong style="color:#fff;">Connected</strong> <span style="color:#7070a0;">— Internet, phone plan</span></div>
+      </div>
+      <div style="display:flex;gap:12px;align-items:center;padding:8px 0;border-bottom:1px solid var(--border);">
+        <span style="font-size:1.1rem;">🛡</span><div><strong style="color:#fff;">Insurance</strong> <span style="color:#7070a0;">— Car, contents, health</span></div>
+      </div>
+      <div style="display:flex;gap:12px;align-items:center;padding:8px 0;border-bottom:1px solid var(--border);">
+        <span style="font-size:1.1rem;">🎵</span><div><strong style="color:#fff;">Subscriptions</strong> <span style="color:#7070a0;">— Streaming, storage, apps</span></div>
+      </div>
+      <div style="display:flex;gap:12px;align-items:center;padding:8px 0;border-bottom:1px solid var(--border);">
+        <span style="font-size:1.1rem;">🚗</span><div><strong style="color:#fff;">Transport</strong> <span style="color:#7070a0;">— Petrol, registration</span></div>
+      </div>
+      <div style="display:flex;gap:12px;align-items:center;padding:8px 0;">
+        <span style="font-size:1.1rem;">💳</span><div><strong style="color:#fff;">Debt</strong> <span style="color:#7070a0;">— Credit card minimums</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- STEP 3 — PERIODS -->
+<div class="step" id="periods">
+  <div class="step-num">3</div>
+  <div class="step-title">Switching time periods</div>
+  <p class="step-desc">At the top of your dashboard, you can switch how your budget is displayed. Same data — just shown as weekly, fortnightly, monthly, or yearly amounts.</p>
+  <div class="mock">
+    <div class="mock-label">Period buttons</div>
+    <div class="period-btns">
+      <span class="pbtn pbtn-inactive">Weekly</span>
+      <span class="pbtn pbtn-active">Fortnightly</span>
+      <span class="pbtn pbtn-inactive">Monthly</span>
+      <span class="pbtn pbtn-inactive">Quarterly</span>
+      <span class="pbtn pbtn-inactive">Yearly</span>
+    </div>
+    <div style="font-size:.78rem;color:#6060a0;margin-top:8px;">All amounts automatically convert when you switch. Your rent of $1,912/month becomes $956/fortnight.</div>
+  </div>
+  <div class="callout callout-tip">If you get paid fortnightly, set the period to <strong>Fortnightly</strong>. Then every number you see is exactly what comes out of each pay. Makes budgeting feel real.</div>
+  <div class="callout callout-note">Utility bills (electricity, gas) are charged quarterly. Clarity stores them as monthly averages and automatically converts to whatever period you're viewing. The small hint text shows the original quarterly amount.</div>
+</div>
+
+<!-- STEP 4 — BILLS -->
+<div class="step" id="bills">
+  <div class="step-num">4</div>
+  <div class="step-title">Tracking your bills — marking as paid</div>
+  <p class="step-desc">Each expense has a small tick button on the right. Tap it after you pay a bill to mark it as done for this pay period.</p>
+  <div class="mock">
+    <div class="mock-label">Bill rows — tap the tick to mark paid</div>
+    <div class="row-demo"><span class="row-name">Rent</span><div style="display:flex;align-items:center;gap:14px;"><span class="row-amount">$1,912</span><span class="row-paid-y">✓ paid</span></div></div>
+    <div class="row-demo"><span class="row-name">Electricity (est.)</span><div style="display:flex;align-items:center;gap:14px;"><span class="row-amount">$78.69</span><span class="row-paid-n">○ unpaid</span></div></div>
+    <div class="row-demo"><span class="row-name">Telstra Internet</span><div style="display:flex;align-items:center;gap:14px;"><span class="row-amount">$79.10</span><span class="row-paid-n">○ unpaid</span></div></div>
+  </div>
+  <div class="callout callout-tip">At the start of a new pay period, use the <strong>"Reset All Paid"</strong> button to clear all ticks and start fresh. You'll find it near the top of the expenses area.</div>
+  <div class="callout callout-note">Marking something as paid doesn't remove it from your totals — it just helps you track what's been paid this cycle vs what's still outstanding.</div>
+</div>
+
+<!-- STEP 5 — EDITING -->
+<div class="step" id="editing">
+  <div class="step-num">5</div>
+  <div class="step-title">Editing your budget figures</div>
+  <p class="step-desc">Your dashboard comes pre-loaded with your figures. If anything changes — new bill amount, new plan, new expense — you can edit it directly.</p>
+  <div class="callout callout-tip">Click on any amount to edit it. Press Enter or click away to save. The dashboard updates instantly.</div>
+  <div class="callout callout-tip">To add a new expense to any category, scroll to that section and click the <strong>"+ Add item"</strong> button at the bottom of the category.</div>
+  <div class="callout callout-note">All changes save automatically to your browser. They'll still be there next time you open Clarity on the same device.</div>
+</div>
+
+<!-- STEP 6 — CSV -->
+<div class="step" id="csv">
+  <div class="step-num">6</div>
+  <div class="step-title">Importing transactions from your bank</div>
+  <p class="step-desc">You can import a CSV file from your bank to auto-update your expenses. Clarity reads Australian bank formats and sorts transactions into categories automatically.</p>
+  <h3 style="color:var(--cyan);font-size:.88rem;margin:20px 0 10px;">How to download your CSV from your bank:</h3>
+  <div class="mock">
+    <div style="display:flex;flex-direction:column;gap:14px;font-size:.83rem;">
+      <div><strong style="color:#fff;">CommBank (CBA)</strong><br><span style="color:#7070a0;">NetBank → Accounts → Export transactions → Select date range → CSV</span></div>
+      <div><strong style="color:#fff;">ANZ</strong><br><span style="color:#7070a0;">ANZ Internet Banking → Accounts → Export → CSV format</span></div>
+      <div><strong style="color:#fff;">Westpac / Bank of Melbourne</strong><br><span style="color:#7070a0;">Online Banking → Statements → Download → CSV</span></div>
+      <div><strong style="color:#fff;">NAB</strong><br><span style="color:#7070a0;">NAB Internet Banking → Accounts → Download transactions → CSV</span></div>
+    </div>
+  </div>
+  <div class="callout callout-tip">Once you have the CSV file, open Clarity, scroll to the <strong>Import CSV</strong> section, and drag your file onto it (or click to browse). Clarity will automatically match transactions to your expense categories.</div>
+  <div class="callout callout-note">Clarity reads and processes the file locally on your device. Your bank data never leaves your browser.</div>
+</div>
+
+<!-- STEP 7 — IPHONE INSTALL -->
+<div class="step" id="install">
+  <div class="step-num">7</div>
+  <div class="step-title">Installing on your iPhone</div>
+  <p class="step-desc">You can add Clarity to your iPhone home screen so it opens like a real app — full screen, no browser bar, with the Whetū Digital icon.</p>
+  <div class="install-steps">
+    <div class="install-step"><div class="install-step-text">Open <strong>Safari</strong> on your iPhone (must be Safari, not Chrome)</div></div>
+    <div class="install-step"><div class="install-step-text">Go to <strong>deep21star.github.io/clarity</strong></div></div>
+    <div class="install-step"><div class="install-step-text">Enter your PIN to make sure it's working</div></div>
+    <div class="install-step"><div class="install-step-text">Tap the <strong>Share button</strong> at the bottom of Safari (the square with an arrow pointing up)</div></div>
+    <div class="install-step"><div class="install-step-text">Scroll down and tap <strong>"Add to Home Screen"</strong></div></div>
+    <div class="install-step"><div class="install-step-text">Name it <strong>"Clarity"</strong> and tap <strong>Add</strong></div></div>
+    <div class="install-step"><div class="install-step-text">Find the Clarity icon on your home screen. Tap it — it opens full-screen, just like any other app.</div></div>
+  </div>
+  <div class="callout callout-iphone">Once installed on your iPhone, this is your go-to. Check it after each pay day — mark bills as paid, check your balance, stay on top of things. Takes 30 seconds.</div>
+</div>
+
+<!-- FAQ -->
+<div class="step" id="faq">
+  <div class="step-num">?</div>
+  <div class="step-title">Frequently Asked Questions</div>
+  <div class="faq">
+    <div class="faq-item">
+      <div class="faq-q">I forgot my PIN. How do I reset it?</div>
+      <div class="faq-a">Contact your Whetū Digital advisor (Deep) — he can reset it for you. In a future update, there will be a self-serve PIN reset option.</div>
+    </div>
+    <div class="faq-item">
+      <div class="faq-q">My data on my laptop doesn't show on my iPhone. Is that normal?</div>
+      <div class="faq-a">Yes, for now. Your data is saved per device. Use one device as your main (your iPhone is best). Cloud sync across devices is coming in a future update — it'll be automatic when it arrives.</div>
+    </div>
+    <div class="faq-item">
+      <div class="faq-q">Is my data safe? Who can see it?</div>
+      <div class="faq-a">Your data is stored only in your browser on your device — nobody else can access it. The PIN prevents anyone who picks up your phone from opening the dashboard. Your actual bank account details are never entered or stored in Clarity.</div>
+    </div>
+    <div class="faq-item">
+      <div class="faq-q">The electricity/gas amounts look wrong. How do I update them?</div>
+      <div class="faq-a">The amounts start as estimates based on your last few bills. When you get a new bill, click the amount in the dashboard and type in the real figure. It saves instantly.</div>
+    </div>
+    <div class="faq-item">
+      <div class="faq-q">Can I use this on my Android phone too?</div>
+      <div class="faq-a">Yes! Open your browser, go to the Clarity URL, and use it just like on your laptop. The "Add to Home Screen" option is available in Chrome on Android too.</div>
+    </div>
+    <div class="faq-item">
+      <div class="faq-q">How do I change the currency from AUD?</div>
+      <div class="faq-a">There's a currency selector at the top right of your dashboard. You can switch between AUD, NZD, USD, GBP, and EUR at any time.</div>
+    </div>
+    <div class="faq-item">
+      <div class="faq-q">Something doesn't look right — what do I do?</div>
+      <div class="faq-a">Message Deep at Whetū Digital. He'll sort it out, usually within a day. That's what the ongoing support is for.</div>
+    </div>
+  </div>
+</div>
+
+<!-- CONTACT -->
+<div class="contact-card">
+  <svg viewBox="0 0 220 220" width="36" height="36" xmlns="http://www.w3.org/2000/svg" style="display:block;margin:0 auto 12px;">
+    <defs>
+      <radialGradient id="gcC" cx="50%" cy="50%" r="50%">
+        <stop offset="0%" stop-color="#fff"/><stop offset="100%" stop-color="#c040ff" stop-opacity="0"/>
+      </radialGradient>
+    </defs>
+    <polygon points="110,16 87,83 110,110" fill="#0888b8"/><polygon points="110,16 110,110 133,83" fill="#20e8ff"/>
+    <polygon points="204,110 133,83 110,110" fill="#8030e8"/><polygon points="204,110 110,110 133,137" fill="#5c16b8"/>
+    <polygon points="110,204 133,137 110,110" fill="#c040ff"/><polygon points="110,204 110,110 87,137" fill="#9828d8"/>
+    <polygon points="16,110 87,137 110,110" fill="#0868a0"/><polygon points="16,110 110,110 87,83" fill="#10b0e8"/>
+    <circle cx="110" cy="110" r="22" fill="url(#gcC)"/><circle cx="110" cy="110" r="8" fill="white" opacity=".85"/>
+  </svg>
+  <p><strong style="color:#fff;">Questions? Need something changed?</strong></p>
+  <p>Clarity is built and maintained by Whetū Digital. If you need help, want a figure updated, or have an idea for something new — just reach out.</p>
+  <p style="margin-top:8px;"><a href="mailto:hello@whetudigital.co.nz">hello@whetudigital.co.nz</a> &nbsp;·&nbsp; <span style="color:var(--muted);">whetudigital.co.nz</span></p>
+</div>
+
+<footer>
+  © 2026 Whetū Digital · Aotearoa, New Zealand · Made with care for Mimi
+</footer>
+
+</div>
+</body>
+</html>
