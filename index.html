@@ -259,6 +259,26 @@
   .add-goal-icon{font-size:1.5rem;opacity:.4;}
   .add-goal-label{font-size:.62rem;letter-spacing:2px;color:var(--muted);text-transform:uppercase;}
 
+  /* ── DARK / LIGHT TOGGLE ── */
+  body.light-mode{
+    --bg:#f0f0fa;--panel:#ffffff;--panel2:#e8e8f5;--border:#c0c0e0;
+    --text:#101028;--muted:#5050a0;--input-bg:#f5f5ff;
+  }
+  body.light-mode .pin-gate{background:var(--bg);}
+  .theme-btn{font-size:1rem;padding:4px 10px;border-radius:8px;border:1px solid var(--border);background:var(--panel);cursor:pointer;transition:all .2s;}
+  .theme-btn:hover{border-color:var(--accent2);}
+
+  /* ── BUDGET TARGET BAR ── */
+  .budget-bar-wrap{padding:4px 14px 6px;border-top:1px solid rgba(30,30,58,0.4);}
+  .budget-bar-track{height:4px;background:var(--panel2);border-radius:2px;overflow:hidden;}
+  .budget-bar-fill{height:100%;border-radius:2px;transition:width .5s ease;}
+  .budget-bar-fill.ok{background:linear-gradient(90deg,#10d8ff,#00ff99);}
+  .budget-bar-fill.warn{background:linear-gradient(90deg,#ffaa00,#ff8844);}
+  .budget-bar-fill.over{background:linear-gradient(90deg,#ff5577,#ff2244);}
+  .budget-bar-labels{display:flex;justify-content:space-between;font-size:0.58rem;color:var(--muted);margin-top:2px;}
+  .budget-set-btn{font-size:0.58rem;color:var(--muted);cursor:pointer;opacity:0.6;border:none;background:none;font-family:inherit;padding:0;}
+  .budget-set-btn:hover{color:var(--accent);opacity:1;}
+
   /* ── DEMO BANNER ── */
   .demo-banner{display:none;align-items:center;justify-content:center;gap:12px;
     background:linear-gradient(90deg,rgba(255,170,0,.12),rgba(255,85,0,.08));
@@ -426,6 +446,10 @@
     <span class="sync-badge unset" id="syncBadge" onclick="openSyncModal()" title="Cloud sync settings">☁ SETUP SYNC</span>
   </div>
   <div class="control-group">
+    <label class="ctrl-label">THEME</label>
+    <button class="theme-btn" id="themeToggle" onclick="toggleTheme()" title="Toggle dark/light mode">🌙</button>
+  </div>
+  <div class="control-group">
     <label class="ctrl-label">HELP</label>
     <a href="guide.html" target="_blank" class="btn btn-guide" style="padding:6px 16px;font-size:0.72rem;text-decoration:none;">? Guide</a>
   </div>
@@ -540,6 +564,7 @@
 <div class="footer">
   <button class="btn primary" onclick="openAddSection()">+ ADD SECTION</button>
   <button class="btn csv-btn" onclick="toggleCsvPanel()">📂 IMPORT CSV</button>
+  <button class="btn csv-btn" onclick="exportCSV()">⬇ EXPORT CSV</button>
   <button class="btn" onclick="exportData()">EXPORT JSON</button>
   <button class="btn" onclick="importData()">IMPORT JSON</button>
   <button class="btn danger" onclick="resetData()">RESET</button>
@@ -616,6 +641,20 @@
 </div>
 
 <input type="file" id="importFile" accept=".json" style="display:none" onchange="handleImport(event)">
+
+<!-- Budget Target Modal -->
+<div class="modal-overlay" id="budgetModal">
+  <div class="modal">
+    <h3>🎯 SET BUDGET LIMIT</h3>
+    <p id="budgetModalLabel" style="font-size:0.72rem;color:var(--muted);margin-bottom:10px;"></p>
+    <input type="number" id="budgetAmountInput" placeholder="Monthly limit (e.g. 800)" min="0" step="any" />
+    <p style="font-size:0.65rem;color:var(--muted);margin-bottom:10px;">Set 0 to remove the budget limit for this section.</p>
+    <div class="modal-btns">
+      <button class="btn" onclick="closeBudgetModal()">CANCEL</button>
+      <button class="btn primary" onclick="saveBudget()">SAVE LIMIT</button>
+    </div>
+  </div>
+</div>
 
 </div><!-- /appWrap -->
 
@@ -988,10 +1027,12 @@ function render(){
     hdr.className=`section-header ${hdrClass}`;
     const totalClass=isDebt?'debt-total':(sec.type==='income'?'income-total':'expense-total');
     const dotClass=isDebt?'debt':sec.type;
+    const budgetIcon=sec.type==='expense'?`<button class="budget-set-btn" onclick="openBudgetModal('${sec.id}','${escHtml(sec.label)}')" title="Set monthly budget limit">🎯</button>`:'';
     hdr.innerHTML=`
       <span class="section-icon">${sec.icon}</span>
       <span class="section-title"><span class="dot ${dotClass}"></span>${sec.label}</span>
       <span class="section-total ${totalClass}">${fmt(secTotal)}<span class="nzd">${currentCurrency}</span></span>
+      ${budgetIcon}
       <span class="row-del" onclick="deleteSection('${sec.id}')" title="Delete section">✕</span>`;
     panel.appendChild(hdr);
 
@@ -999,6 +1040,12 @@ function render(){
     barWrap.className='cat-bar-wrap';
     barWrap.innerHTML=`<div class="cat-bar-track"><div class="cat-bar-fill ${barClass}" style="width:0%" data-target="${barPct.toFixed(2)}%"></div></div><div class="cat-bar-label"><span></span><span>${barLabel}</span></div>`;
     panel.appendChild(barWrap);
+
+    if(sec.type==='expense'){
+      const mTotal=sec.rows.reduce((s,r)=>s+toMonthly(r.amount||0,r.period||'monthly'),0);
+      const bHtml=renderBudgetBar(sec,mTotal);
+      if(bHtml){const bEl=document.createElement('div');bEl.innerHTML=bHtml;panel.appendChild(bEl.firstChild);}
+    }
 
     sec.rows.forEach(row=>{
       const rowEl=document.createElement('div');
@@ -1373,6 +1420,61 @@ function exportData(){
   const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
   const a=document.createElement('a');a.href=URL.createObjectURL(blob);
   a.download='clarity_backup_'+new Date().toISOString().slice(0,10)+'.json';a.click();
+}
+function exportCSV(){
+  const rows=[['Section','Type','Name','Monthly Amount','Display Amount ('+currentPeriod+')','Period']];
+  data.sections.forEach(sec=>{
+    sec.rows.forEach(row=>{
+      const monthly=toMonthly(row.amount||0,row.period||'monthly');
+      const display=fromMonthly(monthly,currentPeriod);
+      rows.push([sec.label,sec.type,row.name,monthly.toFixed(2),display.toFixed(2),row.period||'monthly']);
+    });
+  });
+  const csv=rows.map(r=>r.map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(',')).join('\n');
+  const blob=new Blob([csv],{type:'text/csv'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);
+  a.download='clarity_'+_INST+'_'+new Date().toISOString().slice(0,10)+'.csv';a.click();
+}
+
+// ─── DARK / LIGHT MODE ──────────────────────────────────────────
+function toggleTheme(){
+  const light=document.body.classList.toggle('light-mode');
+  document.getElementById('themeToggle').textContent=light?'☀️':'🌙';
+  localStorage.setItem('clarity_theme_'+_INST,light?'light':'dark');
+}
+(function initTheme(){
+  const saved=localStorage.getItem('clarity_theme_'+_INST);
+  if(saved==='light'){document.body.classList.add('light-mode');const b=document.getElementById('themeToggle');if(b)b.textContent='☀️';}
+})();
+
+// ─── BUDGET TARGETS ──────────────────────────────────────────────
+let _budgetSecId=null;
+function openBudgetModal(secId,secLabel){
+  _budgetSecId=secId;
+  document.getElementById('budgetModalLabel').textContent='Section: '+secLabel;
+  const cur=(data.budgets||{})[secId]||0;
+  document.getElementById('budgetAmountInput').value=cur?cur:'';
+  document.getElementById('budgetModal').classList.add('open');
+}
+function closeBudgetModal(){document.getElementById('budgetModal').classList.remove('open');_budgetSecId=null;}
+function saveBudget(){
+  if(!_budgetSecId)return;
+  if(!data.budgets)data.budgets={};
+  const val=parseFloat(document.getElementById('budgetAmountInput').value)||0;
+  if(val<=0)delete data.budgets[_budgetSecId];
+  else data.budgets[_budgetSecId]=val;
+  closeBudgetModal();save();render();
+}
+function renderBudgetBar(sec,monthlyTotal){
+  if(!data.budgets||!data.budgets[sec.id])return'';
+  const limit=data.budgets[sec.id];
+  const pct=Math.min(100,Math.round(monthlyTotal/limit*100));
+  const cls=pct>=100?'over':pct>=80?'warn':'ok';
+  return'<div class="budget-bar-wrap">'+
+    '<div class="budget-bar-track"><div class="budget-bar-fill '+cls+'" style="width:'+pct+'%"></div></div>'+
+    '<div class="budget-bar-labels"><span>Budget: '+fmt(fromMonthly(limit,currentPeriod))+'</span>'+
+    '<span style="color:'+(pct>=100?'var(--red)':pct>=80?'var(--orange)':'var(--green)')+'">'+pct+'% used</span></div>'+
+    '</div>';
 }
 function importData(){document.getElementById('importFile').click();}
 function handleImport(e){
