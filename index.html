@@ -85,7 +85,7 @@
   .chart-canvas-wrap{position:relative;height:200px;}
 
   /* ── GRID ── */
-  .grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;max-width:1200px;margin:0 auto 20px;}
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:22px;max-width:1200px;margin:0 auto 28px;}
   @media(max-width:760px){.grid{grid-template-columns:1fr;}}
 
   /* ── SECTION PANEL ── */
@@ -93,12 +93,12 @@
   .section-panel.income-panel{border-color:rgba(0,255,136,0.2);}
   .section-panel.expense-panel{border-color:rgba(255,68,102,0.15);}
   .section-panel.debt-panel{border-color:rgba(255,100,0,0.3);background:rgba(255,80,0,0.03);}
-  .section-header{display:flex;align-items:center;padding:11px 14px;border-bottom:1px solid var(--border);gap:8px;}
+  .section-header{display:flex;align-items:center;padding:14px 16px;border-bottom:1px solid var(--border);gap:8px;}
   .section-header.income-hdr{border-bottom-color:rgba(0,255,136,0.15);}
   .section-header.expense-hdr{border-bottom-color:rgba(255,68,102,0.1);}
   .section-header.debt-hdr{border-bottom-color:rgba(255,100,0,0.2);}
   .section-icon{font-size:1rem;width:22px;text-align:center;}
-  .section-title{flex:1;font-size:0.68rem;font-weight:700;letter-spacing:2px;color:var(--muted);}
+  .section-title{flex:1;font-size:0.82rem;font-weight:700;letter-spacing:2px;color:var(--muted);}
   .section-total{font-size:0.95rem;font-weight:700;color:var(--accent2);min-width:80px;text-align:right;}
   .section-total.income-total{color:var(--green);}
   .section-total.expense-total{color:var(--red);}
@@ -117,7 +117,7 @@
   .cat-bar-label{display:flex;justify-content:space-between;font-size:0.6rem;color:var(--muted);margin-top:2px;}
 
   /* ── ROWS ── */
-  .row{display:flex;align-items:center;padding:6px 14px;border-bottom:1px solid rgba(30,30,58,0.5);gap:7px;transition:background 0.15s;}
+  .row{display:flex;align-items:center;padding:10px 16px;border-bottom:1px solid rgba(30,30,58,0.5);gap:7px;transition:background 0.15s;}
   .row:hover{background:rgba(184,0,255,0.04);}
   .row:last-child{border-bottom:none;}
   .row-name{flex:1;font-size:0.83rem;color:var(--text);cursor:pointer;padding:2px 4px;border-radius:4px;transition:background 0.15s;}
@@ -278,6 +278,21 @@
   .budget-bar-labels{display:flex;justify-content:space-between;font-size:0.58rem;color:var(--muted);margin-top:2px;}
   .budget-set-btn{font-size:0.58rem;color:var(--muted);cursor:pointer;opacity:0.6;border:none;background:none;font-family:inherit;padding:0;}
   .budget-set-btn:hover{color:var(--accent);opacity:1;}
+
+  /* ── ACTIVE SECTION NEON PULSE ── */
+  @keyframes neonBorderPulse{
+    0%,100%{box-shadow:0 0 0 1px rgba(16,216,255,.25),0 0 8px rgba(16,216,255,.1);border-color:rgba(16,216,255,.4);}
+    50%{box-shadow:0 0 0 2px rgba(16,216,255,.65),0 0 22px rgba(16,216,255,.3),inset 0 0 10px rgba(16,216,255,.04);border-color:rgba(16,216,255,.9);}
+  }
+  .section-panel.focus-active{animation:neonBorderPulse 1.8s ease-in-out infinite !important;border-color:rgba(16,216,255,.5) !important;}
+
+  /* ── DEBT BALANCE FIELD ── */
+  .debt-balance-strip{padding:6px 16px 8px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid rgba(255,100,0,.15);background:rgba(255,80,0,.025);}
+  .debt-balance-label{font-size:0.6rem;letter-spacing:1.5px;color:#ff9944;opacity:.8;text-transform:uppercase;}
+  .debt-balance-val{font-size:0.82rem;font-weight:700;color:#ff7700;cursor:pointer;padding:2px 8px;border-radius:4px;transition:background .15s;}
+  .debt-balance-val:hover{background:rgba(255,100,0,.12);}
+  .debt-balance-val input{background:var(--input-bg);border:1px solid #ff7700;border-radius:4px;color:#ff7700;font-size:.82rem;font-family:inherit;padding:1px 6px;width:110px;text-align:right;outline:none;}
+  .debt-outstanding-total{font-size:0.65rem;color:#ff9944;text-align:right;padding:2px 16px 6px;opacity:.75;letter-spacing:.5px;}
 
   /* ── DEMO BANNER ── */
   .demo-banner{display:none;align-items:center;justify-content:center;gap:12px;
@@ -1027,11 +1042,16 @@ function render(){
     hdr.className=`section-header ${hdrClass}`;
     const totalClass=isDebt?'debt-total':(sec.type==='income'?'income-total':'expense-total');
     const dotClass=isDebt?'debt':sec.type;
-    const budgetIcon=sec.type==='expense'?`<button class="budget-set-btn" onclick="openBudgetModal('${sec.id}','${escHtml(sec.label)}')" title="Set monthly budget limit">🎯</button>`:'';
+    const budgetIcon=sec.type==='expense'&&!isDebt?`<button class="budget-set-btn" onclick="openBudgetModal('${sec.id}','${escHtml(sec.label)}')" title="Set monthly budget limit">🎯</button>`:'';
+    const outstandingTotal=isDebt?sec.rows.reduce((s,r)=>s+(r.debtBalance||0),0):0;
+    const debtTotalHtml=isDebt?`<span class="section-total debt-total" style="flex-direction:column;align-items:flex-end;line-height:1.2">
+      <span>${fmt(secTotal)}<span class="nzd">${currentCurrency}</span></span>
+      <span style="font-size:.6rem;color:#ff9944;font-weight:400">owed: ${fmt(outstandingTotal)}</span></span>`
+      :`<span class="section-total ${totalClass}">${fmt(secTotal)}<span class="nzd">${currentCurrency}</span></span>`;
     hdr.innerHTML=`
       <span class="section-icon">${sec.icon}</span>
       <span class="section-title"><span class="dot ${dotClass}"></span>${sec.label}</span>
-      <span class="section-total ${totalClass}">${fmt(secTotal)}<span class="nzd">${currentCurrency}</span></span>
+      ${debtTotalHtml}
       ${budgetIcon}
       <span class="row-del" onclick="deleteSection('${sec.id}')" title="Delete section">✕</span>`;
     panel.appendChild(hdr);
@@ -1075,13 +1095,14 @@ function render(){
         dueHtml=`<div class="row-due" onclick="openDueModal('${sec.id}','${row.id}')" title="Set due date">+ due date</div>`;
       }
 
-      const hintHtml=row.hint?`<div class="row-hint">${escHtml(row.hint)}</div>`:'';
+      const hintHtml=(!isDebt&&row.hint)?`<div class="row-hint">${escHtml(row.hint)}</div>`:'';
+      const debtBalHtml=isDebt?`<div class="row-hint" style="color:#ff9944;cursor:pointer" onclick="editDebtBalance('${sec.id}','${row.id}')" title="Click to set outstanding balance">balance: <strong>${fmt(row.debtBalance||0)}</strong> — click to update</div>`:'';
 
       rowEl.innerHTML=`
         <span class="row-paid ${paidClass}" onclick="togglePaid('${sec.id}','${row.id}')" title="${row.paid?'Mark unpaid':'Mark paid'}">${paidIcon}</span>
         <div class="row-name-wrap">
           <span class="row-name" onclick="editName(this,'${sec.id}','${row.id}')">${escHtml(row.name)}</span>
-          ${hintHtml}
+          ${hintHtml}${debtBalHtml}
         </div>
         <div>
           <span class="row-amount" onclick="editAmount(this,'${sec.id}','${row.id}',${displayed.toFixed(4)})">${fmt(displayed)}${origHint}</span>
@@ -1228,7 +1249,24 @@ function updateCharts(sectionTotals,totalIncome,totalExpense,balance){
 // ─── PAID TOGGLE ──────────────────────────────────────────────
 function togglePaid(secId,rowId){
   const row=getRow(secId,rowId);
-  if(row){row.paid=!row.paid;save();render();}
+  if(!row)return;
+  const wasUnpaid=!row.paid;
+  row.paid=!row.paid;
+  // Debt: reduce outstanding balance when marking as paid
+  const sec=data.sections.find(s=>s.id===secId);
+  if(wasUnpaid&&sec&&(sec.id==='debt'||sec.type==='debt')&&row.amount>0){
+    const payment=toMonthly(row.amount,row.period||'monthly');
+    row.debtBalance=Math.max(0,(row.debtBalance||0)-payment);
+  }
+  save();render();
+}
+function editDebtBalance(secId,rowId){
+  const row=getRow(secId,rowId);
+  if(!row)return;
+  const v=prompt(`Enter current outstanding balance for "${row.name}":`,row.debtBalance||0);
+  if(v===null)return;
+  const n=parseFloat(v.replace(/[^0-9.]/g,''));
+  if(!isNaN(n)){row.debtBalance=n;save();render();}
 }
 function resetAllPaid(){
   data.sections.forEach(s=>s.rows.forEach(r=>r.paid=false));
@@ -1568,6 +1606,18 @@ document.addEventListener('DOMContentLoaded',()=>{
   });
   document.getElementById('newSectionName').addEventListener('keydown',e=>{if(e.key==='Enter')confirmAddSection();});
   document.getElementById('dueDayInput').addEventListener('keydown',e=>{if(e.key==='Enter')saveDueDate();});
+  // Neon pulse: highlight the section panel that has keyboard focus
+  document.addEventListener('focusin',e=>{
+    document.querySelectorAll('.section-panel.focus-active').forEach(p=>p.classList.remove('focus-active'));
+    const panel=e.target.closest('.section-panel');
+    if(panel)panel.classList.add('focus-active');
+  });
+  document.addEventListener('focusout',e=>{
+    setTimeout(()=>{
+      if(!document.activeElement||!document.activeElement.closest('.section-panel'))
+        document.querySelectorAll('.section-panel.focus-active').forEach(p=>p.classList.remove('focus-active'));
+    },120);
+  });
 });
 
 // ─── INIT ─────────────────────────────────────────────────────
