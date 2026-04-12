@@ -340,6 +340,13 @@
   .sync-modal .modal-btns .btn{flex:1;text-align:center;}
   .sync-help-link{font-size:0.65rem;color:var(--accent2);text-decoration:none;display:block;text-align:center;margin-top:10px;opacity:0.8;}
   .sync-help-link:hover{opacity:1;}
+
+  /* ── TOOLTIP BALLOON ── */
+  .tip-balloon{position:fixed;z-index:9999;background:#14142e;border:1px solid rgba(16,216,255,.45);
+    color:#d0d0ff;font-size:0.72rem;line-height:1.5;padding:7px 12px;border-radius:9px;
+    box-shadow:0 6px 24px rgba(0,0,0,.55),0 0 14px rgba(16,216,255,.12);
+    pointer-events:none;max-width:230px;opacity:0;transition:opacity .18s;white-space:normal;}
+  .tip-balloon.tip-show{opacity:1;}
 </style>
 </head>
 <body>
@@ -441,7 +448,7 @@
 <div class="top-controls">
   <div class="control-group">
     <label class="ctrl-label">CURRENCY</label>
-    <select id="currencySelect" class="ctrl-select" onchange="setCurrency(this.value)">
+    <select id="currencySelect" class="ctrl-select" onchange="setCurrency(this.value)" data-tip="Choose your display currency — all amounts convert automatically">
       <option value="AUD">🇦🇺 AUD</option>
       <option value="NZD">🇳🇿 NZD</option>
       <option value="USD">🇺🇸 USD</option>
@@ -454,29 +461,29 @@
   </div>
   <div class="control-group">
     <label class="ctrl-label">RESET PAID</label>
-    <button class="btn" onclick="resetAllPaid()" style="padding:4px 12px;font-size:0.7rem;">New Period</button>
+    <button class="btn" onclick="resetAllPaid()" style="padding:4px 12px;font-size:0.7rem;" data-tip="Start a fresh billing period — marks all paid items as unpaid so you can track again">New Period</button>
   </div>
   <div class="control-group" style="margin-left:auto;">
     <label class="ctrl-label">SYNC</label>
-    <span class="sync-badge unset" id="syncBadge" onclick="openSyncModal()" title="Cloud sync settings">☁ SETUP SYNC</span>
+    <span class="sync-badge unset" id="syncBadge" onclick="openSyncModal()" data-tip="Connect cloud sync — your budget then saves automatically across all your devices">☁ SETUP SYNC</span>
   </div>
   <div class="control-group">
     <label class="ctrl-label">THEME</label>
-    <button class="theme-btn" id="themeToggle" onclick="toggleTheme()" title="Toggle dark/light mode">🌙</button>
+    <button class="theme-btn" id="themeToggle" onclick="toggleTheme()" data-tip="Switch between dark and light mode">🌙</button>
   </div>
   <div class="control-group">
     <label class="ctrl-label">HELP</label>
-    <a href="guide.html" target="_blank" class="btn btn-guide" style="padding:6px 16px;font-size:0.72rem;text-decoration:none;">? Guide</a>
+    <a href="guide.html" target="_blank" class="btn btn-guide" style="padding:6px 16px;font-size:0.72rem;text-decoration:none;" data-tip="Open the full step-by-step user guide — explains every feature with examples">? Guide</a>
   </div>
 </div>
 
 <!-- Period Toggle -->
 <div class="period-bar">
-  <button class="period-btn" onclick="setPeriod('weekly')">WEEKLY</button>
-  <button class="period-btn active" onclick="setPeriod('fortnightly')">FORTNIGHTLY</button>
-  <button class="period-btn" onclick="setPeriod('monthly')">MONTHLY</button>
-  <button class="period-btn" onclick="setPeriod('quarterly')">QUARTERLY</button>
-  <button class="period-btn" onclick="setPeriod('yearly')">YEARLY</button>
+  <button class="period-btn" onclick="setPeriod('weekly')" data-tip="Show all amounts as weekly costs">WEEKLY</button>
+  <button class="period-btn active" onclick="setPeriod('fortnightly')" data-tip="Show all amounts as fortnightly costs — great for pay-cycle budgeting">FORTNIGHTLY</button>
+  <button class="period-btn" onclick="setPeriod('monthly')" data-tip="Show all amounts as monthly costs">MONTHLY</button>
+  <button class="period-btn" onclick="setPeriod('quarterly')" data-tip="Show all amounts per quarter (3 months)">QUARTERLY</button>
+  <button class="period-btn" onclick="setPeriod('yearly')" data-tip="Show all amounts as yearly totals">YEARLY</button>
 </div>
 
 <!-- Alert Banner -->
@@ -484,11 +491,11 @@
 
 <!-- Summary Bar -->
 <div class="summary" id="summary">
-  <div class="sum-block"><div class="sum-label">INCOME</div><div class="sum-value income" id="sumIncome">$0.00</div></div>
-  <div class="sum-block"><div class="sum-label">EXPENSES</div><div class="sum-value expense" id="sumExpense">$0.00</div></div>
-  <div class="sum-block"><div class="sum-label">BALANCE</div><div class="sum-value balance" id="sumBalance">$0.00</div></div>
-  <div class="sum-block"><div class="sum-label">SAVINGS %</div><div class="sum-value savings" id="sumSavingsPct">0%</div></div>
-  <div class="sum-block health-block"><div class="sum-label">HEALTH</div><div id="healthBadge"><span class="health-badge warning">— —</span></div></div>
+  <div class="sum-block" data-tip="Your total income for this period — add it in the INCOME section below"><div class="sum-label">INCOME</div><div class="sum-value income" id="sumIncome">$0.00</div></div>
+  <div class="sum-block" data-tip="All your expenses added together for this period"><div class="sum-label">EXPENSES</div><div class="sum-value expense" id="sumExpense">$0.00</div></div>
+  <div class="sum-block" data-tip="What's left after expenses — green means you have surplus, red means you're spending more than you earn"><div class="sum-label">BALANCE</div><div class="sum-value balance" id="sumBalance">$0.00</div></div>
+  <div class="sum-block" data-tip="What percentage of your income is being saved — aim for at least 10%"><div class="sum-label">SAVINGS %</div><div class="sum-value savings" id="sumSavingsPct">0%</div></div>
+  <div class="sum-block health-block" data-tip="Your overall financial health based on income, spending, and savings rate"><div class="sum-label">HEALTH</div><div id="healthBadge"><span class="health-badge warning">— —</span></div></div>
 </div>
 
 <!-- Progress Bar -->
@@ -577,13 +584,13 @@
 
 <!-- Footer -->
 <div class="footer">
-  <button class="btn primary" onclick="openAddSection()">+ ADD SECTION</button>
-  <button class="btn csv-btn" onclick="toggleCsvPanel()">📂 IMPORT CSV</button>
-  <button class="btn csv-btn" onclick="exportCSV()">⬇ EXPORT CSV</button>
-  <button class="btn" onclick="exportData()">EXPORT JSON</button>
-  <button class="btn" onclick="importData()">IMPORT JSON</button>
-  <button class="btn danger" onclick="resetData()">RESET</button>
-  <button class="btn" onclick="changePin()">🔒 CHANGE PIN</button>
+  <button class="btn primary" onclick="openAddSection()" data-tip="Add a new category to your budget — e.g. Transport, Food, Entertainment">+ ADD SECTION</button>
+  <button class="btn csv-btn" onclick="toggleCsvPanel()" data-tip="Upload a bank statement CSV to automatically detect and import your expenses">📂 IMPORT CSV</button>
+  <button class="btn csv-btn" onclick="exportCSV()" data-tip="Download your entire budget as a spreadsheet you can open in Excel or Google Sheets">⬇ EXPORT CSV</button>
+  <button class="btn" onclick="exportData()" data-tip="Save a full backup of your budget data as a JSON file — keep this somewhere safe">EXPORT JSON</button>
+  <button class="btn" onclick="importData()" data-tip="Restore your budget from a previously saved JSON backup file">IMPORT JSON</button>
+  <button class="btn danger" onclick="resetData()" data-tip="⚠ Clear ALL data and start from scratch — this cannot be undone">RESET</button>
+  <button class="btn" onclick="changePin()" data-tip="Change your 4-digit dashboard access PIN">🔒 CHANGE PIN</button>
 </div>
 
 <!-- Add Section Modal -->
@@ -1042,7 +1049,7 @@ function render(){
     hdr.className=`section-header ${hdrClass}`;
     const totalClass=isDebt?'debt-total':(sec.type==='income'?'income-total':'expense-total');
     const dotClass=isDebt?'debt':sec.type;
-    const budgetIcon=sec.type==='expense'&&!isDebt?`<button class="budget-set-btn" onclick="openBudgetModal('${sec.id}','${escHtml(sec.label)}')" title="Set monthly budget limit">🎯</button>`:'';
+    const budgetIcon=sec.type==='expense'&&!isDebt?`<button class="budget-set-btn" onclick="openBudgetModal('${sec.id}','${escHtml(sec.label)}')" data-tip="Set a monthly spending limit — a colour bar shows how close you are to your limit">🎯</button>`:'';
     const outstandingTotal=isDebt?sec.rows.reduce((s,r)=>s+(r.debtBalance||0),0):0;
     const debtTotalHtml=isDebt?`<span class="section-total debt-total" style="flex-direction:column;align-items:flex-end;line-height:1.2">
       <span>${fmt(secTotal)}<span class="nzd">${currentCurrency}</span></span>
@@ -1053,7 +1060,7 @@ function render(){
       <span class="section-title"><span class="dot ${dotClass}"></span>${sec.label}</span>
       ${debtTotalHtml}
       ${budgetIcon}
-      <span class="row-del" onclick="deleteSection('${sec.id}')" title="Delete section">✕</span>`;
+      <span class="row-del" onclick="deleteSection('${sec.id}')" data-tip="Remove this entire section and all its items">✕</span>`;
     panel.appendChild(hdr);
 
     const barWrap=document.createElement('div');
@@ -1099,28 +1106,29 @@ function render(){
       const debtBalHtml=isDebt?`<div class="row-hint" style="color:#ff9944;cursor:pointer" onclick="editDebtBalance('${sec.id}','${row.id}')" title="Click to set outstanding balance">balance: <strong>${fmt(row.debtBalance||0)}</strong> — click to update</div>`:'';
 
       rowEl.innerHTML=`
-        <span class="row-paid ${paidClass}" onclick="togglePaid('${sec.id}','${row.id}')" title="${row.paid?'Mark unpaid':'Mark paid'}">${paidIcon}</span>
+        <span class="row-paid ${paidClass}" onclick="togglePaid('${sec.id}','${row.id}')" data-tip="${row.paid?'Marked as paid — click to undo':'Tick this once you\'ve paid the bill this period'}">${paidIcon}</span>
         <div class="row-name-wrap">
-          <span class="row-name" onclick="editName(this,'${sec.id}','${row.id}')">${escHtml(row.name)}</span>
+          <span class="row-name" onclick="editName(this,'${sec.id}','${row.id}')" data-tip="Click to rename this item">${escHtml(row.name)}</span>
           ${hintHtml}${debtBalHtml}
         </div>
         <div>
-          <span class="row-amount" onclick="editAmount(this,'${sec.id}','${row.id}',${displayed.toFixed(4)})">${fmt(displayed)}${origHint}</span>
+          <span class="row-amount" onclick="editAmount(this,'${sec.id}','${row.id}',${displayed.toFixed(4)})" data-tip="Click to enter the amount you pay for this item">${fmt(displayed)}${origHint}</span>
           ${dueHtml}
         </div>
-        <select class="row-period-select" onchange="changeRowPeriod('${sec.id}','${row.id}',this.value)">
+        <select class="row-period-select" onchange="changeRowPeriod('${sec.id}','${row.id}',this.value)" data-tip="How often you make this payment — amounts automatically convert when you switch periods">
           <option value="weekly" ${row.period==='weekly'?'selected':''}>Weekly</option>
           <option value="fortnightly" ${row.period==='fortnightly'?'selected':''}>Fortnightly</option>
           <option value="monthly" ${row.period==='monthly'?'selected':''}>Monthly</option>
           <option value="quarterly" ${row.period==='quarterly'?'selected':''}>Quarterly</option>
           <option value="yearly" ${row.period==='yearly'?'selected':''}>Yearly</option>
         </select>
-        <span class="row-del" onclick="deleteRow('${sec.id}','${row.id}')">✕</span>`;
+        <span class="row-del" onclick="deleteRow('${sec.id}','${row.id}')" data-tip="Remove this item from your budget">✕</span>`;
       panel.appendChild(rowEl);
     });
 
     const addBtn=document.createElement('div');
     addBtn.className='add-row-btn';
+    addBtn.dataset.tip='Add a new bill or expense to this section';
     addBtn.innerHTML='<span>+</span><span>Add item</span>';
     addBtn.onclick=()=>addRow(sec.id);
     panel.appendChild(addBtn);
@@ -1619,6 +1627,39 @@ document.addEventListener('DOMContentLoaded',()=>{
     },120);
   });
 });
+
+// ─── TOOLTIP BALLOON ──────────────────────────────────────────
+(function(){
+  const tip=document.createElement('div');
+  tip.className='tip-balloon';
+  document.body.appendChild(tip);
+  let timer,active=null;
+  document.addEventListener('mouseover',e=>{
+    const el=e.target.closest('[data-tip]');
+    if(el===active)return;
+    clearTimeout(timer);
+    tip.classList.remove('tip-show');
+    active=el;
+    if(!el)return;
+    timer=setTimeout(()=>{
+      tip.textContent=el.dataset.tip;
+      tip.classList.add('tip-show');
+      posit(e);
+    },420);
+  });
+  document.addEventListener('mousemove',e=>{if(tip.classList.contains('tip-show'))posit(e);});
+  document.addEventListener('mouseout',e=>{
+    if(!e.relatedTarget||!e.relatedTarget.closest('[data-tip]')){
+      clearTimeout(timer);tip.classList.remove('tip-show');active=null;
+    }
+  });
+  function posit(e){
+    const x=e.clientX+14,y=e.clientY+20;
+    const bw=window.innerWidth,bh=window.innerHeight;
+    tip.style.left=Math.min(x,bw-tip.offsetWidth-12)+'px';
+    tip.style.top=(y+tip.offsetHeight>bh-8?e.clientY-tip.offsetHeight-10:y)+'px';
+  }
+})();
 
 // ─── INIT ─────────────────────────────────────────────────────
 document.getElementById('copyrightYear').textContent=new Date().getFullYear();
