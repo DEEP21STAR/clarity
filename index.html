@@ -313,6 +313,90 @@
   .demo-link{color:var(--accent);text-decoration:none;border-bottom:1px solid rgba(16,216,255,.3);}
   .demo-link:hover{border-bottom-color:var(--accent);}
 
+  /* ── PERIOD TRACKER ── */
+  .period-tracker{max-width:1200px;margin:0 auto 14px;background:var(--panel);border:1px solid rgba(16,216,255,.15);border-radius:12px;padding:16px 24px;display:flex;gap:24px;align-items:flex-start;flex-wrap:wrap;box-shadow:0 0 22px rgba(16,216,255,.06);}
+  .pt-block{flex:1;min-width:130px;}
+  .pt-label{font-size:0.58rem;letter-spacing:2px;color:var(--muted);margin-bottom:5px;text-transform:uppercase;}
+  .pt-value{font-size:0.92rem;font-weight:700;color:var(--text);margin-bottom:7px;}
+  .pt-bar{height:5px;background:rgba(255,255,255,.07);border-radius:3px;overflow:hidden;}
+  .pt-fill{height:100%;border-radius:3px;transition:width .6s ease;}
+  .pt-fill.cyan{background:linear-gradient(90deg,#10d8ff,#0088cc);}
+  .pt-fill.green{background:linear-gradient(90deg,#00ff88,#00cc66);}
+  .pt-fill.yellow{background:linear-gradient(90deg,#ffbe00,#ff9900);}
+  .pt-fill.red{background:linear-gradient(90deg,#ff4466,#cc2244);}
+
+  /* ── UPCOMING BILLS ── */
+  .upcoming-wrap{max-width:1200px;margin:0 auto 14px;}
+  .upcoming-head{font-size:0.58rem;letter-spacing:2.5px;color:var(--muted);text-transform:uppercase;margin-bottom:10px;}
+  .upcoming-cards{display:flex;gap:10px;flex-wrap:wrap;}
+  .upcoming-card{flex:1;min-width:150px;max-width:260px;background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:12px 16px;}
+  .upcoming-card.overdue{border-color:rgba(255,68,102,.45);box-shadow:0 0 14px rgba(255,68,102,.1);}
+  .upcoming-card.soon{border-color:rgba(255,190,0,.38);box-shadow:0 0 14px rgba(255,190,0,.08);}
+  .uc-name{font-size:0.72rem;font-weight:700;color:var(--text);margin-bottom:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .uc-amount{font-size:0.82rem;font-weight:700;color:var(--accent2);margin-bottom:3px;}
+  .uc-due{font-size:0.62rem;color:var(--muted);}
+  .uc-due.overdue{color:#ff4466;font-weight:700;}
+  .uc-due.soon{color:#ffbe00;font-weight:700;}
+
+  /* ── NET WORTH ── */
+  .networth-section{max-width:1200px;margin:0 auto 20px;background:var(--panel);border:1px solid rgba(16,216,255,.15);border-radius:12px;overflow:hidden;box-shadow:0 0 22px rgba(16,216,255,.06);}
+  .networth-hdr{display:flex;align-items:center;justify-content:space-between;padding:15px 22px;border-bottom:1px solid var(--border);}
+  .networth-hdr-left{display:flex;align-items:center;gap:14px;}
+  .networth-title{font-size:0.65rem;font-weight:700;letter-spacing:2.5px;color:var(--muted);}
+  .networth-snapshot-btn{font-size:0.58rem;letter-spacing:1px;padding:3px 10px;border-radius:6px;border:1px solid var(--border);background:transparent;color:var(--muted);cursor:pointer;font-family:inherit;transition:all .2s;}
+  .networth-snapshot-btn:hover{border-color:var(--accent2);color:var(--accent2);}
+  .networth-total{font-size:1.25rem;font-weight:700;}
+  .networth-total.pos{color:var(--green);}
+  .networth-total.neg{color:var(--red);}
+  .networth-cols{display:grid;grid-template-columns:1fr 1fr;gap:0;}
+  @media(max-width:600px){.networth-cols{grid-template-columns:1fr;}}
+  .nw-col{padding:16px 20px;}
+  .nw-col.assets-col{border-right:1px solid var(--border);}
+  .nw-col-title{font-size:0.6rem;letter-spacing:2px;color:var(--muted);margin-bottom:11px;font-weight:700;text-transform:uppercase;}
+  .nw-row{display:flex;gap:8px;align-items:center;margin-bottom:8px;}
+  .nw-name{flex:1;background:transparent;border:none;border-bottom:1px solid var(--border);color:var(--text);font-size:0.78rem;padding:3px 0;font-family:inherit;outline:none;}
+  .nw-amount{width:110px;background:transparent;border:none;border-bottom:1px solid var(--border);color:var(--accent2);font-size:0.78rem;padding:3px 0;text-align:right;font-family:inherit;outline:none;}
+  .nw-name:focus,.nw-amount:focus{border-bottom-color:var(--accent2);}
+  .nw-del{background:none;border:none;color:var(--muted);cursor:pointer;font-size:0.78rem;padding:2px 5px;line-height:1;transition:color .15s;}
+  .nw-del:hover{color:var(--red);}
+  .nw-add-btn{background:none;border:1px dashed var(--border);border-radius:6px;color:var(--muted);font-size:0.65rem;padding:5px 12px;cursor:pointer;font-family:inherit;letter-spacing:1px;margin-top:6px;transition:all .2s;display:block;}
+  .nw-add-btn:hover{border-color:var(--accent2);color:var(--accent2);}
+  .nw-col-total{font-size:0.72rem;font-weight:700;margin-top:10px;padding-top:10px;border-top:1px solid var(--border);}
+  .nw-col-total.at{color:var(--green);}
+  .nw-col-total.lt{color:var(--red);}
+  .nw-history{padding:12px 20px;border-top:1px solid var(--border);font-size:0.65rem;color:var(--muted);}
+
+  /* ── COMING SOON ── */
+  .coming-soon-section{max-width:1200px;margin:0 auto 24px;padding:20px 24px;background:var(--panel);border:1px solid rgba(192,64,255,.18);border-radius:12px;box-shadow:0 0 24px rgba(192,64,255,.06);}
+  .cs-title{font-size:0.62rem;letter-spacing:3px;color:rgba(192,64,255,.75);font-weight:700;margin-bottom:4px;text-align:center;text-transform:uppercase;}
+  .cs-sub{font-size:0.58rem;color:var(--muted);text-align:center;margin-bottom:16px;letter-spacing:1px;}
+  .cs-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;}
+  .cs-card{background:rgba(192,64,255,.04);border:1px solid rgba(192,64,255,.14);border-radius:10px;padding:16px 14px;text-align:center;transition:all .2s;}
+  .cs-card:hover{background:rgba(192,64,255,.08);border-color:rgba(192,64,255,.3);}
+  .cs-icon{font-size:1.5rem;margin-bottom:8px;display:block;}
+  .cs-name{font-size:0.68rem;font-weight:700;letter-spacing:1px;color:rgba(192,64,255,.8);margin-bottom:5px;}
+  .cs-desc{font-size:0.62rem;color:var(--muted);line-height:1.45;}
+  .cs-badge{display:inline-block;font-size:0.52rem;letter-spacing:1.5px;background:rgba(192,64,255,.14);color:rgba(192,64,255,.8);border-radius:4px;padding:2px 7px;margin-bottom:7px;}
+
+  /* ── PRINT / PDF EXPORT ── */
+  @media print{
+    .clarity-nav,.top-controls,.period-bar,.alert-banner,.charts-section,.insights-section,
+    .goals-section,.networth-section,.coming-soon-section,.csv-panel,.footer,
+    .feedback-float,.tip-balloon,.btn,.sync-badge,.theme-btn,.progress-wrap,
+    .upcoming-wrap,.modal-overlay,.sync-overlay,.receipts-view,.calc-view,.backup-view,
+    nav,.demo-banner{display:none!important;}
+    body{background:#fff!important;color:#111!important;font-size:12pt;}
+    .summary{border:1px solid #ccc!important;box-shadow:none!important;page-break-inside:avoid;}
+    .section-panel{border:1px solid #ccc!important;box-shadow:none!important;margin-bottom:12pt;page-break-inside:avoid;}
+    .section-header{background:none!important;}
+    .period-tracker{border:1px solid #ccc!important;box-shadow:none!important;page-break-inside:avoid;}
+    h1,h2{color:#111!important;}
+    .sum-value,.section-total{color:#111!important;}
+    .income,.sum-value.income{color:#006633!important;}
+    .expense,.sum-value.expense{color:#cc0033!important;}
+    .brand-line,.subtitle,.tip-line{display:none!important;}
+  }
+
   /* ── INSIGHTS ── */
   .insights-section{max-width:1200px;margin:0 auto 24px;padding:0 20px;}
   .insights-title{font-size:0.6rem;letter-spacing:2.5px;color:var(--muted);text-transform:uppercase;margin-bottom:16px;}
@@ -669,6 +753,15 @@
   <div class="sum-block health-block" data-tip="Your overall financial health based on income, spending, and savings rate"><div class="sum-label">HEALTH</div><div id="healthBadge"><span class="health-badge warning">— —</span></div></div>
 </div>
 
+<!-- Period Tracker -->
+<div class="period-tracker" id="periodTracker"></div>
+
+<!-- Upcoming Bills -->
+<div class="upcoming-wrap" id="upcomingWrap" style="display:none">
+  <div class="upcoming-head">UPCOMING BILLS</div>
+  <div class="upcoming-cards" id="upcomingCards"></div>
+</div>
+
 <!-- Progress Bar -->
 <div class="progress-wrap">
   <div class="progress-track"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
@@ -706,6 +799,64 @@
     <div class="goals-title">SAVINGS GOALS</div>
   </div>
   <div class="goals-grid" id="goalsGrid"></div>
+</div>
+
+<!-- Net Worth Tracker -->
+<div class="networth-section" id="networthSection">
+  <div class="networth-hdr">
+    <div class="networth-hdr-left">
+      <div class="networth-title">NET WORTH TRACKER</div>
+      <button class="networth-snapshot-btn" onclick="saveSnapshot()" title="Save a snapshot of today's net worth to track over time">📸 SAVE SNAPSHOT</button>
+    </div>
+    <div class="networth-total pos" id="networthTotal">A$0</div>
+  </div>
+  <div class="networth-cols">
+    <div class="nw-col assets-col">
+      <div class="nw-col-title">📈 Assets</div>
+      <div id="assetsList"></div>
+      <button class="nw-add-btn" onclick="addNWRow('assets')">+ Add Asset</button>
+      <div class="nw-col-total at" id="assetsTotal"></div>
+    </div>
+    <div class="nw-col">
+      <div class="nw-col-title">📉 Liabilities</div>
+      <div id="liabilitiesList"></div>
+      <button class="nw-add-btn" onclick="addNWRow('liabilities')">+ Add Liability</button>
+      <div class="nw-col-total lt" id="liabilitiesTotal"></div>
+    </div>
+  </div>
+  <div class="nw-history" id="nwHistory"></div>
+</div>
+
+<!-- Coming Soon -->
+<div class="coming-soon-section">
+  <div class="cs-title">✦ Coming Soon · Clarity v4</div>
+  <div class="cs-sub">Planned features — vote or request at hello@whetudigital.co.nz</div>
+  <div class="cs-grid">
+    <div class="cs-card">
+      <span class="cs-badge">v4</span>
+      <span class="cs-icon">🤖</span>
+      <div class="cs-name">AI Money Coach</div>
+      <div class="cs-desc">Natural language financial advice — ask questions about your budget</div>
+    </div>
+    <div class="cs-card">
+      <span class="cs-badge">v4</span>
+      <span class="cs-icon">📱</span>
+      <div class="cs-name">Push Reminders</div>
+      <div class="cs-desc">Bill due alerts sent directly to your phone — never miss a payment</div>
+    </div>
+    <div class="cs-card">
+      <span class="cs-badge">v4</span>
+      <span class="cs-icon">📈</span>
+      <div class="cs-name">Investment Tracker</div>
+      <div class="cs-desc">Track shares, super/KiwiSaver, and crypto alongside your budget</div>
+    </div>
+    <div class="cs-card">
+      <span class="cs-badge">v5</span>
+      <span class="cs-icon">👨‍👩‍👧</span>
+      <div class="cs-name">Shared Budget</div>
+      <div class="cs-desc">Household budgets with multiple users — perfect for couples & families</div>
+    </div>
+  </div>
 </div>
 
 <!-- Goal Name Modal -->
@@ -760,6 +911,7 @@
   <button class="btn csv-btn" onclick="exportCSV()" data-tip="Download your entire budget as a spreadsheet you can open in Excel or Google Sheets">⬇ EXPORT CSV</button>
   <button class="btn" onclick="exportData()" data-tip="Save a full backup of your budget data as a JSON file — keep this somewhere safe">EXPORT JSON</button>
   <button class="btn" onclick="importData()" data-tip="Restore your budget from a previously saved JSON backup file">IMPORT JSON</button>
+  <button class="btn" onclick="exportPDF()" data-tip="Print or save a PDF summary of your current budget">🖨 PRINT / PDF</button>
   <button class="btn danger" onclick="resetData()" data-tip="⚠ Clear ALL data and start from scratch — this cannot be undone">RESET</button>
   <button class="btn" onclick="changePin()" data-tip="Change your 4-digit dashboard access PIN">🔒 CHANGE PIN</button>
 </div>
@@ -1304,7 +1456,21 @@ const DEFAULT_DATA = {
       {id:'hsbc',name:'HSBC',amount:0,period:'monthly',hint:'set balance and repayment amount',dueDay:null,paid:false},
       {id:'overdraft',name:'Overdraft',amount:0,period:'monthly',hint:'set repayment amount',dueDay:null,paid:false}
     ]}
-  ]
+  ],
+  savingsGoals:[
+    {id:'goal_emergency',name:'🛡️ Emergency Fund',target:5000,saved:0},
+    {id:'goal_holiday',name:'✈️ Holiday',target:3000,saved:0}
+  ],
+  netWorth:{
+    assets:[
+      {id:'nwa_savings',name:'Savings Account',amount:0},
+      {id:'nwa_car',name:'Car Value',amount:0}
+    ],
+    liabilities:[
+      {id:'nwl_cards',name:'Credit Cards',amount:0},
+      {id:'nwl_loan',name:'Personal Loan',amount:0}
+    ]
+  }
 };
 
 // ─── STATE ────────────────────────────────────────────────────
@@ -1470,6 +1636,149 @@ function renderInsights(){
     <div class="insight-desc">${ins.desc}</div>
   </div>`).join('');
 }
+
+// ─── PERIOD TRACKER ───────────────────────────────────────────
+function renderPeriodTracker(){
+  const el=document.getElementById('periodTracker');
+  if(!el)return;
+  const sym=CURRENCIES[currentCurrency]?.symbol||'$';
+  let totalBills=0,paidCount=0,overdueCount=0,totalExpense=0;
+  const today=new Date().getDate();
+  data.sections.forEach(sec=>{
+    if(sec.type==='income')return;
+    sec.rows.forEach(row=>{
+      if(!row.amount||Math.abs(row.amount)<0.01)return;
+      totalBills++;
+      totalExpense+=fromMonthly(toMonthly(row.amount,row.period),currentPeriod);
+      if(row.paid)paidCount++;
+      else if(row.dueDay&&row.dueDay<today)overdueCount++;
+    });
+  });
+  const paidPct=totalBills>0?Math.round((paidCount/totalBills)*100):0;
+  const paidCol=paidPct===100?'green':paidPct>=50?'yellow':'red';
+  const daysInMonth=new Date(new Date().getFullYear(),new Date().getMonth()+1,0).getDate();
+  const PERIOD_DAYS={weekly:7,fortnightly:14,monthly:daysInMonth,quarterly:90,yearly:365};
+  const pd=PERIOD_DAYS[currentPeriod]||30;
+  let dayPos=currentPeriod==='weekly'?(new Date().getDay()||7):currentPeriod==='fortnightly'?(((new Date().getDay()||7)-1)%14+1):today;
+  const daysLeft=Math.max(0,pd-dayPos);
+  const dayPct=Math.min(100,Math.round((dayPos/pd)*100));
+  const dayCol=dayPct<60?'cyan':dayPct<85?'yellow':'red';
+  const overdueHtml=overdueCount>0
+    ?`<div class="pt-block"><div class="pt-label">OVERDUE</div><div class="pt-value" style="color:var(--red)">${overdueCount} bill${overdueCount!==1?'s':''}</div><div class="pt-bar"><div class="pt-fill red" style="width:100%"></div></div></div>`:'';
+  el.innerHTML=`
+    <div class="pt-block">
+      <div class="pt-label">BILLS PAID THIS PERIOD</div>
+      <div class="pt-value">${paidCount} <span style="color:var(--muted);font-size:.72rem;font-weight:400">of ${totalBills}</span></div>
+      <div class="pt-bar"><div class="pt-fill ${paidCol}" style="width:${paidPct}%"></div></div>
+    </div>
+    <div class="pt-block">
+      <div class="pt-label">PERIOD PROGRESS</div>
+      <div class="pt-value">${dayPct}% <span style="color:var(--muted);font-size:.72rem;font-weight:400">${daysLeft} day${daysLeft!==1?'s':''} left</span></div>
+      <div class="pt-bar"><div class="pt-fill ${dayCol}" style="width:${dayPct}%"></div></div>
+    </div>
+    <div class="pt-block">
+      <div class="pt-label">TOTAL EXPENSES · ${currentPeriod.toUpperCase()}</div>
+      <div class="pt-value">${sym}${fmtN(totalExpense)}</div>
+      <div class="pt-bar"><div class="pt-fill cyan" style="width:100%"></div></div>
+    </div>
+    ${overdueHtml}`;
+}
+
+// ─── UPCOMING BILLS ───────────────────────────────────────────
+function renderUpcomingBills(){
+  const wrap=document.getElementById('upcomingWrap');
+  const cards=document.getElementById('upcomingCards');
+  if(!wrap||!cards)return;
+  const sym=CURRENCIES[currentCurrency]?.symbol||'$';
+  const today=new Date().getDate();
+  const suffix=['th','st','nd','rd'];
+  const upcoming=[];
+  data.sections.forEach(sec=>{
+    if(sec.type==='income')return;
+    sec.rows.forEach(row=>{
+      if(!row.dueDay||row.paid||!row.amount||Math.abs(row.amount)<0.01)return;
+      const daysUntil=row.dueDay-today;
+      upcoming.push({name:row.name,amount:row.amount,period:row.period,dueDay:row.dueDay,daysUntil,isOverdue:daysUntil<0});
+    });
+  });
+  upcoming.sort((a,b)=>a.isOverdue===b.isOverdue?a.daysUntil-b.daysUntil:(a.isOverdue?-1:1));
+  const top=upcoming.slice(0,4);
+  if(!top.length){wrap.style.display='none';return;}
+  wrap.style.display='block';
+  cards.innerHTML=top.map(b=>{
+    const v=b.dueDay%100;const sfx=(v>=11&&v<=13)?'th':(suffix[b.dueDay%10]||'th');
+    const cls=b.isOverdue?'overdue':b.daysUntil<=3?'soon':'';
+    const dueText=b.isOverdue?`${-b.daysUntil} day${-b.daysUntil!==1?'s':''} overdue`
+      :`Due ${b.dueDay}${sfx}${b.daysUntil===0?' — today':b.daysUntil===1?' — tomorrow':''}`;
+    const amt=fromMonthly(toMonthly(b.amount,b.period),'monthly');
+    return `<div class="upcoming-card ${cls}"><div class="uc-name">${b.name}</div><div class="uc-amount">${sym}${fmtN(amt)}</div><div class="uc-due ${cls}">${dueText}</div></div>`;
+  }).join('');
+}
+
+// ─── NET WORTH TRACKER ────────────────────────────────────────
+const SNAPSHOT_KEY='clarity_nw_snapshots';
+function renderNetWorth(){
+  if(!data.netWorth)data.netWorth={assets:[],liabilities:[]};
+  const sym=CURRENCIES[currentCurrency]?.symbol||'$';
+  const totalA=data.netWorth.assets.reduce((s,r)=>s+(parseFloat(r.amount)||0),0);
+  const totalL=data.netWorth.liabilities.reduce((s,r)=>s+(parseFloat(r.amount)||0),0);
+  const nw=totalA-totalL;
+  const tot=document.getElementById('networthTotal');
+  if(tot){tot.textContent=(nw<0?'−':'')+sym+fmtN(Math.abs(nw));tot.className='networth-total '+(nw>=0?'pos':'neg');}
+  const mkRows=(items,type)=>items.map((r,i)=>`<div class="nw-row">
+    <input class="nw-name" type="text" value="${r.name.replace(/"/g,'&quot;')}" placeholder="Name" onchange="updateNWRow('${type}',${i},'name',this.value)"/>
+    <input class="nw-amount" type="number" value="${r.amount||''}" placeholder="0" min="0" step="any" onchange="updateNWRow('${type}',${i},'amount',this.value)"/>
+    <button class="nw-del" onclick="deleteNWRow('${type}',${i})">✕</button>
+  </div>`).join('');
+  const al=document.getElementById('assetsList');const ll=document.getElementById('liabilitiesList');
+  const at=document.getElementById('assetsTotal');const lt=document.getElementById('liabilitiesTotal');
+  if(al)al.innerHTML=mkRows(data.netWorth.assets,'assets');
+  if(ll)ll.innerHTML=mkRows(data.netWorth.liabilities,'liabilities');
+  if(at)at.innerHTML=`ASSETS · ${sym}${fmtN(totalA)}`;
+  if(lt)lt.innerHTML=`LIABILITIES · ${sym}${fmtN(totalL)}`;
+  // Snapshot history
+  const hist=document.getElementById('nwHistory');
+  if(hist){
+    const snaps=JSON.parse(localStorage.getItem(SNAPSHOT_KEY)||'{}');
+    const keys=Object.keys(snaps).sort().slice(-6);
+    if(keys.length){
+      hist.innerHTML='<span style="font-size:.58rem;letter-spacing:1.5px;color:var(--muted);margin-right:10px;">HISTORY</span>'
+        +keys.map(k=>`<span style="margin-right:12px;">${k}: <b style="color:var(--accent2)">${sym}${fmtN(snaps[k])}</b></span>`).join('');
+    }else{hist.innerHTML='<span style="font-size:.62rem;color:var(--muted)">No snapshots yet — click 📸 SAVE SNAPSHOT to record today\'s net worth.</span>';}
+  }
+}
+function addNWRow(type){
+  if(!data.netWorth)data.netWorth={assets:[],liabilities:[]};
+  data.netWorth[type].push({id:'nw_'+Date.now(),name:'',amount:0});
+  save();renderNetWorth();
+}
+function updateNWRow(type,idx,field,val){
+  if(!data.netWorth||!data.netWorth[type]||!data.netWorth[type][idx])return;
+  data.netWorth[type][idx][field]=field==='amount'?(parseFloat(val)||0):val;
+  save();renderNetWorth();
+}
+function deleteNWRow(type,idx){
+  if(!data.netWorth||!data.netWorth[type])return;
+  data.netWorth[type].splice(idx,1);
+  save();renderNetWorth();
+}
+function saveSnapshot(){
+  if(!data.netWorth)return;
+  const totalA=data.netWorth.assets.reduce((s,r)=>s+(parseFloat(r.amount)||0),0);
+  const totalL=data.netWorth.liabilities.reduce((s,r)=>s+(parseFloat(r.amount)||0),0);
+  const nw=totalA-totalL;
+  const snaps=JSON.parse(localStorage.getItem(SNAPSHOT_KEY)||'{}');
+  const now=new Date();
+  const key=`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
+  snaps[key]=nw;
+  localStorage.setItem(SNAPSHOT_KEY,JSON.stringify(snaps));
+  renderNetWorth();
+  const btn=document.querySelector('.networth-snapshot-btn');
+  if(btn){const orig=btn.textContent;btn.textContent='✓ SAVED';setTimeout(()=>btn.textContent=orig,2000);}
+}
+
+// ─── PDF EXPORT ───────────────────────────────────────────────
+function exportPDF(){window.print();}
 
 // ─── JSONBIN.IO SYNC ──────────────────────────────────────────
 const SYNC_BIN_KEY=_SYNC_INST_BIN;
@@ -1723,6 +2032,9 @@ function render(){
   updateCharts(sectionTotals,totalIncome,totalExpense,balance);
   renderInsights();
   renderGoals();
+  renderPeriodTracker();
+  renderUpcomingBills();
+  renderNetWorth();
   _firstRender=false;
 }
 
