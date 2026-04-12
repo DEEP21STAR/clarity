@@ -24,7 +24,7 @@
   body{background:var(--bg);color:var(--text);font-family:'Segoe UI',Consolas,monospace;min-height:100vh;padding:20px;}
 
   /* ── PIN GATE ── */
-  .pin-gate{position:fixed;inset:0;background:var(--bg);z-index:1000;display:flex;align-items:center;justify-content:center;}
+  .pin-gate{display:none!important;}
   .pin-box{text-align:center;padding:40px 32px;background:var(--panel);border:1px solid var(--border);border-radius:20px;min-width:300px;box-shadow:0 0 60px rgba(192,64,255,0.15);}
   .pin-logo{display:flex;justify-content:center;margin-bottom:10px;filter:drop-shadow(0 0 10px rgba(16,216,255,0.55)) drop-shadow(0 0 24px rgba(192,64,255,0.3));animation:pinLogoGlow 3.5s ease-in-out infinite;}
   @keyframes pinLogoGlow{0%,100%{filter:drop-shadow(0 0 8px rgba(16,216,255,.55)) drop-shadow(0 0 20px rgba(192,64,255,.28));}50%{filter:drop-shadow(0 0 18px rgba(16,216,255,.9)) drop-shadow(0 0 44px rgba(192,64,255,.55));}}
@@ -658,7 +658,7 @@
 </div>
 
 <!-- ── MAIN APP ── -->
-<div id="appWrap" style="display:none;">
+<div id="appWrap" style="display:block;">
 
 <!-- ── CLARITY NAV ── -->
 <nav class="clarity-nav">
@@ -2450,6 +2450,7 @@ function savePinChange(){
 
 // ─── CSV DROP ZONE EVENTS ────────────────────────────────────
 document.addEventListener('DOMContentLoaded',()=>{
+  syncLoad(); // PIN removed — load data directly
   const zone=document.getElementById('csvDropZone');
   if(zone){
     zone.addEventListener('dragover',e=>{e.preventDefault();zone.classList.add('drag-over');});
