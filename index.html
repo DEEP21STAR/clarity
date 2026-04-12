@@ -5,6 +5,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Clarity — by Whetū Digital</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script src="https://accounts.google.com/gsi/client" async defer></script>
 <style>
   :root {
     --bg: #10101f; --panel: #181830; --panel2: #1e1e3a; --border: #2a2a50;
@@ -366,6 +369,139 @@
     box-shadow:0 6px 24px rgba(0,0,0,.55),0 0 14px rgba(16,216,255,.12);
     pointer-events:none;max-width:230px;opacity:0;transition:opacity .18s;white-space:normal;}
   .tip-balloon.tip-show{opacity:1;}
+
+  /* ── VIEW NAV ── */
+  .clarity-nav{display:flex;justify-content:center;gap:5px;max-width:1200px;margin:0 auto 22px;background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:6px;flex-wrap:wrap;}
+  .clarity-tab{padding:8px 20px;border:none;border-radius:8px;background:transparent;color:var(--muted);font-size:0.72rem;font-weight:700;letter-spacing:1.5px;cursor:pointer;transition:all .2s;font-family:inherit;}
+  .clarity-tab:hover{color:var(--text);background:rgba(255,255,255,.05);}
+  .clarity-tab.active{background:linear-gradient(135deg,var(--accent2),#0088cc);color:#fff;box-shadow:0 2px 14px rgba(16,216,255,.35);}
+  .view-panel{display:none;}
+  .view-panel.active{display:block;}
+
+  /* ── COUNTRY TOGGLE ── */
+  .country-toggle{display:flex;border:1px solid var(--border);border-radius:8px;overflow:hidden;}
+  .country-btn{padding:7px 16px;border:none;background:var(--panel2);color:var(--muted);font-size:0.72rem;font-weight:700;letter-spacing:1px;cursor:pointer;transition:all .2s;font-family:inherit;}
+  .country-btn.active{background:var(--accent2);color:#fff;}
+
+  /* ── CALCULATOR ── */
+  .calc-container{max-width:900px;margin:0 auto;padding:0 0 40px;}
+  .calc-tabs{display:flex;gap:6px;margin-bottom:18px;flex-wrap:wrap;}
+  .calc-tab{padding:7px 15px;border:1px solid var(--border);border-radius:8px;background:var(--panel);color:var(--muted);font-size:0.7rem;font-weight:700;letter-spacing:1px;cursor:pointer;transition:all .2s;font-family:inherit;}
+  .calc-tab.active{border-color:var(--accent2);color:var(--accent2);background:rgba(16,216,255,.08);}
+  .calc-panel{display:none;background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:24px;}
+  .calc-panel.active{display:block;}
+  .calc-row{display:flex;align-items:center;gap:12px;margin-bottom:14px;flex-wrap:wrap;}
+  .calc-label{font-size:.65rem;letter-spacing:1.5px;color:var(--muted);text-transform:uppercase;min-width:160px;}
+  .calc-input{flex:1;min-width:120px;background:var(--input-bg);border:1px solid var(--border);border-radius:7px;color:var(--text);font-size:.95rem;padding:9px 12px;font-family:inherit;outline:none;transition:border-color .2s;}
+  .calc-input:focus{border-color:var(--accent2);}
+  .calc-select{flex:1;min-width:140px;background:var(--input-bg);border:1px solid var(--border);border-radius:7px;color:var(--text);font-size:.85rem;padding:9px 12px;font-family:inherit;outline:none;cursor:pointer;}
+  .calc-result-box{background:var(--panel2);border:1px solid var(--border);border-radius:10px;padding:18px 20px;margin-top:20px;}
+  .calc-result-row{display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid rgba(42,42,80,.6);}
+  .calc-result-row:last-child{border-bottom:none;}
+  .calc-result-label{font-size:.7rem;color:var(--muted);letter-spacing:.5px;}
+  .calc-result-value{font-size:.88rem;font-weight:700;color:var(--text);}
+  .calc-result-value.good{color:var(--green);}
+  .calc-result-value.warn{color:var(--orange);}
+  .calc-result-value.bad{color:var(--red);}
+  .calc-result-value.accent{color:var(--accent2);}
+  .calc-result-total{font-size:1.05rem;font-weight:700;color:var(--accent2);border-top:2px solid var(--border);padding-top:12px;margin-top:8px;display:flex;justify-content:space-between;align-items:center;}
+  .calc-bracket-table{width:100%;border-collapse:collapse;font-size:.72rem;margin-bottom:14px;}
+  .calc-bracket-table th{background:var(--panel);color:var(--muted);padding:5px 10px;text-align:left;font-size:.6rem;letter-spacing:1px;border-bottom:1px solid var(--border);}
+  .calc-bracket-table td{padding:5px 10px;border-bottom:1px solid rgba(42,42,80,.4);}
+  .calc-bracket-table tr.active-bracket td{color:#fff;background:rgba(16,216,255,.07);}
+  .calc-rates-note{font-size:.6rem;color:var(--muted);margin-top:10px;text-align:center;opacity:.75;line-height:1.6;}
+  .calc-gst-toggle{display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;}
+  .calc-gst-btn{padding:7px 14px;border:1px solid var(--border);border-radius:6px;background:var(--panel2);color:var(--muted);font-size:.7rem;font-weight:700;letter-spacing:1px;cursor:pointer;transition:all .2s;font-family:inherit;}
+  .calc-gst-btn.active{border-color:var(--accent2);color:var(--accent2);background:rgba(16,216,255,.07);}
+  .calc-yoy-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;}
+  @media(max-width:600px){.calc-yoy-grid{grid-template-columns:1fr;}}
+  .calc-yoy-col{background:var(--panel2);border:1px solid var(--border);border-radius:10px;padding:16px;}
+  .calc-yoy-title{font-size:.65rem;letter-spacing:2px;color:var(--muted);margin-bottom:12px;text-transform:uppercase;}
+  .calc-compare-table{width:100%;border-collapse:collapse;font-size:.78rem;border-radius:10px;overflow:hidden;}
+  .calc-compare-table th{background:rgba(16,216,255,.1);color:var(--accent2);padding:8px 12px;text-align:left;font-size:.6rem;letter-spacing:1.5px;text-transform:uppercase;}
+  .calc-compare-table td{padding:8px 12px;border-bottom:1px solid rgba(42,42,80,.4);}
+  .calc-compare-table td.better{color:var(--green);}
+  .calc-compare-table td.worse{color:var(--red);}
+  .calc-compare-table td.same{color:var(--muted);}
+
+  /* ── RECEIPTS ── */
+  .receipts-container{max-width:1000px;margin:0 auto;padding:0 0 40px;}
+  .receipts-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:12px;}
+  .receipt-upload-zone{border:2px dashed var(--border);border-radius:14px;padding:32px 20px;text-align:center;cursor:pointer;transition:all .2s;margin-bottom:20px;}
+  .receipt-upload-zone:hover,.receipt-upload-zone.drag-over{border-color:var(--accent2);background:rgba(16,216,255,.04);}
+  .receipt-upload-icon{font-size:2.4rem;margin-bottom:8px;}
+  .receipt-upload-text{font-size:.88rem;color:var(--text);margin-bottom:4px;}
+  .receipt-upload-sub{font-size:.68rem;color:var(--muted);}
+  .receipt-form{background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:22px;margin-bottom:20px;display:none;}
+  .receipt-form.open{display:block;}
+  .receipt-form-title{font-size:.72rem;letter-spacing:2px;color:var(--accent2);margin-bottom:16px;font-weight:700;}
+  .receipt-form-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px;}
+  @media(max-width:600px){.receipt-form-grid{grid-template-columns:1fr;}}
+  .receipt-field{display:flex;flex-direction:column;gap:4px;}
+  .receipt-field.full{grid-column:1/-1;}
+  .receipt-field label{font-size:.6rem;letter-spacing:1.5px;color:var(--muted);text-transform:uppercase;}
+  .receipt-field input,.receipt-field select,.receipt-field textarea{background:var(--input-bg);border:1px solid var(--border);border-radius:7px;color:var(--text);font-size:.85rem;padding:8px 11px;font-family:inherit;outline:none;transition:border-color .2s;}
+  .receipt-field input:focus,.receipt-field select:focus,.receipt-field textarea:focus{border-color:var(--accent2);}
+  .receipt-field textarea{resize:vertical;min-height:70px;}
+  .receipt-preview-wrap{grid-column:1/-1;background:var(--panel2);border:1px solid var(--border);border-radius:10px;min-height:120px;display:flex;align-items:center;justify-content:center;overflow:hidden;}
+  .receipt-preview-img{max-width:100%;max-height:260px;object-fit:contain;border-radius:8px;}
+  .receipt-preview-empty{font-size:.72rem;color:var(--muted);text-align:center;padding:20px;}
+  .tax-toggle{display:flex;align-items:center;gap:10px;}
+  .tax-toggle-switch{width:38px;height:20px;border-radius:12px;background:var(--border);cursor:pointer;position:relative;transition:background .2s;flex-shrink:0;}
+  .tax-toggle-switch.on{background:var(--green);}
+  .tax-toggle-thumb{width:16px;height:16px;border-radius:50%;background:#fff;position:absolute;top:2px;left:2px;transition:left .2s;pointer-events:none;}
+  .tax-toggle-switch.on .tax-toggle-thumb{left:20px;}
+  .receipt-list-title{font-size:.62rem;letter-spacing:2.5px;color:var(--muted);text-transform:uppercase;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;}
+  .receipt-cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px;}
+  .receipt-card{background:var(--panel);border:1px solid var(--border);border-radius:12px;overflow:hidden;transition:border-color .2s;position:relative;}
+  .receipt-card:hover{border-color:var(--accent2);}
+  .receipt-card-thumb{height:90px;background:var(--panel2);display:flex;align-items:center;justify-content:center;font-size:2rem;overflow:hidden;}
+  .receipt-card-thumb img{width:100%;height:100%;object-fit:cover;}
+  .receipt-card-body{padding:12px 14px;}
+  .receipt-card-merchant{font-size:.88rem;font-weight:700;color:var(--text);margin-bottom:2px;}
+  .receipt-card-meta{display:flex;justify-content:space-between;font-size:.65rem;color:var(--muted);margin-bottom:6px;}
+  .receipt-card-amount{font-size:1.05rem;font-weight:700;color:var(--accent2);}
+  .receipt-card-tags{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px;}
+  .receipt-tag{font-size:.58rem;padding:2px 8px;border-radius:4px;letter-spacing:.5px;font-weight:700;}
+  .receipt-tag.deductible{background:rgba(0,255,153,.12);color:var(--green);border:1px solid rgba(0,255,153,.25);}
+  .receipt-tag.non-deductible{background:rgba(128,128,184,.08);color:var(--muted);border:1px solid rgba(128,128,184,.2);}
+  .receipt-tag.cat{background:rgba(16,216,255,.08);color:var(--accent2);border:1px solid rgba(16,216,255,.2);}
+  .receipt-tag.warranty{background:rgba(255,170,0,.1);color:var(--orange);border:1px solid rgba(255,170,0,.25);}
+  .receipt-card-del{position:absolute;top:8px;right:8px;background:rgba(0,0,0,.55);border:none;color:#fff;font-size:.7rem;border-radius:4px;padding:2px 7px;cursor:pointer;opacity:0;transition:opacity .2s;}
+  .receipt-card:hover .receipt-card-del{opacity:1;}
+  .receipt-empty{text-align:center;padding:40px 20px;color:var(--muted);font-size:.82rem;grid-column:1/-1;}
+  .receipt-empty-icon{font-size:2.5rem;margin-bottom:12px;}
+  .export-tax-btn{background:linear-gradient(135deg,var(--accent2),#0088cc);border:none;border-radius:8px;color:#fff;font-size:.72rem;font-weight:700;letter-spacing:1px;padding:9px 20px;cursor:pointer;font-family:inherit;transition:opacity .2s;}
+  .export-tax-btn:hover{opacity:.85;}
+
+  /* ── CLOUD BACKUP ── */
+  .backup-container{max-width:800px;margin:0 auto;padding:0 0 40px;}
+  .backup-section-title{font-size:.62rem;letter-spacing:2.5px;color:var(--muted);text-transform:uppercase;margin-bottom:16px;padding-bottom:8px;border-bottom:1px solid var(--border);}
+  .backup-options{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:28px;}
+  @media(max-width:600px){.backup-options{grid-template-columns:1fr;}}
+  .backup-card{background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:20px;text-align:center;transition:border-color .2s;}
+  .backup-card:hover{border-color:var(--accent2);}
+  .backup-card-icon{font-size:2rem;margin-bottom:10px;}
+  .backup-card-title{font-size:.85rem;font-weight:700;color:var(--text);margin-bottom:4px;}
+  .backup-card-desc{font-size:.68rem;color:var(--muted);line-height:1.55;margin-bottom:14px;}
+  .backup-card-btn{padding:8px 18px;border-radius:7px;border:1px solid var(--accent2);background:transparent;color:var(--accent2);font-size:.7rem;font-weight:700;letter-spacing:1px;cursor:pointer;font-family:inherit;transition:all .2s;display:inline-block;margin-bottom:6px;}
+  .backup-card-btn:hover{background:rgba(16,216,255,.1);}
+  .backup-card-btn.primary{background:linear-gradient(135deg,var(--accent2),#0088cc);border:none;color:#fff;}
+  .backup-card-btn.connected{background:rgba(0,255,153,.15);border-color:rgba(0,255,153,.4);color:var(--green);}
+  .backup-status{font-size:.62rem;color:var(--muted);margin-top:6px;}
+  .backup-guide{margin-bottom:6px;}
+  .backup-guide-title{font-size:.78rem;font-weight:700;color:var(--text);display:flex;align-items:center;gap:8px;cursor:pointer;padding:10px 14px;background:var(--panel);border:1px solid var(--border);border-radius:8px;transition:border-color .2s;user-select:none;}
+  .backup-guide-title:hover{border-color:var(--muted);}
+  .guide-arrow{transition:transform .2s;margin-left:auto;font-size:.7rem;}
+  .backup-guide-title.open .guide-arrow{transform:rotate(90deg);}
+  .backup-guide-body{background:var(--panel2);border:1px solid var(--border);border-top:none;border-radius:0 0 8px 8px;padding:16px 18px;display:none;font-size:.78rem;color:var(--muted);line-height:1.8;}
+  .backup-guide-body.open{display:block;}
+  .backup-guide-step{display:flex;gap:12px;margin-bottom:10px;align-items:flex-start;}
+  .backup-guide-step:last-child{margin-bottom:0;}
+  .backup-guide-num{background:var(--accent2);color:#fff;font-size:.62rem;font-weight:700;width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:2px;}
+  .gdrive-status{font-size:.72rem;padding:7px 12px;border-radius:6px;margin-top:8px;display:none;}
+  .gdrive-status.connected{display:block;background:rgba(0,255,153,.1);color:var(--green);border:1px solid rgba(0,255,153,.25);}
+  .gdrive-status.error{display:block;background:rgba(255,85,119,.1);color:var(--red);border:1px solid rgba(255,85,119,.25);}
 </style>
 </head>
 <body>
@@ -429,6 +565,17 @@
 
 <!-- ── MAIN APP ── -->
 <div id="appWrap" style="display:none;">
+
+<!-- ── CLARITY NAV ── -->
+<nav class="clarity-nav">
+  <button class="clarity-tab active" onclick="switchView('dash')" data-tip="Your budget dashboard — income, expenses, charts and insights">📊 DASHBOARD</button>
+  <button class="clarity-tab" onclick="switchView('calc')" data-tip="Tax calculators for NZ & Australia — income tax, GST, returns, year-on-year">🧮 CALCULATOR</button>
+  <button class="clarity-tab" onclick="switchView('receipts')" data-tip="Capture and store receipts for tax deductions — camera or file upload">📷 RECEIPTS</button>
+  <button class="clarity-tab" onclick="switchView('backup')" data-tip="Back up your data to Google Drive or download a ZIP — never lose your data">☁ BACKUP</button>
+</nav>
+
+<!-- ── DASHBOARD VIEW ── -->
+<div id="dashView" class="view-panel active">
 
 <!-- Demo banner (shown only in demo mode) -->
 <div class="demo-banner" id="demoBanner">
@@ -680,6 +827,348 @@
   <span style="margin:0 8px;opacity:0.4;">·</span>
   Built with care for <span id="clientName" class="client-name">Mimi</span>
 </div>
+
+</div><!-- /dashView -->
+
+<!-- ══════════════════════════════════════════════════════════════ -->
+<!-- CALCULATOR VIEW                                                -->
+<!-- ══════════════════════════════════════════════════════════════ -->
+<div id="calcView" class="view-panel">
+  <div class="calc-container">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:12px;">
+      <div>
+        <h2 style="font-size:1rem;font-weight:700;letter-spacing:3px;color:var(--accent2);">🧮 FINANCIAL CALCULATOR</h2>
+        <p style="font-size:.68rem;color:var(--muted);margin-top:4px;">2024/25 tax rates · NZ (IRD) and Australia (ATO)</p>
+      </div>
+      <div class="country-toggle" data-tip="Switch between New Zealand and Australia tax rules">
+        <button class="country-btn active" id="countryNZ" onclick="setCalcCountry('NZ')">🇳🇿 NEW ZEALAND</button>
+        <button class="country-btn" id="countryAU" onclick="setCalcCountry('AU')">🇦🇺 AUSTRALIA</button>
+      </div>
+    </div>
+    <div class="calc-tabs">
+      <button class="calc-tab active" onclick="setCalcTab('income')" data-tip="Calculate your take-home pay after income tax">INCOME TAX</button>
+      <button class="calc-tab" onclick="setCalcTab('gst')" data-tip="Add or remove GST from any amount">GST</button>
+      <button class="calc-tab" onclick="setCalcTab('return')" data-tip="Estimate your tax refund or amount owing">TAX RETURN</button>
+      <button class="calc-tab" onclick="setCalcTab('yoy')" data-tip="Compare two tax years side by side">YEAR-ON-YEAR</button>
+      <button class="calc-tab" onclick="setCalcTab('super')" data-tip="KiwiSaver (NZ) and Superannuation (AUS) contribution calculator">SUPER / KIWISAVER</button>
+    </div>
+
+    <!-- Income Tax -->
+    <div class="calc-panel active" id="calcIncome">
+      <div class="calc-row">
+        <span class="calc-label">GROSS ANNUAL INCOME</span>
+        <input class="calc-input" type="number" id="calcGrossIncome" placeholder="e.g. 75000" oninput="calcIncomeTax()" min="0" />
+      </div>
+      <div class="calc-row" id="calcStudentRow">
+        <span class="calc-label">STUDENT LOAN</span>
+        <select class="calc-select" id="calcStudentLoan" onchange="calcIncomeTax()">
+          <option value="0">No student loan</option>
+          <option value="1">Yes — include repayments (12% above $22,828)</option>
+        </select>
+      </div>
+      <div class="calc-row" id="calcKiwiRow">
+        <span class="calc-label">KIWISAVER RATE</span>
+        <select class="calc-select" id="calcKiwiRate" onchange="calcIncomeTax()">
+          <option value="0">Not enrolled</option>
+          <option value="3" selected>3%</option>
+          <option value="4">4%</option>
+          <option value="6">6%</option>
+          <option value="8">8%</option>
+          <option value="10">10%</option>
+        </select>
+      </div>
+      <div class="calc-row" id="calcSuperRow" style="display:none;">
+        <span class="calc-label">MEDICARE LEVY</span>
+        <select class="calc-select" id="calcMedicare" onchange="calcIncomeTax()">
+          <option value="1" selected>Yes — include 2% Medicare levy</option>
+          <option value="0">No</option>
+        </select>
+      </div>
+      <div class="calc-result-box" id="calcIncomeTaxResult" style="display:none;">
+        <table class="calc-bracket-table" id="calcBracketTable"></table>
+        <div id="calcIncomeSummary"></div>
+        <p class="calc-rates-note" id="calcRatesNote"></p>
+      </div>
+    </div>
+
+    <!-- GST -->
+    <div class="calc-panel" id="calcGst">
+      <div class="calc-gst-toggle">
+        <button class="calc-gst-btn active" id="gstAddBtn" onclick="setGstMode('add')">ADD GST (excl → incl) · 15%</button>
+        <button class="calc-gst-btn" id="gstRemoveBtn" onclick="setGstMode('remove')">REMOVE GST (incl → excl) · 15%</button>
+      </div>
+      <div class="calc-row">
+        <span class="calc-label" id="gstAmountLabel">AMOUNT (excl. GST)</span>
+        <input class="calc-input" type="number" id="calcGstAmount" placeholder="e.g. 100.00" oninput="calcGst()" min="0" step="0.01" />
+      </div>
+      <div class="calc-result-box" id="calcGstResult" style="display:none;"></div>
+    </div>
+
+    <!-- Tax Return -->
+    <div class="calc-panel" id="calcReturn">
+      <div id="calcReturnCountryNote" style="font-size:.7rem;color:var(--muted);margin-bottom:16px;line-height:1.6;padding:10px 14px;background:rgba(16,216,255,.05);border-radius:8px;border:1px solid rgba(16,216,255,.15);">🇳🇿 New Zealand · Tax year: 1 Apr – 31 Mar · Rates per IRD 2024/25 · PAYE deducted at source</div>
+      <div class="calc-row">
+        <span class="calc-label">TOTAL ANNUAL INCOME</span>
+        <input class="calc-input" type="number" id="calcReturnIncome" placeholder="e.g. 75000" oninput="calcTaxReturn()" min="0" />
+      </div>
+      <div class="calc-row">
+        <span class="calc-label">TAX WITHHELD (PAYE/PAYG)</span>
+        <input class="calc-input" type="number" id="calcReturnTaxPaid" placeholder="e.g. 18000" oninput="calcTaxReturn()" min="0" />
+      </div>
+      <div class="calc-row">
+        <span class="calc-label">TOTAL DEDUCTIONS</span>
+        <input class="calc-input" type="number" id="calcReturnDeductions" placeholder="e.g. 2000 (work expenses, donations...)" oninput="calcTaxReturn()" min="0" />
+      </div>
+      <div class="calc-result-box" id="calcReturnResult" style="display:none;"></div>
+    </div>
+
+    <!-- Year-on-Year -->
+    <div class="calc-panel" id="calcYoy">
+      <div class="calc-yoy-grid">
+        <div class="calc-yoy-col">
+          <div class="calc-yoy-title">YEAR 1 · <span id="yoyYear1Label">2022/23</span></div>
+          <div class="calc-row" style="margin-bottom:10px;"><span class="calc-label">GROSS INCOME</span><input class="calc-input" type="number" id="yoy1Income" placeholder="75000" oninput="calcYoy()" min="0" /></div>
+          <div class="calc-row" style="margin-bottom:10px;"><span class="calc-label">DEDUCTIONS</span><input class="calc-input" type="number" id="yoy1Deductions" placeholder="0" oninput="calcYoy()" min="0" /></div>
+          <div class="calc-row" style="margin-bottom:0;"><span class="calc-label">TAX WITHHELD</span><input class="calc-input" type="number" id="yoy1TaxPaid" placeholder="0" oninput="calcYoy()" min="0" /></div>
+        </div>
+        <div class="calc-yoy-col">
+          <div class="calc-yoy-title">YEAR 2 · <span id="yoyYear2Label">2023/24</span></div>
+          <div class="calc-row" style="margin-bottom:10px;"><span class="calc-label">GROSS INCOME</span><input class="calc-input" type="number" id="yoy2Income" placeholder="80000" oninput="calcYoy()" min="0" /></div>
+          <div class="calc-row" style="margin-bottom:10px;"><span class="calc-label">DEDUCTIONS</span><input class="calc-input" type="number" id="yoy2Deductions" placeholder="0" oninput="calcYoy()" min="0" /></div>
+          <div class="calc-row" style="margin-bottom:0;"><span class="calc-label">TAX WITHHELD</span><input class="calc-input" type="number" id="yoy2TaxPaid" placeholder="0" oninput="calcYoy()" min="0" /></div>
+        </div>
+      </div>
+      <div class="calc-result-box" id="calcYoyResult" style="display:none;"></div>
+    </div>
+
+    <!-- Super / KiwiSaver -->
+    <div class="calc-panel" id="calcSuper">
+      <div class="calc-row">
+        <span class="calc-label">GROSS ANNUAL SALARY</span>
+        <input class="calc-input" type="number" id="calcSuperSalary" placeholder="e.g. 75000" oninput="calcSuperKiwi()" min="0" />
+      </div>
+      <div class="calc-row" id="kiwiRateRow">
+        <span class="calc-label">EMPLOYEE RATE</span>
+        <select class="calc-select" id="calcSuperEmployeeRate" onchange="calcSuperKiwi()">
+          <option value="3" selected>3%</option>
+          <option value="4">4%</option>
+          <option value="6">6%</option>
+          <option value="8">8%</option>
+          <option value="10">10%</option>
+        </select>
+      </div>
+      <div class="calc-row" id="superRateRow" style="display:none;">
+        <span class="calc-label">EMPLOYER RATE</span>
+        <select class="calc-select" id="calcSuperEmployerRate" onchange="calcSuperKiwi()">
+          <option value="11.5" selected>11.5% (2024/25)</option>
+          <option value="12">12% (2025/26+)</option>
+        </select>
+      </div>
+      <div class="calc-result-box" id="calcSuperResult" style="display:none;"></div>
+    </div>
+  </div>
+</div><!-- /calcView -->
+
+<!-- ══════════════════════════════════════════════════════════════ -->
+<!-- RECEIPTS VIEW                                                   -->
+<!-- ══════════════════════════════════════════════════════════════ -->
+<div id="receiptsView" class="view-panel">
+  <div class="receipts-container">
+    <div class="receipts-header">
+      <div>
+        <h2 style="font-size:1rem;font-weight:700;letter-spacing:3px;color:var(--accent2);">📷 RECEIPT CAPTURE</h2>
+        <p style="font-size:.68rem;color:var(--muted);margin-top:4px;">Photo or file upload · Warranty tracking · Tax deductions for NZ & AUS</p>
+      </div>
+      <button class="export-tax-btn" onclick="exportTaxSummary()" data-tip="Generate a printable tax deduction summary — ready to hand to your accountant">📄 Export Tax Summary</button>
+    </div>
+
+    <!-- Upload zone -->
+    <div class="receipt-upload-zone" id="receiptDropZone" onclick="document.getElementById('receiptFileInput').click()" data-tip="Tap to take a photo or choose a file from your device">
+      <div class="receipt-upload-icon">📷</div>
+      <div class="receipt-upload-text">Tap to take a photo or choose a file</div>
+      <div class="receipt-upload-sub">Supports JPG · PNG · PDF · Camera works on iPhone & Android</div>
+    </div>
+    <input type="file" id="receiptFileInput" accept="image/*,application/pdf" capture="environment" style="display:none" onchange="handleReceiptFile(this)">
+
+    <!-- Receipt entry form -->
+    <div class="receipt-form" id="receiptForm">
+      <div class="receipt-form-title">📋 RECEIPT DETAILS</div>
+      <div class="receipt-form-grid">
+        <div class="receipt-field full">
+          <label>RECEIPT IMAGE / PDF PREVIEW</label>
+          <div class="receipt-preview-wrap" id="receiptPreviewWrap">
+            <div class="receipt-preview-empty">No file selected</div>
+          </div>
+        </div>
+        <div class="receipt-field">
+          <label>MERCHANT / SUPPLIER *</label>
+          <input type="text" id="rfMerchant" placeholder="e.g. Bunnings, Officeworks" />
+        </div>
+        <div class="receipt-field">
+          <label>AMOUNT *</label>
+          <input type="number" id="rfAmount" placeholder="0.00" min="0" step="0.01" />
+        </div>
+        <div class="receipt-field">
+          <label>DATE</label>
+          <input type="date" id="rfDate" />
+        </div>
+        <div class="receipt-field">
+          <label>CATEGORY</label>
+          <select id="rfCategory">
+            <option>Office &amp; Stationery</option>
+            <option>Equipment &amp; Tools</option>
+            <option>Vehicle &amp; Travel</option>
+            <option>Meals &amp; Entertainment</option>
+            <option>Utilities &amp; Services</option>
+            <option>Health &amp; Medical</option>
+            <option>Clothing &amp; Uniform</option>
+            <option>Education &amp; Training</option>
+            <option>Software &amp; Subscriptions</option>
+            <option>Home Office</option>
+            <option>Other</option>
+          </select>
+        </div>
+        <div class="receipt-field">
+          <label>GST INCLUDED?</label>
+          <select id="rfGstIncluded">
+            <option value="yes">Yes — GST included in amount</option>
+            <option value="no">No — amount is ex-GST</option>
+            <option value="exempt">GST exempt / not applicable</option>
+          </select>
+        </div>
+        <div class="receipt-field">
+          <label>WARRANTY EXPIRY (optional)</label>
+          <input type="date" id="rfWarranty" />
+        </div>
+        <div class="receipt-field" style="justify-content:flex-end;">
+          <label>TAX DEDUCTIBLE?</label>
+          <div class="tax-toggle" style="margin-top:8px;">
+            <div class="tax-toggle-switch" id="rfDeductibleSwitch" onclick="toggleDeductible()" data-tip="Mark this receipt as a tax-deductible expense — it will appear in your Tax Summary export">
+              <div class="tax-toggle-thumb"></div>
+            </div>
+            <span id="rfDeductibleLabel" style="font-size:.78rem;color:var(--muted);">No</span>
+          </div>
+        </div>
+        <div class="receipt-field full">
+          <label>DESCRIPTION / NOTES</label>
+          <textarea id="rfNotes" placeholder="What was purchased and why — helpful for tax time (e.g. 'Work desk for home office')"></textarea>
+        </div>
+      </div>
+      <div style="display:flex;gap:10px;">
+        <button class="btn primary" onclick="saveReceipt()" data-tip="Save this receipt to your secure local storage">SAVE RECEIPT</button>
+        <button class="btn" onclick="cancelReceiptForm()">CANCEL</button>
+      </div>
+    </div>
+
+    <!-- Receipt list -->
+    <div id="receiptListWrap">
+      <div class="receipt-list-title">
+        <span>SAVED RECEIPTS (<span id="receiptCount">0</span>)</span>
+        <span id="receiptTaxTotal" style="color:var(--green);font-size:.68rem;"></span>
+      </div>
+      <div class="receipt-cards" id="receiptCards">
+        <div class="receipt-empty">
+          <div class="receipt-empty-icon">📂</div>
+          <div>No receipts yet — tap the upload zone above to add your first receipt</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div><!-- /receiptsView -->
+
+<!-- ══════════════════════════════════════════════════════════════ -->
+<!-- BACKUP VIEW                                                     -->
+<!-- ══════════════════════════════════════════════════════════════ -->
+<div id="backupView" class="view-panel">
+  <div class="backup-container">
+    <div style="margin-bottom:24px;">
+      <h2 style="font-size:1rem;font-weight:700;letter-spacing:3px;color:var(--accent2);">☁ CLOUD BACKUP</h2>
+      <p style="font-size:.68rem;color:var(--muted);margin-top:4px;">Keep your budget data and receipts safe — backed up in case your device is lost, stolen, or replaced</p>
+    </div>
+
+    <div class="backup-section-title">AUTOMATIC CLOUD SYNC</div>
+    <div class="backup-options">
+      <div class="backup-card">
+        <div class="backup-card-icon">📂</div>
+        <div class="backup-card-title">Google Drive</div>
+        <div class="backup-card-desc">15 GB free · Works on all devices · Recommended for Android & Chrome users · Auto-saves budget + receipts</div>
+        <div id="gdriveStatus" class="gdrive-status"></div>
+        <button class="backup-card-btn primary" id="gdriveBtn" onclick="connectGoogleDrive()" data-tip="Sign in with your Google account to back up automatically to Google Drive">Connect Google Drive</button>
+        <div class="backup-status" id="gdriveLastSync"></div>
+      </div>
+      <div class="backup-card">
+        <div class="backup-card-icon">💾</div>
+        <div class="backup-card-title">Download Backup ZIP</div>
+        <div class="backup-card-desc">Downloads all data + receipt images as a ZIP file — upload it to iCloud, OneDrive, Dropbox, or email it to yourself</div>
+        <button class="backup-card-btn" onclick="downloadBackupZip()" data-tip="Download a complete backup — includes all budget data and receipt images">⬇ Download Backup.zip</button>
+        <br>
+        <button class="backup-card-btn" style="margin-top:4px;" onclick="document.getElementById('restoreZipInput').click()" data-tip="Restore everything from a previously downloaded backup ZIP">↩ Restore from Backup</button>
+        <input type="file" id="restoreZipInput" accept=".zip" style="display:none" onchange="restoreFromZip(this)">
+      </div>
+    </div>
+
+    <div class="backup-section-title" style="margin-top:8px;">HOW TO SAVE TO YOUR PREFERRED CLOUD — STEP-BY-STEP GUIDES</div>
+    <p style="font-size:.72rem;color:var(--muted);margin-bottom:16px;line-height:1.6;">Download your backup ZIP above, then follow the guide for your cloud service below.</p>
+
+    <div class="backup-guide">
+      <div class="backup-guide-title" onclick="toggleGuide('icloud')">
+        <span>☁ iCloud Drive (iPhone / Mac)</span><span class="guide-arrow">▶</span>
+      </div>
+      <div class="backup-guide-body" id="guide-icloud">
+        <div class="backup-guide-step"><div class="backup-guide-num">1</div><div>Tap <strong>Download Backup.zip</strong> above</div></div>
+        <div class="backup-guide-step"><div class="backup-guide-num">2</div><div>iPhone: open the <strong>Files app</strong> → On My iPhone → Downloads → find the ZIP</div></div>
+        <div class="backup-guide-step"><div class="backup-guide-num">3</div><div>Tap and hold the ZIP → <strong>Move</strong> → select <strong>iCloud Drive</strong> → create a folder called <em>Clarity Backup</em></div></div>
+        <div class="backup-guide-step"><div class="backup-guide-num">4</div><div>Mac/Windows: open <strong>iCloud Drive</strong> in Finder or File Explorer → drag the ZIP into it</div></div>
+        <div class="backup-guide-step"><div class="backup-guide-num">5</div><div>To restore: download the ZIP from iCloud Drive → tap <strong>Restore from Backup</strong> above</div></div>
+      </div>
+    </div>
+    <div class="backup-guide" style="margin-top:6px;">
+      <div class="backup-guide-title" onclick="toggleGuide('onedrive')">
+        <span>☁ OneDrive (Microsoft · 5 GB free)</span><span class="guide-arrow">▶</span>
+      </div>
+      <div class="backup-guide-body" id="guide-onedrive">
+        <div class="backup-guide-step"><div class="backup-guide-num">1</div><div>Download your backup ZIP above</div></div>
+        <div class="backup-guide-step"><div class="backup-guide-num">2</div><div>Go to <strong>onedrive.live.com</strong> or open the OneDrive app → sign in with your Microsoft account</div></div>
+        <div class="backup-guide-step"><div class="backup-guide-num">3</div><div>Click <strong>Upload → Files</strong> → select the backup ZIP → it uploads in seconds</div></div>
+        <div class="backup-guide-step"><div class="backup-guide-num">4</div><div>To restore: download from OneDrive → tap <strong>Restore from Backup</strong> above</div></div>
+      </div>
+    </div>
+    <div class="backup-guide" style="margin-top:6px;">
+      <div class="backup-guide-title" onclick="toggleGuide('dropbox')">
+        <span>☁ Dropbox (2 GB free)</span><span class="guide-arrow">▶</span>
+      </div>
+      <div class="backup-guide-body" id="guide-dropbox">
+        <div class="backup-guide-step"><div class="backup-guide-num">1</div><div>Download your backup ZIP above</div></div>
+        <div class="backup-guide-step"><div class="backup-guide-num">2</div><div>Open the <strong>Dropbox app</strong> or go to <strong>dropbox.com</strong> → sign in</div></div>
+        <div class="backup-guide-step"><div class="backup-guide-num">3</div><div>Tap <strong>+</strong> → <strong>Upload files</strong> → select the ZIP · 2 GB free covers years of Clarity backups</div></div>
+        <div class="backup-guide-step"><div class="backup-guide-num">4</div><div>To restore: download from Dropbox → tap <strong>Restore from Backup</strong> above</div></div>
+      </div>
+    </div>
+    <div class="backup-guide" style="margin-top:6px;">
+      <div class="backup-guide-title" onclick="toggleGuide('email')">
+        <span>📧 Email to Yourself (simplest option)</span><span class="guide-arrow">▶</span>
+      </div>
+      <div class="backup-guide-body" id="guide-email">
+        <div class="backup-guide-step"><div class="backup-guide-num">1</div><div>Download your backup ZIP above</div></div>
+        <div class="backup-guide-step"><div class="backup-guide-num">2</div><div>Open Gmail, Outlook, or your email app → compose a new email to yourself</div></div>
+        <div class="backup-guide-step"><div class="backup-guide-num">3</div><div>Attach the ZIP → subject it <em>"Clarity Backup — [today's date]"</em> → send</div></div>
+        <div class="backup-guide-step"><div class="backup-guide-num">4</div><div>The email lives in your inbox forever — search "Clarity Backup" anytime to find it</div></div>
+        <div class="backup-guide-step"><div class="backup-guide-num">5</div><div>To restore: open the email, download the ZIP → tap <strong>Restore from Backup</strong> above</div></div>
+      </div>
+    </div>
+
+    <div style="margin-top:28px;background:rgba(16,216,255,.05);border:1px solid rgba(16,216,255,.15);border-radius:10px;padding:16px 18px;">
+      <div style="font-size:.62rem;letter-spacing:1.5px;color:var(--accent2);margin-bottom:6px;font-weight:700;">ℹ GOOGLE DRIVE SETUP NOTE (for Deep)</div>
+      <div style="font-size:.72rem;color:var(--muted);line-height:1.75;">
+        Google Drive auto-sync requires a one-time OAuth Client ID. Steps:<br>
+        1. Go to <strong>console.cloud.google.com</strong> → New project → Enable Google Drive API<br>
+        2. Credentials → Create OAuth 2.0 Client ID → Web application → add your domain to authorised origins<br>
+        3. Replace <code style="color:var(--accent2);font-size:.7rem;">YOUR_GOOGLE_CLIENT_ID</code> in the source code with the Client ID<br>
+        Until then, the Download Backup ZIP method is just as secure — no setup needed.
+      </div>
+    </div>
+  </div>
+</div><!-- /backupView -->
 
 <input type="file" id="importFile" accept=".json" style="display:none" onchange="handleImport(event)">
 
@@ -1656,6 +2145,20 @@ document.addEventListener('DOMContentLoaded',()=>{
   });
   document.getElementById('newSectionName').addEventListener('keydown',e=>{if(e.key==='Enter')confirmAddSection();});
   document.getElementById('dueDayInput').addEventListener('keydown',e=>{if(e.key==='Enter')saveDueDate();});
+  // Receipt drag-and-drop
+  const rZone=document.getElementById('receiptDropZone');
+  if(rZone){
+    rZone.addEventListener('dragover',e=>{e.preventDefault();rZone.classList.add('drag-over');});
+    rZone.addEventListener('dragleave',()=>rZone.classList.remove('drag-over'));
+    rZone.addEventListener('drop',e=>{
+      e.preventDefault();rZone.classList.remove('drag-over');
+      const f=e.dataTransfer.files[0];if(!f)return;
+      const dt=new DataTransfer();dt.items.add(f);
+      const inp=document.getElementById('receiptFileInput');inp.files=dt.files;handleReceiptFile(inp);
+    });
+  }
+  // Init calculator country from saved preference
+  setCalcCountry(_calcCountry);
   // Neon pulse: highlight the section panel that has keyboard focus
   document.addEventListener('focusin',e=>{
     document.querySelectorAll('.section-panel.focus-active').forEach(p=>p.classList.remove('focus-active'));
@@ -1727,6 +2230,594 @@ function submitFeedback(){
     tip.style.top=(y+tip.offsetHeight>bh-8?e.clientY-tip.offsetHeight-10:y)+'px';
   }
 })();
+
+// ─── VIEW NAVIGATION ─────────────────────────────────────────
+function switchView(view){
+  document.querySelectorAll('.view-panel').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.clarity-tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById(view+'View').classList.add('active');
+  const tabs=['dash','calc','receipts','backup'];
+  const idx=tabs.indexOf(view);
+  const navTabs=document.querySelectorAll('.clarity-tab');
+  if(navTabs[idx])navTabs[idx].classList.add('active');
+  if(view==='receipts')renderReceiptList();
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+// ─── CALCULATOR ──────────────────────────────────────────────
+let _calcCountry=localStorage.getItem('clarity_calc_country')||'AU';
+let _calcGstMode='add';
+
+const TAX_BRACKETS={
+  NZ:[
+    {min:0,      max:14000,   rate:0.105, label:'$0 – $14,000'},
+    {min:14000,  max:48000,   rate:0.175, label:'$14,001 – $48,000'},
+    {min:48000,  max:70000,   rate:0.30,  label:'$48,001 – $70,000'},
+    {min:70000,  max:180000,  rate:0.33,  label:'$70,001 – $180,000'},
+    {min:180000, max:Infinity,rate:0.39,  label:'$180,001+'}
+  ],
+  AU:[
+    {min:0,      max:18200,   rate:0,     label:'$0 – $18,200 (tax free)'},
+    {min:18200,  max:45000,   rate:0.19,  label:'$18,201 – $45,000'},
+    {min:45000,  max:120000,  rate:0.325, label:'$45,001 – $120,000'},
+    {min:120000, max:180000,  rate:0.37,  label:'$120,001 – $180,000'},
+    {min:180000, max:Infinity,rate:0.45,  label:'$180,001+'}
+  ]
+};
+
+function calcTaxForBrackets(income,country){
+  const brackets=TAX_BRACKETS[country];
+  let tax=0;const rows=[];
+  for(const b of brackets){
+    if(income<=b.min)break;
+    const taxable=Math.min(income,b.max)-b.min;
+    const bracketTax=taxable*b.rate;
+    tax+=bracketTax;
+    rows.push({label:b.label,rate:b.rate,taxable,tax:bracketTax,active:income>b.min});
+  }
+  return{tax,rows};
+}
+
+function calcLITO(income){
+  if(income<=37500)return 700;
+  if(income<=45000)return 700-(income-37500)*0.05;
+  if(income<=66667)return 325-(income-45000)*0.015;
+  return 0;
+}
+
+function setCalcCountry(country){
+  _calcCountry=country;
+  document.getElementById('countryNZ').classList.toggle('active',country==='NZ');
+  document.getElementById('countryAU').classList.toggle('active',country==='AU');
+  document.getElementById('calcKiwiRow').style.display=country==='NZ'?'':'none';
+  document.getElementById('calcStudentRow').style.display=country==='NZ'?'':'none';
+  document.getElementById('calcSuperRow').style.display=country==='AU'?'':'none';
+  document.getElementById('kiwiRateRow').style.display=country==='NZ'?'':'none';
+  document.getElementById('superRateRow').style.display=country==='AU'?'':'none';
+  const gstPct=country==='NZ'?'15%':'10%';
+  document.getElementById('gstAddBtn').textContent=`ADD GST (excl → incl) · ${gstPct}`;
+  document.getElementById('gstRemoveBtn').textContent=`REMOVE GST (incl → excl) · ${gstPct}`;
+  document.getElementById('calcReturnCountryNote').textContent=
+    country==='NZ'
+    ?'🇳🇿 New Zealand · Tax year: 1 Apr – 31 Mar · Rates per IRD 2024/25 · PAYE deducted at source'
+    :'🇦🇺 Australia · Tax year: 1 Jul – 30 Jun · Rates per ATO 2024/25 · PAYG withholding · Medicare levy 2%';
+  localStorage.setItem('clarity_calc_country',country);
+  calcIncomeTax();calcGst();calcTaxReturn();calcYoy();calcSuperKiwi();
+}
+
+function setCalcTab(tab){
+  const map={income:'calcIncome',gst:'calcGst',return:'calcReturn',yoy:'calcYoy',super:'calcSuper'};
+  const tabs=['income','gst','return','yoy','super'];
+  document.querySelectorAll('.calc-tab').forEach((b,i)=>b.classList.toggle('active',tabs[i]===tab));
+  document.querySelectorAll('.calc-panel').forEach(p=>p.classList.remove('active'));
+  document.getElementById(map[tab]).classList.add('active');
+}
+
+function calcFmt(n){
+  const sym=_calcCountry==='NZ'?'$':'A$';
+  return sym+Math.abs(n).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g,',');
+}
+
+function calcIncomeTax(){
+  const income=parseFloat(document.getElementById('calcGrossIncome').value)||0;
+  const box=document.getElementById('calcIncomeTaxResult');
+  if(income<=0){box.style.display='none';return;}
+  box.style.display='block';
+  const{tax:rawTax,rows}=calcTaxForBrackets(income,_calcCountry);
+  const sym=_calcCountry==='NZ'?'$':'A$';
+  let totalTax=rawTax,accLevy=0,medicare=0,studentLoan=0,kiwiEmp=0,kiwiEmpER=0,superAmt=0,lito=0;
+  if(_calcCountry==='NZ'){
+    accLevy=Math.min(income,139384)*0.016;totalTax+=accLevy;
+    if((document.getElementById('calcStudentLoan').value||'0')==='1'){
+      studentLoan=income>22828?(income-22828)*0.12:0;totalTax+=studentLoan;
+    }
+    const kiwiRate=parseFloat(document.getElementById('calcKiwiRate').value||0)/100;
+    if(kiwiRate>0){kiwiEmp=income*kiwiRate;kiwiEmpER=income*0.03;}
+  }else{
+    if((document.getElementById('calcMedicare').value||'1')==='1'){medicare=income*0.02;totalTax+=medicare;}
+    lito=calcLITO(income);totalTax=Math.max(0,totalTax-lito);
+    superAmt=income*0.115;
+  }
+  const netPay=income-totalTax-kiwiEmp;
+  const effRate=income>0?(totalTax/income)*100:0;
+  let tbl='<thead><tr><th>BRACKET</th><th>RATE</th><th>TAXABLE</th><th>TAX</th></tr></thead><tbody>';
+  rows.forEach(r=>{tbl+=`<tr class="${r.active?'active-bracket':''}"><td>${r.label}</td><td>${(r.rate*100).toFixed(1)}%</td><td>${sym}${fmtN(r.taxable)}</td><td>${sym}${r.tax.toFixed(2)}</td></tr>`;});
+  tbl+='</tbody>';
+  document.getElementById('calcBracketTable').innerHTML=tbl;
+  const mkR=(label,val,cls='')=>`<div class="calc-result-row"><span class="calc-result-label">${label}</span><span class="calc-result-value ${cls}">${val}</span></div>`;
+  let s='';
+  s+=mkR('Gross Annual Income',calcFmt(income));
+  s+=mkR('Income Tax',calcFmt(rawTax),'bad');
+  if(_calcCountry==='NZ'){
+    s+=mkR('ACC Earners\' Levy (1.60%)',calcFmt(accLevy),'warn');
+    if(studentLoan>0)s+=mkR('Student Loan Repayment (12%)',calcFmt(studentLoan),'warn');
+    if(kiwiEmp>0){
+      s+=mkR(`KiwiSaver — You (${document.getElementById('calcKiwiRate').value}%)`,calcFmt(kiwiEmp),'warn');
+      s+=mkR('KiwiSaver — Employer (3% min)','+ '+calcFmt(kiwiEmpER),'good');
+    }
+  }else{
+    s+=mkR('Medicare Levy (2%)',calcFmt(medicare),'warn');
+    s+=mkR('Low Income Tax Offset (LITO)','− '+calcFmt(lito),'good');
+    s+=mkR('Employer Super (11.5% on top of salary)','+ '+calcFmt(superAmt),'good');
+  }
+  s+=`<div class="calc-result-total"><span>NET ANNUAL TAKE-HOME</span><span class="${netPay>=0?'good':'bad'}">${calcFmt(netPay)}</span></div>`;
+  s+=mkR('Weekly take-home',calcFmt(netPay/52),'accent');
+  s+=mkR('Fortnightly take-home',calcFmt(netPay/26),'accent');
+  s+=mkR('Monthly take-home',calcFmt(netPay/12),'accent');
+  s+=mkR('Effective tax rate',effRate.toFixed(1)+'%',effRate>30?'warn':'');
+  document.getElementById('calcIncomeSummary').innerHTML=s;
+  document.getElementById('calcRatesNote').textContent=
+    _calcCountry==='NZ'
+    ?'NZ tax year 1 Apr – 31 Mar · IRD 2024/25 · ACC levy 1.60% capped at $139,384 · Employer KiwiSaver not deducted from your pay'
+    :'AUS tax year 1 Jul – 30 Jun · ATO 2024/25 · Medicare levy 2% · LITO applied · Employer super is paid on top of salary · This is an estimate only';
+}
+
+function setGstMode(mode){
+  _calcGstMode=mode;
+  document.getElementById('gstAddBtn').classList.toggle('active',mode==='add');
+  document.getElementById('gstRemoveBtn').classList.toggle('active',mode==='remove');
+  document.getElementById('gstAmountLabel').textContent=mode==='add'?'AMOUNT (excl. GST)':'AMOUNT (incl. GST)';
+  calcGst();
+}
+
+function calcGst(){
+  const amount=parseFloat(document.getElementById('calcGstAmount').value)||0;
+  const box=document.getElementById('calcGstResult');
+  if(amount<=0){box.style.display='none';return;}
+  box.style.display='block';
+  const rate=_calcCountry==='NZ'?0.15:0.10;
+  const ratePct=_calcCountry==='NZ'?'15%':'10%';
+  let exGst,incGst,gstAmt;
+  if(_calcGstMode==='add'){exGst=amount;gstAmt=amount*rate;incGst=amount+gstAmt;}
+  else{incGst=amount;exGst=amount/(1+rate);gstAmt=amount-exGst;}
+  const mkR=(label,val,cls='')=>`<div class="calc-result-row"><span class="calc-result-label">${label}</span><span class="calc-result-value ${cls}">${val}</span></div>`;
+  box.innerHTML=mkR('Amount excl. GST',calcFmt(exGst))+mkR(`GST (${ratePct})`,calcFmt(gstAmt),'accent')+
+    `<div class="calc-result-total"><span>TOTAL INCL. GST</span><span>${calcFmt(incGst)}</span></div>`;
+}
+
+function calcTaxReturn(){
+  const income=parseFloat(document.getElementById('calcReturnIncome').value)||0;
+  const taxPaid=parseFloat(document.getElementById('calcReturnTaxPaid').value)||0;
+  const deductions=parseFloat(document.getElementById('calcReturnDeductions').value)||0;
+  const box=document.getElementById('calcReturnResult');
+  if(income<=0){box.style.display='none';return;}
+  box.style.display='block';
+  const taxable=Math.max(0,income-deductions);
+  const{tax:rawTax}=calcTaxForBrackets(taxable,_calcCountry);
+  let totalTax=rawTax;
+  if(_calcCountry==='AU'){totalTax+=taxable*0.02;totalTax=Math.max(0,totalTax-calcLITO(taxable));}
+  else{totalTax+=Math.min(taxable,139384)*0.016;}
+  const diff=taxPaid-totalTax;
+  const mkR=(label,val,cls='')=>`<div class="calc-result-row"><span class="calc-result-label">${label}</span><span class="calc-result-value ${cls}">${val}</span></div>`;
+  box.innerHTML=mkR('Gross Income',calcFmt(income))+mkR('Less Deductions',calcFmt(deductions))+
+    mkR('Taxable Income',calcFmt(taxable),'accent')+mkR('Tax Payable',calcFmt(totalTax),'bad')+
+    mkR('Tax Already Withheld (PAYE/PAYG)',calcFmt(taxPaid))+
+    `<div class="calc-result-total" style="color:${diff>=0?'var(--green)':'var(--red)'}">
+      <span>${diff>=0?'✓ ESTIMATED REFUND':'⚠ TAX OWING'}</span><span>${calcFmt(Math.abs(diff))}</span>
+    </div>
+    <p style="font-size:.6rem;color:var(--muted);margin-top:10px;">⚠ Estimate only. Verify with your accountant or ${_calcCountry==='NZ'?'IRD (ird.govt.nz)':'ATO (ato.gov.au)'} before lodging your return.</p>`;
+}
+
+function calcYoy(){
+  const g=id=>parseFloat(document.getElementById(id).value)||0;
+  const y1i=g('yoy1Income'),y1d=g('yoy1Deductions'),y1t=g('yoy1TaxPaid');
+  const y2i=g('yoy2Income'),y2d=g('yoy2Deductions'),y2t=g('yoy2TaxPaid');
+  const box=document.getElementById('calcYoyResult');
+  if(y1i<=0&&y2i<=0){box.style.display='none';return;}
+  box.style.display='block';
+  function calcNet(income,deductions,taxPaid){
+    const taxable=Math.max(0,income-deductions);
+    const{tax:rawTax}=calcTaxForBrackets(taxable,_calcCountry);
+    let totalTax=rawTax;
+    if(_calcCountry==='AU'){totalTax+=taxable*0.02;totalTax=Math.max(0,totalTax-calcLITO(taxable));}
+    else{totalTax+=Math.min(taxable,139384)*0.016;}
+    return{taxable,totalTax,refund:taxPaid-totalTax,netPay:income-totalTax};
+  }
+  const r1=calcNet(y1i,y1d,y1t),r2=calcNet(y2i,y2d,y2t);
+  const sym=_calcCountry==='NZ'?'$':'A$';
+  const rows=[
+    ['Gross Income',y1i,y2i,true],['Deductions',y1d,y2d,true],
+    ['Taxable Income',r1.taxable,r2.taxable,true],['Tax Payable',r1.totalTax,r2.totalTax,false],
+    ['Est. Refund / Owing',r1.refund,r2.refund,true],['Net Take-Home (annual)',r1.netPay,r2.netPay,true],
+  ];
+  let html=`<table class="calc-compare-table"><thead><tr><th>COMPARISON</th><th>YEAR 1</th><th>YEAR 2</th><th>CHANGE</th></tr></thead><tbody>`;
+  rows.forEach(([label,v1,v2,hb])=>{
+    const d=v2-v1,cls=d===0?'same':(hb?(d>0?'better':'worse'):(d>0?'worse':'better'));
+    html+=`<tr><td>${label}</td><td>${sym}${fmtN(Math.abs(v1))}</td><td>${sym}${fmtN(Math.abs(v2))}</td><td class="${cls}">${d>=0?'+':''}${sym}${fmtN(Math.abs(d))}</td></tr>`;
+  });
+  html+='</tbody></table>';
+  box.innerHTML=html;
+}
+
+function calcSuperKiwi(){
+  const salary=parseFloat(document.getElementById('calcSuperSalary').value)||0;
+  const box=document.getElementById('calcSuperResult');
+  if(salary<=0){box.style.display='none';return;}
+  box.style.display='block';
+  const mkR=(label,val,cls='')=>`<div class="calc-result-row"><span class="calc-result-label">${label}</span><span class="calc-result-value ${cls}">${val}</span></div>`;
+  let html='';
+  if(_calcCountry==='NZ'){
+    const rate=parseFloat(document.getElementById('calcSuperEmployeeRate').value||3)/100;
+    const empC=salary*rate,erC=salary*0.03,total=empC+erC;
+    html+=mkR('Your Annual Salary',calcFmt(salary))+mkR(`Your KiwiSaver (${(rate*100).toFixed(0)}%)`,calcFmt(empC),'warn')+
+      mkR('Employer Contribution (3% min)','+ '+calcFmt(erC),'good')+
+      `<div class="calc-result-total"><span>TOTAL ANNUAL TO KIWISAVER</span><span class="good">${calcFmt(total)}</span></div>`+
+      mkR('Fortnightly — your contribution',calcFmt(empC/26))+mkR('Monthly — your contribution',calcFmt(empC/12))+
+      '<p style="font-size:.6rem;color:var(--muted);margin-top:10px;">Government contributes up to $521/yr if you contribute at least $1,042 (Member Tax Credits). See ird.govt.nz/kiwisaver</p>';
+  }else{
+    const erRate=parseFloat(document.getElementById('calcSuperEmployerRate').value||11.5)/100;
+    const superAmt=salary*erRate,taxOnSuper=superAmt*0.15,netSuper=superAmt-taxOnSuper;
+    html+=mkR('Your Annual Salary',calcFmt(salary))+mkR(`Employer Super (${(erRate*100).toFixed(1)}% on top of salary)`,calcFmt(superAmt),'good')+
+      mkR('Contributions Tax (15%)',calcFmt(taxOnSuper),'warn')+
+      `<div class="calc-result-total"><span>NET ANNUAL SUPER (after tax)</span><span class="good">${calcFmt(netSuper)}</span></div>`+
+      mkR('Monthly contribution',calcFmt(superAmt/12))+mkR('Fortnightly contribution',calcFmt(superAmt/26))+
+      '<p style="font-size:.6rem;color:var(--muted);margin-top:10px;">Super rate rises to 12% from 1 Jul 2025. See ato.gov.au/super for full details and salary sacrifice options.</p>';
+  }
+  box.innerHTML=html;
+}
+
+// ─── INDEXEDDB FOR RECEIPTS ───────────────────────────────────
+let _receiptsDB=null;
+function openReceiptsDB(){
+  return new Promise((resolve,reject)=>{
+    if(_receiptsDB){resolve(_receiptsDB);return;}
+    const req=indexedDB.open('ClarityReceiptsDB',1);
+    req.onupgradeneeded=e=>{
+      const db=e.target.result;
+      if(!db.objectStoreNames.contains('receipts')){
+        const store=db.createObjectStore('receipts',{keyPath:'id',autoIncrement:true});
+        store.createIndex('date','date');
+      }
+    };
+    req.onsuccess=e=>{_receiptsDB=e.target.result;resolve(_receiptsDB);};
+    req.onerror=e=>reject(e.target.error);
+  });
+}
+async function getAllReceipts(){
+  const db=await openReceiptsDB();
+  return new Promise((res,rej)=>{
+    const req=db.transaction('receipts','readonly').objectStore('receipts').getAll();
+    req.onsuccess=()=>res(req.result);req.onerror=e=>rej(e.target.error);
+  });
+}
+async function saveReceiptToDB(receipt){
+  const db=await openReceiptsDB();
+  return new Promise((res,rej)=>{
+    const req=db.transaction('receipts','readwrite').objectStore('receipts').add(receipt);
+    req.onsuccess=()=>res(req.result);req.onerror=e=>rej(e.target.error);
+  });
+}
+async function deleteReceiptFromDB(id){
+  const db=await openReceiptsDB();
+  return new Promise((res,rej)=>{
+    const req=db.transaction('receipts','readwrite').objectStore('receipts').delete(id);
+    req.onsuccess=()=>res();req.onerror=e=>rej(e.target.error);
+  });
+}
+
+// ─── RECEIPTS UI ─────────────────────────────────────────────
+let _receiptFile=null,_receiptDeductible=false;
+
+function handleReceiptFile(input){
+  const file=input.files[0];if(!file)return;
+  _receiptFile=file;
+  showReceiptForm();
+  document.getElementById('rfDate').value=new Date().toISOString().split('T')[0];
+  const wrap=document.getElementById('receiptPreviewWrap');
+  if(file.type==='application/pdf'){showPdfPreview(file,wrap);}
+  else{
+    const reader=new FileReader();
+    reader.onload=e=>{wrap.innerHTML=`<img class="receipt-preview-img" src="${e.target.result}" alt="Receipt preview">`;};
+    reader.readAsDataURL(file);
+  }
+}
+
+function showPdfPreview(file,wrap){
+  if(typeof pdfjsLib==='undefined'){
+    wrap.innerHTML=`<div class="receipt-preview-empty">📄 PDF attached — ${escHtml(file.name)}</div>`;return;
+  }
+  pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+  const reader=new FileReader();
+  reader.onload=async e=>{
+    try{
+      const pdf=await pdfjsLib.getDocument({data:new Uint8Array(e.target.result)}).promise;
+      const page=await pdf.getPage(1);
+      const vp=page.getViewport({scale:1.4});
+      const canvas=document.createElement('canvas');
+      canvas.width=vp.width;canvas.height=vp.height;
+      canvas.style.cssText='max-width:100%;max-height:260px;object-fit:contain;';
+      await page.render({canvasContext:canvas.getContext('2d'),viewport:vp}).promise;
+      wrap.innerHTML='';wrap.appendChild(canvas);
+    }catch(err){wrap.innerHTML=`<div class="receipt-preview-empty">📄 ${escHtml(file.name)}</div>`;}
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+function showReceiptForm(){
+  document.getElementById('receiptForm').classList.add('open');
+  document.getElementById('receiptDropZone').style.display='none';
+  setTimeout(()=>document.getElementById('rfMerchant').focus(),100);
+}
+function cancelReceiptForm(){
+  document.getElementById('receiptForm').classList.remove('open');
+  document.getElementById('receiptDropZone').style.display='';
+  document.getElementById('receiptFileInput').value='';
+  document.getElementById('receiptPreviewWrap').innerHTML='<div class="receipt-preview-empty">No file selected</div>';
+  _receiptFile=null;_receiptDeductible=false;
+  document.getElementById('rfDeductibleSwitch').classList.remove('on');
+  document.getElementById('rfDeductibleLabel').textContent='No';
+  ['rfMerchant','rfAmount','rfWarranty','rfNotes'].forEach(id=>document.getElementById(id).value='');
+}
+function toggleDeductible(){
+  _receiptDeductible=!_receiptDeductible;
+  document.getElementById('rfDeductibleSwitch').classList.toggle('on',_receiptDeductible);
+  document.getElementById('rfDeductibleLabel').textContent=_receiptDeductible?'Yes':'No';
+}
+async function saveReceipt(){
+  const merchant=document.getElementById('rfMerchant').value.trim();
+  const amount=parseFloat(document.getElementById('rfAmount').value)||0;
+  if(!merchant||amount<=0){
+    const m=document.getElementById('rfMerchant');m.style.borderColor='var(--red)';m.focus();
+    setTimeout(()=>m.style.borderColor='',1200);return;
+  }
+  const receipt={
+    merchant,amount,
+    date:document.getElementById('rfDate').value||new Date().toISOString().split('T')[0],
+    category:document.getElementById('rfCategory').value,
+    gstIncluded:document.getElementById('rfGstIncluded').value,
+    warranty:document.getElementById('rfWarranty').value||null,
+    notes:document.getElementById('rfNotes').value.trim(),
+    deductible:_receiptDeductible,
+    country:_calcCountry,
+    savedAt:new Date().toISOString(),
+    fileType:_receiptFile?_receiptFile.type:null,
+    fileName:_receiptFile?_receiptFile.name:null,
+  };
+  if(_receiptFile){
+    try{
+      receipt.fileData=await new Promise((res,rej)=>{
+        const r=new FileReader();r.onload=e=>res(e.target.result);r.onerror=rej;r.readAsDataURL(_receiptFile);
+      });
+    }catch(e){receipt.fileData=null;}
+  }
+  try{await saveReceiptToDB(receipt);cancelReceiptForm();renderReceiptList();}
+  catch(e){alert('Error saving receipt. Please try again.');}
+}
+
+async function renderReceiptList(){
+  const cards=document.getElementById('receiptCards');
+  const countEl=document.getElementById('receiptCount');
+  const totalEl=document.getElementById('receiptTaxTotal');
+  if(!cards)return;
+  let receipts=[];
+  try{receipts=await getAllReceipts();}catch(e){}
+  receipts.sort((a,b)=>b.date.localeCompare(a.date));
+  countEl.textContent=receipts.length;
+  const deductTotal=receipts.filter(r=>r.deductible).reduce((s,r)=>s+(r.amount||0),0);
+  totalEl.textContent=deductTotal>0?`Deductible total: ${_calcCountry==='NZ'?'$':'A$'}${deductTotal.toFixed(2)}`:'';
+  if(receipts.length===0){
+    cards.innerHTML='<div class="receipt-empty"><div class="receipt-empty-icon">📂</div><div>No receipts yet — tap the upload zone above</div></div>';return;
+  }
+  cards.innerHTML=receipts.map(r=>{
+    const sym=r.country==='NZ'?'$':'A$';
+    const gRate=r.country==='NZ'?0.15:0.10;
+    const gstAmt=r.gstIncluded==='yes'?r.amount/(1+gRate)*gRate:(r.gstIncluded==='no'?r.amount*gRate:0);
+    const gstStr=r.gstIncluded!=='exempt'?` · GST: ${sym}${gstAmt.toFixed(2)}`:'';
+    const thumbHtml=r.fileData&&r.fileType&&r.fileType.startsWith('image/')
+      ?`<img src="${r.fileData}" alt="receipt" style="width:100%;height:100%;object-fit:cover;">`
+      :r.fileData&&r.fileType==='application/pdf'?'<span style="font-size:2rem;">📄</span>':'<span style="font-size:2rem;">🧾</span>';
+    const warrantyTag=r.warranty?`<span class="receipt-tag warranty">⚠ Warranty to ${r.warranty}</span>`:'';
+    return`<div class="receipt-card">
+      <div class="receipt-card-thumb">${thumbHtml}</div>
+      <button class="receipt-card-del" onclick="deleteReceipt(${r.id})">✕</button>
+      <div class="receipt-card-body">
+        <div class="receipt-card-merchant">${escHtml(r.merchant)}</div>
+        <div class="receipt-card-meta"><span>${r.date}</span><span>${escHtml(r.category)}</span></div>
+        <div class="receipt-card-amount">${sym}${r.amount.toFixed(2)}${gstStr}</div>
+        <div class="receipt-card-tags">
+          <span class="receipt-tag ${r.deductible?'deductible':'non-deductible'}">${r.deductible?'✓ TAX DEDUCTIBLE':'NON-DEDUCTIBLE'}</span>
+          ${warrantyTag}
+        </div>
+        ${r.notes?`<div style="font-size:.63rem;color:var(--muted);margin-top:6px;line-height:1.5;">${escHtml(r.notes)}</div>`:''}
+      </div></div>`;
+  }).join('');
+}
+
+async function deleteReceipt(id){
+  try{await deleteReceiptFromDB(id);renderReceiptList();}
+  catch(e){alert('Could not delete receipt.');}
+}
+
+async function exportTaxSummary(){
+  let receipts=[];
+  try{receipts=await getAllReceipts();}catch(e){}
+  const deductible=receipts.filter(r=>r.deductible);
+  if(deductible.length===0){alert('No tax-deductible receipts saved yet.');return;}
+  const sym=_calcCountry==='NZ'?'$':'A$';
+  const gRate=_calcCountry==='NZ'?0.15:0.10;
+  const taxYear=_calcCountry==='NZ'?'1 Apr 2024 – 31 Mar 2025':'1 Jul 2024 – 30 Jun 2025';
+  const auth=_calcCountry==='NZ'?'IRD (ird.govt.nz)':'ATO (ato.gov.au)';
+  const total=deductible.reduce((s,r)=>s+r.amount,0);
+  const gstTotal=deductible.reduce((s,r)=>{
+    if(r.gstIncluded==='yes')return s+r.amount/(1+gRate)*gRate;
+    if(r.gstIncluded==='no')return s+r.amount*gRate;
+    return s;
+  },0);
+  const byCat={};deductible.forEach(r=>{if(!byCat[r.category])byCat[r.category]=[];byCat[r.category].push(r);});
+  const catRows=Object.entries(byCat).map(([cat,rs])=>`<tr><td>${cat}</td><td style="text-align:center">${rs.length}</td><td style="text-align:right;font-weight:700">${sym}${rs.reduce((s,r)=>s+r.amount,0).toFixed(2)}</td></tr>`).join('');
+  const detailRows=deductible.map(r=>{
+    const g=r.gstIncluded==='yes'?(r.amount/(1+gRate)*gRate).toFixed(2):(r.gstIncluded==='no'?(r.amount*gRate).toFixed(2):'Exempt');
+    return`<tr><td>${r.date}</td><td>${r.merchant}</td><td>${r.category}</td><td style="text-align:right">${sym}${r.amount.toFixed(2)}</td><td style="text-align:right">${sym}${g}</td><td style="font-size:.75rem">${r.notes||''}</td></tr>`;
+  }).join('');
+  const html=`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Clarity Tax Summary</title>
+  <style>body{font-family:Arial,sans-serif;padding:28px;color:#1a1a2e;max-width:940px;margin:0 auto;}
+  h1{font-size:1.35rem;color:#0060a0;margin-bottom:2px;}
+  .sub{font-size:.78rem;color:#6060a0;margin-bottom:22px;}
+  h2{font-size:.95rem;color:#0060a0;margin:22px 0 10px;border-bottom:2px solid #e0e0f0;padding-bottom:4px;}
+  table{width:100%;border-collapse:collapse;font-size:.8rem;margin-bottom:14px;}
+  th{background:#0060a0;color:#fff;padding:6px 10px;text-align:left;}
+  td{padding:5px 10px;border-bottom:1px solid #e8e8f0;}
+  tr:nth-child(even) td{background:#f8f8ff;}
+  .tot td{font-weight:700;border-top:2px solid #0060a0;background:#eef4ff;}
+  .ft{font-size:.68rem;color:#8080a0;margin-top:28px;border-top:1px solid #e0e0f0;padding-top:10px;}
+  @media print{body{padding:12px;}}</style></head><body>
+  <h1>📄 TAX DEDUCTION SUMMARY</h1>
+  <div class="sub">Clarity by Whetū Digital · Tax year: ${taxYear} · Client: ${_INST} · Generated: ${new Date().toLocaleDateString()}</div>
+  <h2>BY CATEGORY</h2>
+  <table><thead><tr><th>CATEGORY</th><th style="text-align:center">ITEMS</th><th style="text-align:right">TOTAL</th></tr></thead><tbody>${catRows}</tbody>
+  <tfoot><tr class="tot"><td>TOTAL DEDUCTIBLE</td><td style="text-align:center">${deductible.length}</td><td style="text-align:right">${sym}${total.toFixed(2)}</td></tr></tfoot></table>
+  <h2>DETAILED RECEIPT LIST</h2>
+  <table><thead><tr><th>DATE</th><th>MERCHANT</th><th>CATEGORY</th><th style="text-align:right">AMOUNT</th><th style="text-align:right">GST COMPONENT</th><th>NOTES</th></tr></thead>
+  <tbody>${detailRows}</tbody>
+  <tfoot><tr class="tot"><td colspan="3">TOTALS</td><td style="text-align:right">${sym}${total.toFixed(2)}</td><td style="text-align:right">${sym}${gstTotal.toFixed(2)}</td><td></td></tr></tfoot></table>
+  <div class="ft">⚠ Estimate only — not financial advice. Verify with your accountant or ${auth} before lodging.<br>Generated by Clarity · Whetū Digital · whetudigital.co.nz</div>
+  <script>window.onload=()=>window.print();<\/script></body></html>`;
+  const win=window.open('','_blank');win.document.write(html);win.document.close();
+}
+
+// ─── CLOUD BACKUP ────────────────────────────────────────────
+function toggleGuide(id){
+  const body=document.getElementById('guide-'+id);
+  const title=body.previousElementSibling;
+  const isOpen=body.classList.contains('open');
+  document.querySelectorAll('.backup-guide-body').forEach(b=>b.classList.remove('open'));
+  document.querySelectorAll('.backup-guide-title').forEach(t=>t.classList.remove('open'));
+  if(!isOpen){body.classList.add('open');title.classList.add('open');}
+}
+
+async function downloadBackupZip(){
+  if(typeof JSZip==='undefined'){alert('JSZip not loaded. Check your internet connection.');return;}
+  const zip=new JSZip();
+  const allData={};
+  for(let i=0;i<localStorage.length;i++){
+    const k=localStorage.key(i);
+    if(k.startsWith('clarity_'))allData[k]=localStorage.getItem(k);
+  }
+  zip.file('clarity_data.json',JSON.stringify(allData,null,2));
+  let receipts=[];
+  try{receipts=await getAllReceipts();}catch(e){}
+  const meta=receipts.map(r=>({...r,fileData:undefined}));
+  zip.file('receipts/receipts_meta.json',JSON.stringify(meta,null,2));
+  receipts.forEach(r=>{
+    if(r.fileData){
+      const base64=r.fileData.split(',')[1];
+      const ext=r.fileType==='application/pdf'?'pdf':(r.fileType?.split('/')[1]||'jpg');
+      const safe=(r.merchant||'receipt').replace(/[^a-z0-9]/gi,'_').substring(0,20);
+      zip.file(`receipts/receipt_${r.id}_${safe}.${ext}`,base64,{base64:true});
+    }
+  });
+  const blob=await zip.generateAsync({type:'blob',compression:'DEFLATE',compressionOptions:{level:6}});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');a.href=url;a.download=`clarity-backup-${new Date().toISOString().split('T')[0]}.zip`;a.click();
+  URL.revokeObjectURL(url);
+}
+
+async function restoreFromZip(input){
+  const file=input.files[0];if(!file)return;
+  if(typeof JSZip==='undefined'){alert('JSZip not loaded.');return;}
+  if(!confirm('This will replace all current data with the backup. Continue?')){input.value='';return;}
+  try{
+    const zip=await JSZip.loadAsync(file);
+    const dataFile=zip.file('clarity_data.json');
+    if(dataFile){
+      const json=JSON.parse(await dataFile.async('string'));
+      Object.entries(json).forEach(([k,v])=>localStorage.setItem(k,v));
+    }
+    const metaFile=zip.file('receipts/receipts_meta.json');
+    if(metaFile){
+      const metaArr=JSON.parse(await metaFile.async('string'));
+      const db=await openReceiptsDB();
+      await new Promise((res,rej)=>{const tx=db.transaction('receipts','readwrite');tx.objectStore('receipts').clear().onsuccess=res;tx.onerror=rej;});
+      for(const r of metaArr){
+        const pattern=new RegExp(`receipts/receipt_${r.id}_`);
+        const imgFiles=[];zip.forEach((path,f)=>{if(pattern.test(path))imgFiles.push(f);});
+        if(imgFiles.length>0){
+          const b64=await imgFiles[0].async('base64');
+          const ext=imgFiles[0].name.split('.').pop();
+          const mime={jpg:'image/jpeg',jpeg:'image/jpeg',png:'image/png',pdf:'application/pdf'}[ext]||'image/jpeg';
+          r.fileData=`data:${mime};base64,${b64}`;
+        }
+        const rCopy={...r};delete rCopy.id;
+        await new Promise((res,rej)=>{
+          const tx=db.transaction('receipts','readwrite');
+          tx.objectStore('receipts').add(rCopy).onsuccess=res;tx.onerror=rej;
+        });
+      }
+    }
+    alert('✓ Backup restored! Reloading...');setTimeout(()=>location.reload(),700);
+  }catch(e){alert('Error restoring backup: '+e.message);}
+  input.value='';
+}
+
+const GOOGLE_CLIENT_ID='YOUR_GOOGLE_CLIENT_ID';
+function connectGoogleDrive(){
+  if(GOOGLE_CLIENT_ID==='YOUR_GOOGLE_CLIENT_ID'){
+    const s=document.getElementById('gdriveStatus');
+    s.className='gdrive-status error';
+    s.textContent='Google Drive not yet configured — use Download Backup ZIP. See setup note below.';
+    return;
+  }
+  if(typeof google==='undefined'){alert('Google Identity Services not loaded.');return;}
+  google.accounts.oauth2.initTokenClient({
+    client_id:GOOGLE_CLIENT_ID,
+    scope:'https://www.googleapis.com/auth/drive.file',
+    callback:async resp=>{
+      if(resp.access_token){
+        localStorage.setItem('clarity_gdrive_token',resp.access_token);
+        document.getElementById('gdriveBtn').className='backup-card-btn connected';
+        document.getElementById('gdriveBtn').textContent='✓ Connected — Sync Now';
+        document.getElementById('gdriveBtn').onclick=syncToGoogleDrive;
+        document.getElementById('gdriveStatus').className='gdrive-status connected';
+        document.getElementById('gdriveStatus').textContent='Connected to Google Drive';
+        await syncToGoogleDrive(resp.access_token);
+      }
+    }
+  }).requestAccessToken();
+}
+
+async function syncToGoogleDrive(token){
+  const t=token||localStorage.getItem('clarity_gdrive_token');
+  if(!t){connectGoogleDrive();return;}
+  try{
+    const allData={};
+    for(let i=0;i<localStorage.length;i++){const k=localStorage.key(i);if(k.startsWith('clarity_'))allData[k]=localStorage.getItem(k);}
+    let receipts=[];try{receipts=await getAllReceipts();}catch(e){}
+    const backup={data:allData,receipts:receipts.map(r=>({...r,fileData:undefined})),exportedAt:new Date().toISOString()};
+    const blob=new Blob([JSON.stringify(backup)],{type:'application/json'});
+    const fd=new FormData();
+    fd.append('metadata',new Blob([JSON.stringify({name:'clarity-backup.json',mimeType:'application/json'})],{type:'application/json'}));
+    fd.append('file',blob);
+    const r=await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart',{method:'POST',headers:{Authorization:'Bearer '+t},body:fd});
+    if(r.ok){
+      const now=new Date().toLocaleString();
+      document.getElementById('gdriveLastSync').textContent='Last synced: '+now;
+      localStorage.setItem('clarity_gdrive_last_sync',now);
+    }
+  }catch(e){
+    const s=document.getElementById('gdriveStatus');
+    if(s){s.className='gdrive-status error';s.textContent='Sync failed — check your connection';}
+  }
+}
 
 // ─── INIT ─────────────────────────────────────────────────────
 document.getElementById('copyrightYear').textContent=new Date().getFullYear();
