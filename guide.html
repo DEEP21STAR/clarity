@@ -396,6 +396,16 @@ body{background:var(--bg);color:var(--text);font-family:'Space Grotesk','Segoe U
     <div class="step"><div class="step-num" style="background:linear-gradient(135deg,#10d8ff,#0088cc);">⚙</div><div class="step-body"><strong>SYNC</strong> — backs up your data to the cloud so it's available on all your devices. See Section 7 for full setup steps.</div></div>
     <div class="step"><div class="step-num" style="background:linear-gradient(135deg,#10d8ff,#0088cc);">⚙</div><div class="step-body"><strong>THEME</strong> — tap the moon/sun icon to toggle between dark mode (default) and light mode.</div></div>
   </div>
+
+  <div class="callout tip" style="margin-top:28px;"><span class="callout-icon">💡</span><strong>How HEALTH is calculated:</strong> Clarity looks at your savings rate (what's left after expenses ÷ income).<br><br>
+    <strong style="color:#00ff99;">✓ HEALTHY</strong> — saving 20% or more of your income<br>
+    <strong style="color:#ffaa00;">⚠ WARNING</strong> — saving 5–19% (could be tighter)<br>
+    <strong style="color:#ffaa00;">⚠ TIGHT</strong> — saving less than 5% but not in deficit<br>
+    <strong style="color:#ff5577;">✕ DEFICIT</strong> — spending more than you earn<br><br>
+    The goal is to get to HEALTHY. Even small improvements each month add up.
+  </div>
+
+  <div class="callout tip" style="margin-top:16px;"><span class="callout-icon">💡</span><strong>Period buttons + bill frequency — how they work together:</strong> Each bill has its own frequency (weekly, monthly, etc.). When you switch periods, Clarity converts all bills automatically. Example: a $1,200 Monthly bill shows as <strong>$600 in FORTNIGHTLY view</strong> and <strong>$300 in WEEKLY view</strong>. Your totals always reflect the period you're looking at.</div>
 </div>
 
 <hr class="guide-divider" style="margin-top:48px;">
@@ -526,6 +536,17 @@ body{background:var(--bg);color:var(--text);font-family:'Space Grotesk','Segoe U
   </div>
 
   <div class="callout tip"><span class="callout-icon">💡</span>Use the ticks as a fortnightly or monthly checklist. At a glance you can see which bills are still to pay.</div>
+
+  <div style="margin-top:28px;">
+    <h3 style="font-size:.9rem;font-weight:700;color:var(--cyan);margin-bottom:8px;">📅 Setting a due date on a bill</h3>
+    <p style="font-size:.85rem;color:var(--muted);margin-bottom:14px;">Due dates power the Upcoming Bills strip (see Section 10). Set them once and Clarity reminds you automatically.</p>
+    <div class="steps">
+      <div class="step"><div class="step-num">1</div><div class="step-body">Find the bill you want to set a due date for in your dashboard.</div></div>
+      <div class="step"><div class="step-num">2</div><div class="step-body">Tap the bill row — a <strong>Due [date]</strong> badge appears beside the bill name. Tap it.</div></div>
+      <div class="step"><div class="step-num">3</div><div class="step-body">Enter the day of the month the bill is due (e.g. <strong>15</strong> for the 15th). Tap Save.</div></div>
+      <div class="step"><div class="step-num">4</div><div class="step-body">The bill will now appear in the Upcoming Bills strip as the due date approaches — amber within 3 days, red if overdue.</div></div>
+    </div>
+  </div>
 </div>
 
 <hr class="guide-divider" style="margin-top:48px;">
@@ -619,6 +640,13 @@ body{background:var(--bg);color:var(--text);font-family:'Space Grotesk','Segoe U
       <div class="step"><div class="step-num">2</div><div class="step-body">Choose a tab — <strong>Income Tax</strong>, <strong>GST</strong>, <strong>Tax Return</strong>, <strong>Year-on-Year</strong>, or <strong>Super</strong>.</div></div>
       <div class="step"><div class="step-num">3</div><div class="step-body">Type in your numbers — results appear instantly. The 🇦🇺 / 🇳🇿 toggle switches between Australian and New Zealand tax rules.</div></div>
     </div>
+    <div style="margin-top:20px;display:grid;gap:10px;">
+      <div class="label-row"><span class="label-arrow">→</span><span class="label-badge">INCOME TAX</span><span style="color:var(--muted);">Enter gross salary → see take-home pay, tax, Medicare levy, and super broken down</span></div>
+      <div class="label-row"><span class="label-arrow">→</span><span class="label-badge">GST</span><span style="color:var(--muted);">Enter an amount → add 10% GST or strip it out (AU 10% / NZ 15%)</span></div>
+      <div class="label-row"><span class="label-arrow">→</span><span class="label-badge">TAX RETURN</span><span style="color:var(--muted);">Enter income, deductions, and tax paid → see if you're getting a refund or owe more</span></div>
+      <div class="label-row"><span class="label-arrow">→</span><span class="label-badge">YEAR-ON-YEAR</span><span style="color:var(--muted);">Compare two financial years side by side — useful if your income changed significantly</span></div>
+      <div class="label-row"><span class="label-arrow">→</span><span class="label-badge">SUPER / KIWISAVER</span><span style="color:var(--muted);">Enter salary and contribution rates → see employer + employee super projections</span></div>
+    </div>
   </div>
 
   <!-- 9b Receipts -->
@@ -632,6 +660,12 @@ body{background:var(--bg);color:var(--text);font-family:'Space Grotesk','Segoe U
       <div class="step"><div class="step-num">3</div><div class="step-body">Fill in the merchant name, amount, and category. Toggle <strong>Tax Deductible</strong> to green if it's a work expense.</div></div>
       <div class="step"><div class="step-num">4</div><div class="step-body">Tap <strong>SAVE RECEIPT</strong>. It's stored securely on your device — no account needed.</div></div>
       <div class="step"><div class="step-num">5</div><div class="step-body">When tax time comes, tap <strong>📄 Export Tax Summary</strong> — a printable summary opens with all your deductible receipts listed.</div></div>
+    </div>
+    <div style="margin-top:20px;display:grid;gap:10px;">
+      <div class="label-row"><span class="label-arrow">→</span><span class="label-badge">CATEGORY</span><span style="color:var(--muted);">Choose from: Vehicle, Meals, Office Supplies, Equipment, Travel, Clothing, Utilities, Medical, Education, Other</span></div>
+      <div class="label-row"><span class="label-arrow">→</span><span class="label-badge">GST INCLUDED</span><span style="color:var(--muted);">Toggle on if the receipt includes GST — Clarity will calculate the GST component separately in the tax summary</span></div>
+      <div class="label-row"><span class="label-arrow">→</span><span class="label-badge">WARRANTY DATE</span><span style="color:var(--muted);">Optional — enter the warranty expiry date for appliances or electronics. Useful to check before a warranty claim</span></div>
+      <div class="label-row"><span class="label-arrow">→</span><span class="label-badge">TAX DEDUCTIBLE</span><span style="color:var(--muted);">Toggle on for work-related expenses — only these appear in your Export Tax Summary report</span></div>
     </div>
   </div>
 
@@ -727,6 +761,84 @@ body{background:var(--bg);color:var(--text);font-family:'Space Grotesk','Segoe U
     <div class="step"><div class="step-num">3</div><div class="step-body">The exported view shows your summary bar, period tracker, and all bill sections — charts and nav are hidden for a clean layout.</div></div>
   </div>
   <div class="callout tip"><span class="callout-icon">📱</span>On iPhone, tap the share icon in Safari → <strong>Print</strong> → pinch outward on the preview to save as PDF to your Files app.</div>
+</div>
+
+<hr class="guide-divider" style="margin-top:48px;">
+
+<!-- ══ SECTION 13 ══ -->
+<div class="guide-section" id="section-13">
+  <div class="section-num">13</div>
+  <div class="section-title">Charts &amp; Financial Insights</div>
+  <div class="section-sub">Clarity automatically generates three charts and a personalised insights panel from your budget data — no setup needed.</div>
+
+  <!-- Charts -->
+  <div style="margin-bottom:32px;">
+    <h3 style="font-size:.9rem;font-weight:700;color:var(--cyan);margin-bottom:8px;">📊 YOUR THREE CHARTS</h3>
+    <p style="font-size:.85rem;color:var(--muted);margin-bottom:14px;">Charts appear on your dashboard below the bill sections. They update automatically whenever you add or change data.</p>
+    <div style="display:grid;gap:10px;margin-bottom:16px;">
+      <div class="label-row"><span class="label-arrow">→</span><span class="label-badge">SPENDING BY CATEGORY</span><span style="color:var(--muted);">Donut chart — shows how your expenses are split across your bill sections. Quickly see which category takes the most.</span></div>
+      <div class="label-row"><span class="label-arrow">→</span><span class="label-badge">INCOME vs EXPENSES</span><span style="color:var(--muted);">Bar chart — side-by-side comparison of your income and total expenses for the selected period.</span></div>
+      <div class="label-row"><span class="label-arrow">→</span><span class="label-badge">BALANCE FORECAST · 6 MONTHS</span><span style="color:var(--muted);">Line chart — projects your cumulative balance forward 6 months based on your current income and expenses. Assumes nothing changes — useful for spotting trends.</span></div>
+    </div>
+    <div class="callout tip"><span class="callout-icon">💡</span>Switch the period buttons (WEEKLY / FORTNIGHTLY / MONTHLY etc.) and all three charts update to match. Compare how your budget looks across different timeframes.</div>
+  </div>
+
+  <!-- Financial Insights -->
+  <div>
+    <h3 style="font-size:.9rem;font-weight:700;color:var(--cyan);margin-bottom:8px;">💡 FINANCIAL INSIGHTS</h3>
+    <p style="font-size:.85rem;color:var(--muted);margin-bottom:14px;">Below the charts, Clarity shows a personalised insights panel — automatically generated tips and observations based on your actual numbers.</p>
+    <div class="steps">
+      <div class="step"><div class="step-num">1</div><div class="step-body">Insights appear automatically — you don't set them up. They update every time your data changes.</div></div>
+      <div class="step"><div class="step-num">2</div><div class="step-body">Green insight cards are positive signals (e.g. "Housing cost within the 30% guideline"). Orange/red cards flag areas to watch.</div></div>
+      <div class="step"><div class="step-num">3</div><div class="step-body">Common insights include: housing cost %, savings rate, biggest expense category, income vs expenses ratio, and bill overdue warnings.</div></div>
+    </div>
+    <div class="callout tip"><span class="callout-icon">💡</span>If an insight flags something — like housing taking more than 30% of income — it's a prompt to review that category, not an alarm. Use it as a conversation starter with yourself about your spending.</div>
+  </div>
+</div>
+
+<hr class="guide-divider" style="margin-top:48px;">
+
+<!-- ══ SECTION 14 ══ -->
+<div class="guide-section" id="section-14">
+  <div class="section-num">14</div>
+  <div class="section-title">Custom Sections, CSV Import &amp; Export</div>
+  <div class="section-sub">Add your own expense categories, import bank transactions, or export your data as a spreadsheet.</div>
+
+  <!-- Custom Sections -->
+  <div style="margin-bottom:32px;">
+    <h3 style="font-size:.9rem;font-weight:700;color:var(--cyan);margin-bottom:8px;">➕ ADDING A CUSTOM EXPENSE SECTION</h3>
+    <p style="font-size:.85rem;color:var(--muted);margin-bottom:14px;">Clarity comes with standard categories but you can add your own — Transport, Subscriptions, Kids, Pets, anything you like.</p>
+    <div class="steps">
+      <div class="step"><div class="step-num">1</div><div class="step-body">On your dashboard, scroll down past your bill sections and tap the <strong>+ ADD SECTION</strong> button.</div></div>
+      <div class="step"><div class="step-num">2</div><div class="step-body">Type a name for your new category (e.g. <em>Transport</em> or <em>Subscriptions</em>) and tap <strong>Add</strong>.</div></div>
+      <div class="step"><div class="step-num">3</div><div class="step-body">Your new section appears on the dashboard. Tap <strong>+ Add Bill</strong> inside it to start adding expenses to that category.</div></div>
+      <div class="step"><div class="step-num">4</div><div class="step-body">To remove a section, tap the ✕ beside the section name. This removes the section and all bills inside it — so double check before deleting.</div></div>
+    </div>
+  </div>
+
+  <!-- CSV Import -->
+  <div style="margin-bottom:32px;">
+    <h3 style="font-size:.9rem;font-weight:700;color:var(--cyan);margin-bottom:8px;">📂 IMPORTING A BANK CSV</h3>
+    <p style="font-size:.85rem;color:var(--muted);margin-bottom:14px;">Most banks let you export your transactions as a CSV file. Clarity can read that file and help you import your regular bills.</p>
+    <div class="steps">
+      <div class="step"><div class="step-num">1</div><div class="step-body">Download a CSV export from your bank's website or app (usually found under Transactions → Export).</div></div>
+      <div class="step"><div class="step-num">2</div><div class="step-body">On your Clarity dashboard, tap <strong>📂 IMPORT CSV</strong>. Drag your CSV file onto the drop zone, or tap to browse for it.</div></div>
+      <div class="step"><div class="step-num">3</div><div class="step-body">Clarity shows a preview of the transactions it detected. Review the list — deselect anything you don't want to import.</div></div>
+      <div class="step"><div class="step-num">4</div><div class="step-body">Tap <strong>Import</strong> to add the selected transactions as bills in your dashboard.</div></div>
+    </div>
+    <div class="callout tip"><span class="callout-icon">💡</span>CSV import works best for recurring transactions (rent, power, subscriptions). One-off purchases don't need to be in Clarity — focus on your regular bills.</div>
+  </div>
+
+  <!-- CSV Export -->
+  <div>
+    <h3 style="font-size:.9rem;font-weight:700;color:var(--cyan);margin-bottom:8px;">⬇ EXPORTING TO SPREADSHEET</h3>
+    <p style="font-size:.85rem;color:var(--muted);margin-bottom:14px;">Export your entire Clarity budget as a CSV spreadsheet — opens in Excel, Google Sheets, or Numbers.</p>
+    <div class="steps">
+      <div class="step"><div class="step-num">1</div><div class="step-body">On your dashboard, tap <strong>⬇ EXPORT CSV</strong>.</div></div>
+      <div class="step"><div class="step-num">2</div><div class="step-body">A file downloads automatically — open it in Excel or Google Sheets to view all your bills, amounts, frequencies, and paid status in a table.</div></div>
+    </div>
+    <div class="callout tip"><span class="callout-icon">💡</span>The export is a great way to share your budget with a partner or financial advisor — or to keep a spreadsheet record alongside your regular ZIP backup.</div>
+  </div>
 </div>
 
 </div><!-- /guide-wrap -->
