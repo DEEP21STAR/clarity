@@ -341,6 +341,25 @@
   .sync-help-link{font-size:0.65rem;color:var(--accent2);text-decoration:none;display:block;text-align:center;margin-top:10px;opacity:0.8;}
   .sync-help-link:hover{opacity:1;}
 
+  /* ── FEEDBACK FLOAT ── */
+  .feedback-float{position:fixed;bottom:24px;right:24px;z-index:500;
+    background:linear-gradient(135deg,var(--accent),var(--accent2));
+    border:none;border-radius:24px;color:#fff;font-size:0.78rem;font-weight:700;
+    letter-spacing:1px;padding:10px 20px;cursor:pointer;font-family:inherit;
+    box-shadow:0 4px 22px rgba(192,64,255,0.45);transition:all .2s;}
+  .feedback-float:hover{transform:translateY(-2px);box-shadow:0 8px 30px rgba(192,64,255,0.65);}
+  .feedback-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.72);z-index:600;align-items:center;justify-content:center;}
+  .feedback-overlay.open{display:flex;}
+  .feedback-modal{background:var(--panel2);border:1px solid var(--accent);border-radius:16px;padding:26px;width:min(380px,92vw);box-shadow:var(--glow);}
+  .feedback-title{font-size:0.78rem;letter-spacing:2px;color:var(--accent);font-weight:700;margin-bottom:6px;}
+  .feedback-sub{font-size:0.72rem;color:var(--muted);margin-bottom:16px;line-height:1.55;}
+  .feedback-stars{display:flex;gap:4px;margin-bottom:14px;font-size:1.7rem;}
+  .fstar{cursor:pointer;color:var(--border);transition:color .15s,transform .12s;user-select:none;}
+  .fstar:hover,.fstar.lit{color:var(--orange);transform:scale(1.18);}
+  .feedback-modal textarea{width:100%;background:var(--input-bg);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:0.83rem;padding:10px 12px;margin-bottom:14px;font-family:inherit;resize:vertical;outline:none;line-height:1.5;min-height:90px;}
+  .feedback-modal textarea:focus{border-color:var(--accent);}
+  .feedback-sent{text-align:center;padding:10px 0 4px;font-size:0.82rem;color:var(--green);}
+
   /* ── TOOLTIP BALLOON ── */
   .tip-balloon{position:fixed;z-index:9999;background:#14142e;border:1px solid rgba(16,216,255,.45);
     color:#d0d0ff;font-size:0.72rem;line-height:1.5;padding:7px 12px;border-radius:9px;
@@ -674,6 +693,29 @@
     <div class="modal-btns">
       <button class="btn" onclick="closeBudgetModal()">CANCEL</button>
       <button class="btn primary" onclick="saveBudget()">SAVE LIMIT</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── FEEDBACK FLOAT BUTTON ── -->
+<button class="feedback-float" onclick="openFeedback()" data-tip="Send feedback, ask a question, or report an issue — goes straight to Deep">💬 Feedback</button>
+
+<!-- ── FEEDBACK MODAL ── -->
+<div class="feedback-overlay" id="feedbackOverlay">
+  <div class="feedback-modal">
+    <div class="feedback-title">💬 SEND FEEDBACK</div>
+    <p class="feedback-sub">Rate your experience or send a message. Deep will reply personally.</p>
+    <div class="feedback-stars" id="feedbackStars">
+      <span class="fstar" onclick="setRating(1)">★</span>
+      <span class="fstar" onclick="setRating(2)">★</span>
+      <span class="fstar" onclick="setRating(3)">★</span>
+      <span class="fstar" onclick="setRating(4)">★</span>
+      <span class="fstar" onclick="setRating(5)">★</span>
+    </div>
+    <textarea id="feedbackMsg" placeholder="A question, improvement idea, or issue — anything is welcome..."></textarea>
+    <div class="modal-btns">
+      <button class="btn" onclick="closeFeedback()">Cancel</button>
+      <button class="btn primary" onclick="submitFeedback()">Send →</button>
     </div>
   </div>
 </div>
@@ -1627,6 +1669,31 @@ document.addEventListener('DOMContentLoaded',()=>{
     },120);
   });
 });
+
+// ─── FEEDBACK WIDGET ──────────────────────────────────────────
+let _feedbackRating=0;
+function openFeedback(){
+  _feedbackRating=0;
+  document.getElementById('feedbackMsg').value='';
+  document.querySelectorAll('.fstar').forEach(s=>s.classList.remove('lit'));
+  document.getElementById('feedbackOverlay').classList.add('open');
+  setTimeout(()=>document.getElementById('feedbackMsg').focus(),120);
+}
+function closeFeedback(){document.getElementById('feedbackOverlay').classList.remove('open');}
+function setRating(val){
+  _feedbackRating=val;
+  document.querySelectorAll('.fstar').forEach((s,i)=>s.classList.toggle('lit',i<val));
+}
+function submitFeedback(){
+  const msg=document.getElementById('feedbackMsg').value.trim();
+  if(!msg&&!_feedbackRating){document.getElementById('feedbackMsg').focus();return;}
+  const stars=_feedbackRating?'★'.repeat(_feedbackRating)+'☆'.repeat(5-_feedbackRating):'Not rated';
+  const client=typeof _INST!=='undefined'?_INST:'unknown';
+  const subj=encodeURIComponent('Clarity Feedback — '+client);
+  const body=encodeURIComponent('Rating: '+stars+'\nClient: '+client+'\n\n'+msg);
+  window.open('mailto:hello@whetudigital.co.nz?subject='+subj+'&body='+body);
+  closeFeedback();
+}
 
 // ─── TOOLTIP BALLOON ──────────────────────────────────────────
 (function(){
