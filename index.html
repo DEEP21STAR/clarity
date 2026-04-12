@@ -464,6 +464,11 @@
   .clarity-tab{padding:11px 26px;border:1px solid transparent;border-radius:9px;background:rgba(255,255,255,.04);color:rgba(180,190,220,.7);font-size:0.8rem;font-weight:700;letter-spacing:2px;cursor:pointer;transition:all .22s;font-family:inherit;text-shadow:none;}
   .clarity-tab:hover{color:var(--text);background:rgba(16,216,255,.08);border-color:rgba(16,216,255,.2);box-shadow:0 0 12px rgba(16,216,255,.12);}
   .clarity-tab.active{background:linear-gradient(135deg,rgba(16,216,255,.18) 0%,rgba(0,136,204,.22) 100%);color:#fff;border-color:rgba(16,216,255,.55);box-shadow:0 0 20px rgba(16,216,255,.4),0 0 8px rgba(16,216,255,.2),inset 0 1px 0 rgba(255,255,255,.08);text-shadow:0 0 12px rgba(16,216,255,.6);letter-spacing:2.5px;}
+  @media(max-width:500px){
+    .clarity-nav{gap:4px;padding:6px;}
+    .clarity-tab{flex:1 1 calc(50% - 4px);padding:9px 6px;font-size:0.65rem;letter-spacing:1px;text-align:center;}
+    .clarity-tab.active{letter-spacing:1.5px;}
+  }
   .view-panel{display:none;}
   .view-panel.active{display:block;}
 
