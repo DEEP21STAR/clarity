@@ -2,8 +2,13 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Clarity">
+<meta name="theme-color" content="#10101f">
 <title>Clarity — by Whetū Digital</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg viewBox='0 0 220 220' xmlns='http://www.w3.org/2000/svg'><polygon points='110,16 87,83 110,110' fill='%230888b8'/><polygon points='110,16 110,110 133,83' fill='%2320e8ff'/><polygon points='204,110 133,83 110,110' fill='%238030e8'/><polygon points='204,110 110,110 133,137' fill='%235c16b8'/><polygon points='110,204 133,137 110,110' fill='%23c040ff'/><polygon points='110,204 110,110 87,137' fill='%239828d8'/><polygon points='16,110 87,137 110,110' fill='%230868a0'/><polygon points='16,110 110,110 87,83' fill='%2310b0e8'/><circle cx='110' cy='110' r='24' fill='white' opacity='.9'/></svg>">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
@@ -988,7 +993,7 @@
       <div class="receipt-upload-text">Tap to take a photo or choose a file</div>
       <div class="receipt-upload-sub">Supports JPG · PNG · PDF · Camera works on iPhone & Android</div>
     </div>
-    <input type="file" id="receiptFileInput" accept="image/*,application/pdf" capture="environment" style="display:none" onchange="handleReceiptFile(this)">
+    <input type="file" id="receiptFileInput" accept="image/*,application/pdf" style="display:none" onchange="handleReceiptFile(this)">
 
     <!-- Receipt entry form -->
     <div class="receipt-form" id="receiptForm">
@@ -1808,6 +1813,7 @@ function editDebtBalance(secId,rowId){
   if(!isNaN(n)){row.debtBalance=n;save();render();}
 }
 function resetAllPaid(){
+  if(!confirm('Start a new period? This will mark all items as unpaid.'))return;
   data.sections.forEach(s=>s.rows.forEach(r=>r.paid=false));
   save();render();
 }
