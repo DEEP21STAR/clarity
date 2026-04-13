@@ -24,7 +24,7 @@
   body{background:var(--bg);color:var(--text);font-family:'Segoe UI',Consolas,monospace;min-height:100vh;padding:20px;}
 
   /* ── PIN GATE ── */
-  .pin-gate{display:none!important;}
+  .pin-gate{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;}
   .pin-box{text-align:center;padding:40px 32px;background:var(--panel);border:1px solid var(--border);border-radius:20px;min-width:300px;box-shadow:0 0 60px rgba(192,64,255,0.15);}
   .pin-logo{display:flex;justify-content:center;margin-bottom:10px;filter:drop-shadow(0 0 10px rgba(16,216,255,0.55)) drop-shadow(0 0 24px rgba(192,64,255,0.3));animation:pinLogoGlow 3.5s ease-in-out infinite;}
   @keyframes pinLogoGlow{0%,100%{filter:drop-shadow(0 0 8px rgba(16,216,255,.55)) drop-shadow(0 0 20px rgba(192,64,255,.28));}50%{filter:drop-shadow(0 0 18px rgba(16,216,255,.9)) drop-shadow(0 0 44px rgba(192,64,255,.55));}}
@@ -768,7 +768,7 @@
 </div>
 
 <!-- ── MAIN APP ── -->
-<div id="appWrap" style="display:block;">
+<div id="appWrap" style="display:none;">
 
 <!-- ── CLARITY NAV ── -->
 <nav class="clarity-nav">
@@ -2798,7 +2798,11 @@ function pinError(msg){
   document.querySelector('.pin-box').classList.add('pin-shake');
   setTimeout(()=>document.querySelector('.pin-box').classList.remove('pin-shake'),400);
 }
-function unlockDashboard(){document.getElementById('pinGate').style.display='none';document.getElementById('appWrap').style.display='block';}
+function unlockDashboard(){
+  try{sessionStorage.setItem('clarity_auth','1');}catch(e){}
+  document.getElementById('pinGate').style.display='none';
+  document.getElementById('appWrap').style.display='block';
+}
 
 // ─── CHANGE PIN ───────────────────────────────────────────────
 function changePin(){document.getElementById('pinOldInput').value='';document.getElementById('pinNewInput').value='';document.getElementById('pinConfirmInput').value='';document.getElementById('pinChangeMsg').textContent='';document.getElementById('pinModal').classList.add('open');}
@@ -3537,12 +3541,17 @@ if(DEMO_MODE){
   document.getElementById('syncBadge').style.display='none';
   initCharts();render();
 } else {
-  // Check PIN
-  const _storedPin=localStorage.getItem(PIN_KEY);
-  if(_storedPin===null){
-    document.getElementById('pinMsg').textContent='Create your 4-digit PIN';
-    document.getElementById('pinSetupNote').textContent='You will be asked to confirm it once.';
+  // Pre-seed PIN 6304 if not set (ensures correct PIN even after storage clear)
+  if(localStorage.getItem(PIN_KEY)===null){
+    localStorage.setItem(PIN_KEY,'6304');
+    document.getElementById('pinMsg').textContent='Enter your PIN';
   }
+  // Session persistence — no re-entry on page refresh within same browser session
+  try{
+    if(sessionStorage.getItem('clarity_auth')==='1'){
+      unlockDashboard();
+    }
+  }catch(e){ /* sessionStorage unavailable — pin gate stays */ }
 }
 
 document.querySelectorAll('.period-btn').forEach(b=>b.classList.remove('active'));
