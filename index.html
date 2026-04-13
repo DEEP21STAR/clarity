@@ -293,6 +293,18 @@
     50%{box-shadow:0 0 0 2px rgba(16,216,255,.65),0 0 22px rgba(16,216,255,.3),inset 0 0 10px rgba(16,216,255,.04);border-color:rgba(16,216,255,.9);}
   }
   .section-panel.focus-active{animation:neonBorderPulse 1.8s ease-in-out infinite !important;border-color:rgba(16,216,255,.5) !important;}
+  .section-panel.scroll-active:not(.focus-active){border-color:rgba(16,216,255,.32)!important;box-shadow:0 0 18px rgba(16,216,255,.09),inset 0 0 6px rgba(16,216,255,.02)!important;transition:box-shadow .5s,border-color .5s;}
+
+  /* ── SECTION CRUMB PILL ── */
+  .section-crumb{position:fixed;bottom:22px;left:22px;z-index:300;background:rgba(12,15,28,.92);backdrop-filter:blur(10px);border:1px solid rgba(16,216,255,.3);border-radius:20px;padding:5px 14px;font-size:.65rem;letter-spacing:1.8px;color:var(--accent);opacity:0;transform:translateY(8px);transition:all .35s;pointer-events:none;box-shadow:0 0 14px rgba(16,216,255,.15);white-space:nowrap;max-width:220px;overflow:hidden;text-overflow:ellipsis;}
+  .section-crumb.visible{opacity:1;transform:translateY(0);}
+
+  /* ── TOAST NOTIFICATIONS ── */
+  .clarity-toast{position:fixed;bottom:26px;left:50%;transform:translateX(-50%) translateY(16px);background:var(--panel);border:1px solid var(--border);border-radius:24px;padding:10px 22px;font-size:.78rem;color:var(--text);z-index:9999;opacity:0;transition:all .32s;pointer-events:none;white-space:nowrap;box-shadow:0 6px 24px rgba(0,0,0,.35);}
+  .clarity-toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+  .clarity-toast.t-success{border-color:rgba(0,255,153,.45);color:var(--green);box-shadow:0 4px 20px rgba(0,255,153,.12);}
+  .clarity-toast.t-info{border-color:rgba(16,216,255,.45);color:var(--accent);box-shadow:0 4px 20px rgba(16,216,255,.12);}
+  .clarity-toast.t-warn{border-color:rgba(255,170,0,.45);color:var(--orange,#ffaa00);box-shadow:0 4px 20px rgba(255,170,0,.1);}
 
   /* ── DEBT BALANCE FIELD ── */
   .debt-balance-strip{padding:6px 16px 8px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid rgba(255,100,0,.15);background:rgba(255,80,0,.025);}
@@ -616,8 +628,26 @@
   .help-guide{display:none;background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:26px;}
   .help-guide.active{display:block;}
   .help-guide-header{display:flex;align-items:center;gap:14px;margin-bottom:24px;padding-bottom:16px;border-bottom:1px solid var(--border);}
-  .help-guide-back{background:none;border:1px solid var(--border);color:var(--muted);font-size:.72rem;padding:6px 16px;border-radius:20px;cursor:pointer;font-family:inherit;transition:all .15s;white-space:nowrap;}
-  .help-guide-back:hover{border-color:var(--accent2);color:var(--accent2);}
+  @keyframes backGlow{0%,100%{border-color:var(--border);color:var(--muted);box-shadow:none;}50%{border-color:var(--accent2);color:var(--accent2);box-shadow:0 0 14px rgba(192,64,255,.4),0 0 5px rgba(192,64,255,.2);}}
+  @keyframes periodHint{0%,75%,100%{border-color:var(--border);color:var(--muted);box-shadow:none;}87%{border-color:rgba(16,216,255,.45);color:var(--text);box-shadow:0 0 8px rgba(16,216,255,.18);}}
+  @keyframes calcHint{0%,75%,100%{border-color:var(--border);color:var(--muted);box-shadow:none;}87%{border-color:rgba(192,64,255,.4);color:var(--text);box-shadow:0 0 8px rgba(192,64,255,.15);}}
+  @keyframes uploadBreath{0%,100%{border-color:var(--border);box-shadow:none;}50%{border-color:rgba(192,64,255,.45);box-shadow:0 0 18px rgba(192,64,255,.12);}}
+  .help-guide-back{background:none;border:1px solid var(--border);color:var(--muted);font-size:.72rem;padding:6px 16px;border-radius:20px;cursor:pointer;font-family:inherit;transition:border-color .15s,color .15s;white-space:nowrap;animation:backGlow 2.4s ease-in-out infinite;}
+  .help-guide-back:hover{animation:none;border-color:var(--accent2);color:var(--accent2);}
+  .period-btn:not(.active){animation:periodHint 6s ease-in-out infinite;}
+  .period-btn:not(.active):nth-child(2){animation-delay:.4s;}
+  .period-btn:not(.active):nth-child(3){animation-delay:.8s;}
+  .period-btn:not(.active):nth-child(4){animation-delay:1.2s;}
+  .period-btn:not(.active):nth-child(5){animation-delay:1.6s;}
+  .period-btn:not(.active):hover{animation:none;}
+  .calc-tab:not(.active){animation:calcHint 5s ease-in-out infinite;}
+  .calc-tab:not(.active):nth-child(2){animation-delay:.5s;}
+  .calc-tab:not(.active):nth-child(3){animation-delay:1s;}
+  .calc-tab:not(.active):nth-child(4){animation-delay:1.5s;}
+  .calc-tab:not(.active):nth-child(5){animation-delay:2s;}
+  .calc-tab:not(.active):hover{animation:none;}
+  .receipt-upload-zone{animation:uploadBreath 3.5s ease-in-out infinite;}
+  .receipt-upload-zone:hover{animation:none;}
   .help-guide-title{font-size:1.05rem;font-weight:700;color:var(--text);}
   .help-step{display:flex;gap:16px;margin-bottom:20px;align-items:flex-start;}
   .help-step-num{width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,var(--accent2),var(--accent));color:#fff;font-size:.78rem;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:2px;}
@@ -751,6 +781,7 @@
 </nav>
 
 <!-- ── DASHBOARD VIEW ── -->
+<div id="sectionCrumb" class="section-crumb"></div>
 <div id="dashView" class="view-panel active">
 
 <!-- Demo banner (shown only in demo mode) -->
@@ -1070,7 +1101,7 @@
     <div class="help-hero">
       <div style="font-size:2rem;margin-bottom:10px;">?</div>
       <h2>How to Use Clarity</h2>
-      <p>Tap a topic below for simple step-by-step instructions</p>
+      <p>Tap a topic below for step-by-step instructions — with a live animation of the process</p>
     </div>
 
     <!-- Topic grid (default view) -->
@@ -2380,6 +2411,67 @@ function updateCharts(sectionTotals,totalIncome,totalExpense,balance){
   lineChartInst.update();
 }
 
+// ─── TOAST NOTIFICATIONS ──────────────────────────────────────
+let _toastTimer=null;
+function showToast(msg,type='success'){
+  let t=document.querySelector('.clarity-toast');
+  if(!t){t=document.createElement('div');document.body.appendChild(t);}
+  t.className=`clarity-toast t-${type}`;
+  t.textContent=msg;
+  clearTimeout(_toastTimer);
+  requestAnimationFrame(()=>{ requestAnimationFrame(()=>t.classList.add('show')); });
+  _toastTimer=setTimeout(()=>{t.classList.remove('show');},2800);
+}
+
+// ─── SECTION CRUMB + SCROLL GLOW ──────────────────────────────
+(function(){
+  const crumb=document.getElementById('sectionCrumb');
+  let _crumbHide=null;
+  function _setCrumb(panel){
+    if(!crumb)return;
+    const hdr=panel?panel.querySelector('.section-header'):null;
+    const icon=hdr?hdr.querySelector('.section-icon'):null;
+    const nameEl=hdr?hdr.querySelector('.section-name'):null;
+    // Fall back to first text of header
+    const text=hdr?(icon?icon.textContent+' ':'')+( nameEl?nameEl.textContent:hdr.textContent.trim().split('\n')[0].trim().substring(0,25)):'';
+    clearTimeout(_crumbHide);
+    if(text&&panel){
+      crumb.textContent=text;
+      crumb.classList.add('visible');
+      _crumbHide=setTimeout(()=>crumb.classList.remove('visible'),3000);
+    } else {
+      crumb.classList.remove('visible');
+    }
+  }
+  const obs=new IntersectionObserver(entries=>{
+    // Only on dash view
+    if(!document.getElementById('dashView').classList.contains('active'))return;
+    entries.forEach(e=>{
+      if(e.isIntersecting){
+        document.querySelectorAll('.section-panel.scroll-active').forEach(p=>p.classList.remove('scroll-active'));
+        e.target.classList.add('scroll-active');
+        _setCrumb(e.target);
+      } else {
+        e.target.classList.remove('scroll-active');
+      }
+    });
+  },{threshold:0.25,rootMargin:'0px 0px -35% 0px'});
+  // Watch for dynamically added section panels
+  new MutationObserver(muts=>{
+    muts.forEach(m=>m.addedNodes.forEach(n=>{
+      if(n.nodeType!==1)return;
+      if(n.classList&&n.classList.contains('section-panel'))obs.observe(n);
+      n.querySelectorAll&&n.querySelectorAll('.section-panel').forEach(p=>obs.observe(p));
+    }));
+  }).observe(document.body,{childList:true,subtree:true});
+  // Hide crumb when switching away from dash
+  const _origSwitch=window.switchView;
+  window.switchView=function(v){
+    _origSwitch(v);
+    if(v!=='dash'&&crumb)crumb.classList.remove('visible');
+  };
+})();
+
 // ─── PAID TOGGLE ──────────────────────────────────────────────
 function togglePaid(secId,rowId){
   const row=getRow(secId,rowId);
@@ -2393,6 +2485,7 @@ function togglePaid(secId,rowId){
     row.debtBalance=Math.max(0,(row.debtBalance||0)-payment);
   }
   save();render();
+  showToast(row.paid?`✓ ${row.name} marked as paid`:`↩ ${row.name} unmarked`, row.paid?'success':'info');
 }
 function editDebtBalance(secId,rowId){
   const row=getRow(secId,rowId);
@@ -2406,6 +2499,7 @@ function resetAllPaid(){
   if(!confirm('Start a new period? This will mark all items as unpaid.'))return;
   data.sections.forEach(s=>s.rows.forEach(r=>r.paid=false));
   save();render();
+  showToast('🔄 New period started — all bills reset','info');
 }
 
 // ─── DUE DATE MODAL ───────────────────────────────────────────
