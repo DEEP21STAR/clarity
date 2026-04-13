@@ -1184,6 +1184,11 @@
           <div class="help-topic-name">Reading the numbers</div>
           <div class="help-topic-desc">What INCOME, BALANCE, SAVINGS % and HEALTH mean</div>
         </div>
+        <div class="help-topic-card" onclick="showGuide('g-taxyear')">
+          <div class="help-topic-icon">📅</div>
+          <div class="help-topic-name">Tax Year Summary</div>
+          <div class="help-topic-desc">View your FY totals, mark deductibles, estimate tax and export for your accountant</div>
+        </div>
       </div>
     </div>
 
@@ -1343,6 +1348,42 @@
         <div class="help-tip-box" style="background:rgba(255,170,0,.08);border-color:rgba(255,170,0,.3);color:var(--orange);margin-top:6px;">⚠ WARNING — saving 5–19%, getting tight</div>
         <div class="help-tip-box" style="background:rgba(255,85,119,.08);border-color:rgba(255,85,119,.3);color:var(--red);margin-top:6px;">✕ DEFICIT — spending more than you earn</div>
       </div></div>
+    </div>
+
+    <!-- ── Guide: Tax Year Summary ── -->
+    <div class="help-guide" id="g-taxyear">
+      <div class="help-guide-header">
+        <button class="help-guide-back" onclick="showGuide(null)">← All topics</button>
+        <span class="help-guide-title">📅 Tax Year Summary</span>
+      </div>
+      <div class="help-demo" id="demo-taxyear">
+        <div class="demo-screen">
+          <div class="demo-nav">
+            <div class="demo-nav-tab">📊 DASH</div>
+            <div class="demo-nav-tab">🧮 CALC</div>
+            <div class="demo-nav-tab">📷 RECEIPTS</div>
+            <div class="demo-nav-tab">☁ BACKUP</div>
+            <div class="demo-nav-tab">? HELP</div>
+            <div class="demo-nav-tab" id="dty-tab" style="color:var(--accent2);">📅 TAX YEAR</div>
+          </div>
+          <div id="dty-content">
+            <div class="demo-fy-badge" id="dty-badge" style="display:inline-block;margin:6px 0;padding:3px 10px;border-radius:20px;font-size:.6rem;background:rgba(192,64,255,.15);border:1px solid rgba(192,64,255,.4);color:var(--accent2);">📅 FY 2024–25 · Jul 2024 – Jun 2025</div>
+            <div style="display:flex;gap:6px;margin-top:6px;flex-wrap:wrap;">
+              <div style="flex:1;min-width:60px;padding:6px;background:rgba(0,255,153,.08);border:1px solid rgba(0,255,153,.2);border-radius:6px;font-size:.6rem;text-align:center;"><div style="color:var(--muted);">INCOME</div><div style="color:var(--green);font-weight:700;">$62,400</div></div>
+              <div style="flex:1;min-width:60px;padding:6px;background:rgba(255,85,119,.08);border:1px solid rgba(255,85,119,.2);border-radius:6px;font-size:.6rem;text-align:center;"><div style="color:var(--muted);">EXPENSES</div><div style="color:var(--red);font-weight:700;">$48,960</div></div>
+              <div style="flex:1;min-width:60px;padding:6px;background:rgba(192,64,255,.08);border:1px solid rgba(192,64,255,.2);border-radius:6px;font-size:.6rem;text-align:center;"><div style="color:var(--muted);">DEDUCTIBLE</div><div style="color:var(--accent2);font-weight:700;">$2,340</div></div>
+            </div>
+            <div class="demo-callout" id="dty-msg" style="margin-top:8px;font-size:.6rem;">← Tap 📅 TAX YEAR in the nav above</div>
+          </div>
+        </div>
+      </div>
+      <div class="help-step"><div class="help-step-num">1</div><div class="help-step-body"><h4>Find the FY badge or TAX YEAR tab</h4><p>On the Dashboard you'll see a purple pill near the top showing the current Financial Year — e.g. <strong>📅 FY 2024–25</strong>. Tap it, or tap the <strong>📅 TAX YEAR</strong> tab in the navigation bar.</p></div></div>
+      <div class="help-step"><div class="help-step-num">2</div><div class="help-step-body"><h4>Choose the Financial Year</h4><p>At the top of the Tax Year screen there's a dropdown to pick which year to view. The current FY is selected automatically. In Australia the FY runs <strong>July to June</strong> (e.g. FY 2024–25 = Jul 2024 to Jun 2025).</p><div class="help-tip-box">💡 Clarity automatically uses the Australian FY calendar for AUD budgets — no setup needed.</div></div></div>
+      <div class="help-step"><div class="help-step-num">3</div><div class="help-step-body"><h4>See your annual totals</h4><p>The summary cards show your total annual Income, Expenses, Balance and any items you've marked as Tax Deductible — all calculated for the selected FY.</p></div></div>
+      <div class="help-step"><div class="help-step-num">4</div><div class="help-step-body"><h4>Mark items as Tax Deductible</h4><p>Scroll down to see all your bills listed. Each one has a <strong>✓ Tax</strong> button. Tap it to mark that expense as tax deductible — it turns purple and is included in your deductible total. Tap again to un-mark it.</p><div class="help-tip-box">💡 Examples of deductible expenses: work-from-home internet, phone used for work, professional subscriptions. Ask your accountant if unsure.</div></div></div>
+      <div class="help-step"><div class="help-step-num">5</div><div class="help-step-body"><h4>Work From Home calculator</h4><p>If you work from home, scroll to the WFH section. Enter your hours per week and weeks worked — Clarity calculates your ATO fixed-rate deduction ($0.67/hr) automatically.</p></div></div>
+      <div class="help-step"><div class="help-step-num">6</div><div class="help-step-body"><h4>Save a Snapshot</h4><p>Click <strong>Save Snapshot</strong> to lock in your numbers for this FY — useful to compare year to year or share with your accountant before you change anything.</p></div></div>
+      <div class="help-step"><div class="help-step-num">7</div><div class="help-step-body"><h4>Print or Export for your accountant</h4><p>Use <strong>Print Tax Summary</strong> to get a clean PDF page, or <strong>Export CSV</strong> to download a spreadsheet. Both include your income, expenses, deductibles and WFH claim.</p><div class="help-tip-box">📋 Give both documents to your accountant at tax time — they have everything needed to complete your Australian tax return.</div></div></div>
     </div>
 
   </div>
@@ -3967,6 +4008,7 @@ function showGuide(id){
       'g-newperiod': _demoNewPeriod,
       'g-backup': _demoBackup,
       'g-numbers': _demoNumbers,
+      'g-taxyear': _demoTaxYear,
     }[id];
     if(demoFn){ setTimeout(demoFn, 600); }
   }
@@ -4135,6 +4177,38 @@ function _demoBackup(){
     drvbtn.classList.remove('d-glow'); drvbtn.classList.add('d-done');
     done.classList.add('d-show');
     await _demoSleep(2200,K);
+  });
+}
+
+// ── Demo 7: Tax Year ──────────────────────────────────────────────────────
+function _demoTaxYear(){
+  const K='taxyear';
+  _demoLoop(K, async()=>{
+    const tab=document.getElementById('dty-tab');
+    const badge=document.getElementById('dty-badge');
+    const msg=document.getElementById('dty-msg');
+    if(!tab)return;
+    // Reset
+    tab.classList.remove('d-active'); badge.classList.remove('d-glow');
+    msg.textContent='← Tap 📅 TAX YEAR in the nav above'; msg.classList.remove('d-show');
+    await _demoSleep(800,K);
+    // 1 — Highlight TAX YEAR tab
+    tab.classList.add('d-active');
+    await _demoSleep(900,K);
+    // 2 — FY badge glows
+    badge.classList.add('d-glow');
+    msg.textContent='📅 FY 2024–25 detected — Jul 2024 – Jun 2025'; msg.classList.add('d-show');
+    await _demoSleep(1500,K);
+    // 3 — Show deductible message
+    badge.classList.remove('d-glow');
+    msg.textContent='✓ Tax toggle — mark bills as deductible'; msg.classList.add('d-show');
+    await _demoSleep(1500,K);
+    // 4 — Show export message
+    msg.textContent='📋 Print Tax Summary or Export CSV for your accountant'; msg.classList.add('d-show');
+    await _demoSleep(1800,K);
+    msg.classList.remove('d-show');
+    tab.classList.remove('d-active');
+    await _demoSleep(500,K);
   });
 }
 
