@@ -401,8 +401,41 @@ body{background:var(--bg);color:var(--text);font-family:'Space Grotesk','Segoe U
   <div class="steps" style="margin-top:28px;">
     <div class="step"><div class="step-num" style="background:linear-gradient(135deg,#10d8ff,#0088cc);">⚙</div><div class="step-body"><strong>CURRENCY</strong> — tap the dropdown (AU AUD / NZ NZD) to switch between Australian and New Zealand dollars. All amounts update instantly.</div></div>
     <div class="step"><div class="step-num" style="background:linear-gradient(135deg,#10d8ff,#0088cc);">⚙</div><div class="step-body"><strong>RESET PAID</strong> — clears all the green tick marks so you can start fresh for a new pay period. Tap <em>New Period</em> beside it to confirm.</div></div>
-    <div class="step"><div class="step-num" style="background:linear-gradient(135deg,#10d8ff,#0088cc);">⚙</div><div class="step-body"><strong>SYNC</strong> — backs up your data to the cloud so it's available on all your devices. See Section 7 for full setup steps.</div></div>
-    <div class="step"><div class="step-num" style="background:linear-gradient(135deg,#10d8ff,#0088cc);">⚙</div><div class="step-body"><strong>THEME</strong> — tap the moon/sun icon to toggle between dark mode (default) and light mode.</div></div>
+    <div class="step"><div class="step-num" style="background:linear-gradient(135deg,#10d8ff,#0088cc);">⚙</div><div class="step-body"><strong>☁ BACKUP</strong> — tap <em>Save to Drive</em> to back up your budget to Google Drive. Access it on any device — your data is never lost. See Section 7 for setup steps.</div></div>
+    <div class="step"><div class="step-num" style="background:linear-gradient(135deg,#10d8ff,#0088cc);">⚙</div><div class="step-body"><strong>DARK / LIGHT</strong> — tap the 🌙 moon icon to switch to light mode. Tap the ☀️ sun to go back to dark mode.</div></div>
+    <div class="step"><div class="step-num" style="background:linear-gradient(135deg,#c040ff,#8020cc);">⚙</div><div class="step-body"><strong>? Guide</strong> — that's this guide! Tap any time you're unsure about a feature.</div></div>
+  </div>
+
+  <!-- ── Header controls visual mock ── -->
+  <div class="window" style="margin-top:24px;">
+    <div class="window-bar"><div class="window-dot r"></div><div class="window-dot y"></div><div class="window-dot g"></div><div class="window-url">deep21star.github.io/clarity — top-right controls</div></div>
+    <div class="window-body">
+      <p style="font-size:.7rem;letter-spacing:.1em;color:var(--muted);text-transform:uppercase;margin-bottom:16px;">Top-right buttons — what each one does</p>
+      <div style="display:flex;align-items:flex-end;gap:14px;flex-wrap:wrap;">
+
+        <div style="display:flex;flex-direction:column;align-items:center;gap:6px;">
+          <div style="font-size:.58rem;letter-spacing:.12em;color:var(--muted);text-transform:uppercase;">☁ BACKUP</div>
+          <!-- Normal state (how it looks by default) -->
+          <div style="background:rgba(255,255,255,.04);border:1px solid #2a2a50;border-radius:20px;padding:4px 10px;font-size:.65rem;color:#8080b8;white-space:nowrap;cursor:default;letter-spacing:1px;">☁ Save to Drive</div>
+          <!-- Hover state label -->
+          <div style="font-size:.58rem;color:var(--cyan);opacity:.7;text-align:center;">↑ glows cyan on hover</div>
+          <div style="font-size:.62rem;color:var(--muted);text-align:center;max-width:110px;">Tap to back up your budget to Google Drive</div>
+        </div>
+
+        <div style="display:flex;flex-direction:column;align-items:center;gap:6px;">
+          <div style="font-size:.58rem;letter-spacing:.12em;color:var(--muted);text-transform:uppercase;">DARK / LIGHT</div>
+          <div style="background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.15);border-radius:8px;padding:6px 14px;font-size:1rem;cursor:default;">🌙</div>
+          <div style="font-size:.62rem;color:var(--muted);text-align:center;max-width:80px;">Tap to switch dark ↔ light</div>
+        </div>
+
+        <div style="display:flex;flex-direction:column;align-items:center;gap:6px;">
+          <div style="font-size:.58rem;letter-spacing:.12em;color:var(--muted);text-transform:uppercase;">HELP</div>
+          <div style="background:rgba(16,216,255,.08);border:2px solid var(--cyan);border-radius:8px;padding:6px 14px;font-size:.72rem;color:var(--cyan);font-weight:700;cursor:default;box-shadow:0 0 10px rgba(16,216,255,.3);">? Guide</div>
+          <div style="font-size:.62rem;color:var(--muted);text-align:center;max-width:80px;">Opens this guide</div>
+        </div>
+
+      </div>
+    </div>
   </div>
 
   <div class="callout tip" style="margin-top:28px;"><span class="callout-icon">💡</span><strong>How HEALTH is calculated:</strong> Clarity looks at your savings rate (what's left after expenses ÷ income).<br><br>

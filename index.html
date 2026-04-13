@@ -416,6 +416,7 @@
   .sync-badge.synced{color:#00ff99;border-color:rgba(0,255,153,0.3);}
   .sync-badge.syncing{color:var(--accent);border-color:rgba(16,216,255,0.3);animation:syncPulse 1s ease-in-out infinite;}
   .sync-badge.unset{color:var(--muted);border-color:var(--border);}
+  .sync-badge.unset:hover{border-color:var(--accent2);color:var(--accent2);background:rgba(16,216,255,0.08);}
   .sync-badge.error{color:#ff5577;border-color:rgba(255,85,119,0.3);}
   @keyframes syncPulse{0%,100%{opacity:1;}50%{opacity:0.5;}}
 
@@ -460,10 +461,15 @@
   .tip-balloon.tip-show{opacity:1;}
 
   /* ── VIEW NAV ── */
-  .clarity-nav{display:flex;justify-content:center;gap:6px;max-width:1200px;margin:0 auto 22px;background:var(--panel);border:1px solid rgba(16,216,255,.18);border-radius:14px;padding:8px;flex-wrap:wrap;box-shadow:0 0 28px rgba(16,216,255,.07),0 0 8px rgba(192,64,255,.05),inset 0 1px 0 rgba(255,255,255,.04);}
+  @keyframes navGlow{0%,100%{box-shadow:0 0 28px rgba(16,216,255,.07),0 0 8px rgba(192,64,255,.05),inset 0 1px 0 rgba(255,255,255,.04);border-color:rgba(16,216,255,.18);}50%{box-shadow:0 0 55px rgba(16,216,255,.22),0 0 22px rgba(192,64,255,.14),inset 0 1px 0 rgba(255,255,255,.07);border-color:rgba(16,216,255,.42);}}
+  @keyframes tabPulse{0%,100%{box-shadow:0 0 20px rgba(16,216,255,.4),0 0 8px rgba(16,216,255,.2),inset 0 1px 0 rgba(255,255,255,.08);text-shadow:0 0 12px rgba(16,216,255,.6);}50%{box-shadow:0 0 38px rgba(16,216,255,.75),0 0 18px rgba(16,216,255,.45),0 0 6px rgba(192,64,255,.3),inset 0 1px 0 rgba(255,255,255,.14);text-shadow:0 0 22px rgba(16,216,255,.95),0 0 8px rgba(192,64,255,.4);}}
+  .clarity-nav{position:relative;display:flex;justify-content:center;gap:6px;max-width:1200px;margin:0 auto 22px;background:var(--panel);border:1px solid rgba(16,216,255,.18);border-radius:14px;padding:8px 56px 8px 56px;flex-wrap:wrap;animation:navGlow 4s ease-in-out infinite;}
+  .nav-theme-btn{position:absolute;right:10px;top:50%;transform:translateY(-50%);background:rgba(255,255,255,.04);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:1.1rem;width:38px;height:38px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .2s;}
+  .nav-theme-btn:hover{border-color:var(--accent);box-shadow:0 0 10px rgba(16,216,255,.25);}
+  @media(max-width:500px){.clarity-nav{padding:6px 50px 6px 6px;}.nav-theme-btn{width:34px;height:34px;font-size:1rem;}}
   .clarity-tab{padding:11px 26px;border:1px solid transparent;border-radius:9px;background:rgba(255,255,255,.04);color:rgba(180,190,220,.7);font-size:0.8rem;font-weight:700;letter-spacing:2px;cursor:pointer;transition:all .22s;font-family:inherit;text-shadow:none;}
   .clarity-tab:hover{color:var(--text);background:rgba(16,216,255,.08);border-color:rgba(16,216,255,.2);box-shadow:0 0 12px rgba(16,216,255,.12);}
-  .clarity-tab.active{background:linear-gradient(135deg,rgba(16,216,255,.18) 0%,rgba(0,136,204,.22) 100%);color:#fff;border-color:rgba(16,216,255,.55);box-shadow:0 0 20px rgba(16,216,255,.4),0 0 8px rgba(16,216,255,.2),inset 0 1px 0 rgba(255,255,255,.08);text-shadow:0 0 12px rgba(16,216,255,.6);letter-spacing:2.5px;}
+  .clarity-tab.active{background:linear-gradient(135deg,rgba(16,216,255,.18) 0%,rgba(0,136,204,.22) 100%);color:#fff;border-color:rgba(16,216,255,.55);letter-spacing:2.5px;animation:tabPulse 2.8s ease-in-out infinite;}
   @media(max-width:500px){
     .clarity-nav{gap:4px;padding:6px;}
     .clarity-tab{flex:1 1 calc(50% - 4px);padding:9px 6px;font-size:0.65rem;letter-spacing:1px;text-align:center;}
@@ -596,6 +602,80 @@
   .gdrive-status{font-size:.72rem;padding:7px 12px;border-radius:6px;margin-top:8px;display:none;}
   .gdrive-status.connected{display:block;background:rgba(0,255,153,.1);color:var(--green);border:1px solid rgba(0,255,153,.25);}
   .gdrive-status.error{display:block;background:rgba(255,85,119,.1);color:var(--red);border:1px solid rgba(255,85,119,.25);}
+
+  /* ── HELP TAB VIEW ── */
+  .help-hero{text-align:center;padding:32px 20px 28px;background:linear-gradient(135deg,rgba(192,64,255,.08),rgba(16,216,255,.05));border:1px solid var(--border);border-radius:14px;margin-bottom:24px;}
+  .help-hero h2{font-size:1.5rem;font-weight:700;color:var(--accent);margin-bottom:8px;}
+  .help-hero p{font-size:.85rem;color:var(--muted);}
+  .help-topic-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;margin-bottom:28px;}
+  .help-topic-card{background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:22px 18px;cursor:pointer;transition:all .2s;}
+  .help-topic-card:hover{border-color:var(--accent2);background:rgba(16,216,255,.06);transform:translateY(-3px);box-shadow:0 6px 24px rgba(16,216,255,.1);}
+  .help-topic-icon{font-size:2.2rem;margin-bottom:12px;}
+  .help-topic-name{font-size:.9rem;font-weight:700;color:var(--text);margin-bottom:6px;}
+  .help-topic-desc{font-size:.75rem;color:var(--muted);line-height:1.5;}
+  .help-guide{display:none;background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:26px;}
+  .help-guide.active{display:block;}
+  .help-guide-header{display:flex;align-items:center;gap:14px;margin-bottom:24px;padding-bottom:16px;border-bottom:1px solid var(--border);}
+  .help-guide-back{background:none;border:1px solid var(--border);color:var(--muted);font-size:.72rem;padding:6px 16px;border-radius:20px;cursor:pointer;font-family:inherit;transition:all .15s;white-space:nowrap;}
+  .help-guide-back:hover{border-color:var(--accent2);color:var(--accent2);}
+  .help-guide-title{font-size:1.05rem;font-weight:700;color:var(--text);}
+  .help-step{display:flex;gap:16px;margin-bottom:20px;align-items:flex-start;}
+  .help-step-num{width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,var(--accent2),var(--accent));color:#fff;font-size:.78rem;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:2px;}
+  .help-step-body h4{font-size:.88rem;font-weight:700;color:var(--text);margin-bottom:5px;}
+  .help-step-body p{font-size:.78rem;color:var(--muted);line-height:1.6;}
+  .help-tip-box{background:rgba(192,64,255,.08);border:1px solid rgba(192,64,255,.2);border-radius:8px;padding:10px 14px;font-size:.73rem;color:var(--muted);margin-top:10px;line-height:1.55;}
+
+  /* ── HELP DEMOS ── */
+  .help-demo{background:var(--input-bg);border:1px solid var(--border);border-radius:12px;padding:14px 16px 16px;margin-bottom:22px;position:relative;overflow:hidden;}
+  .help-demo::before{content:'▶ LIVE DEMO';position:absolute;top:10px;right:12px;font-size:.55rem;letter-spacing:2px;color:var(--accent);opacity:.6;}
+  .demo-screen{background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:12px;position:relative;}
+  .demo-nav{display:flex;gap:3px;background:var(--panel);border:1px solid var(--border);border-radius:7px;padding:3px;margin-bottom:8px;}
+  .demo-nav-tab{flex:1;text-align:center;font-size:.52rem;padding:4px 2px;border-radius:4px;border:1px solid transparent;color:var(--muted);letter-spacing:.5px;}
+  .demo-nav-tab.d-active{background:rgba(16,216,255,.15);border-color:rgba(16,216,255,.4);color:#fff;box-shadow:0 0 8px rgba(16,216,255,.25);}
+  .demo-sum{display:flex;gap:4px;margin-bottom:8px;}
+  .demo-sum-block{flex:1;background:var(--panel);border:1px solid var(--border);border-radius:6px;padding:6px 4px;text-align:center;transition:all .4s;}
+  .demo-sum-block.d-lit{border-color:var(--accent);box-shadow:0 0 10px rgba(16,216,255,.3);}
+  .demo-sum-lbl{font-size:.48rem;letter-spacing:.8px;color:var(--muted);display:block;}
+  .demo-sum-val{font-size:.72rem;font-weight:700;display:block;margin-top:2px;}
+  .demo-sum-val.income{color:var(--green);}
+  .demo-sum-val.expense{color:var(--red);}
+  .demo-sum-val.balance{color:var(--accent);}
+  .demo-sum-val.savings{color:var(--orange,#ffaa00);}
+  .demo-row{display:flex;align-items:center;gap:8px;padding:7px 10px;background:var(--panel);border:1px solid var(--border);border-radius:7px;margin-bottom:4px;transition:all .4s;position:relative;}
+  .demo-row.d-paid{border-color:rgba(0,255,153,.35);background:rgba(0,255,153,.05);}
+  .demo-row.d-new{border-color:rgba(16,216,255,.35);animation:demoRowIn .4s ease;}
+  @keyframes demoRowIn{from{opacity:0;transform:translateY(-6px);}to{opacity:1;transform:none;}}
+  .demo-circle{width:18px;height:18px;border:2px solid var(--border);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.6rem;flex-shrink:0;transition:all .35s;}
+  .demo-circle.d-checked{border-color:var(--green);background:rgba(0,255,153,.15);color:var(--green);}
+  .demo-circle.d-pulse{box-shadow:0 0 0 3px rgba(16,216,255,.25);}
+  .demo-rname{font-size:.72rem;flex:1;color:var(--text);}
+  .demo-ramt{font-size:.72rem;font-weight:700;color:var(--accent);}
+  .demo-rfreq{font-size:.55rem;color:var(--muted);background:var(--input-bg);border:1px solid var(--border);border-radius:3px;padding:1px 5px;}
+  .demo-pencil{font-size:.75rem;color:var(--muted);cursor:pointer;transition:all .3s;padding:2px 4px;border-radius:4px;}
+  .demo-pencil.d-glow{color:var(--accent);background:rgba(16,216,255,.12);box-shadow:0 0 8px rgba(16,216,255,.3);}
+  .demo-modal{position:absolute;top:4px;right:4px;background:var(--panel);border:1px solid var(--accent);border-radius:8px;padding:10px;width:150px;box-shadow:0 4px 20px rgba(16,216,255,.2);opacity:0;transform:scale(.92);transition:all .3s;pointer-events:none;z-index:10;}
+  .demo-modal.d-show{opacity:1;transform:scale(1);}
+  .demo-modal-lbl{font-size:.55rem;letter-spacing:1px;color:var(--muted);margin-bottom:5px;}
+  .demo-modal-val{background:var(--input-bg);border:1px solid var(--accent);border-radius:5px;padding:5px 8px;font-size:.82rem;color:var(--text);font-weight:700;min-height:28px;text-align:right;}
+  .demo-modal-cursor{display:inline-block;animation:dCursor .7s infinite;}
+  @keyframes dCursor{0%,100%{opacity:1;}50%{opacity:0;}}
+  .demo-modal-btn{background:linear-gradient(135deg,rgba(16,216,255,.8),rgba(192,64,255,.8));color:#fff;border:none;border-radius:5px;padding:5px 10px;font-size:.62rem;width:100%;margin-top:6px;letter-spacing:1px;}
+  .demo-add-btn{text-align:center;font-size:.65rem;color:var(--accent);padding:5px;border:1px dashed rgba(16,216,255,.3);border-radius:5px;margin-top:4px;transition:all .3s;}
+  .demo-add-btn.d-glow{border-color:var(--accent);background:rgba(16,216,255,.07);box-shadow:0 0 8px rgba(16,216,255,.15);}
+  .demo-action-btn{background:var(--panel);border:1px solid var(--border);border-radius:6px;padding:5px 12px;font-size:.68rem;color:var(--text);transition:all .3s;display:inline-block;}
+  .demo-action-btn.d-glow{border-color:var(--accent);color:var(--accent);box-shadow:0 0 10px rgba(16,216,255,.25);}
+  .demo-action-btn.d-success{border-color:var(--green);color:var(--green);box-shadow:0 0 10px rgba(0,255,153,.25);}
+  .demo-drive-btn{background:linear-gradient(135deg,rgba(16,216,255,.15),rgba(192,64,255,.15));border:1px solid rgba(16,216,255,.4);border-radius:8px;padding:8px 16px;font-size:.72rem;color:var(--text);text-align:center;margin-top:8px;transition:all .4s;}
+  .demo-drive-btn.d-glow{border-color:var(--accent);box-shadow:0 0 16px rgba(16,216,255,.3);color:var(--accent);}
+  .demo-drive-btn.d-done{border-color:var(--green);box-shadow:0 0 16px rgba(0,255,153,.3);color:var(--green);}
+  .demo-callout{font-size:.65rem;color:var(--accent);background:rgba(16,216,255,.08);border:1px solid rgba(16,216,255,.2);border-radius:6px;padding:5px 10px;margin-top:6px;opacity:0;transition:opacity .4s;}
+  .demo-callout.d-show{opacity:1;}
+  .demo-section-lbl{font-size:.58rem;letter-spacing:2px;color:var(--muted);margin-bottom:6px;padding-bottom:4px;border-bottom:1px solid var(--border);}
+  .demo-counter{font-size:.65rem;color:var(--muted);text-align:right;margin-top:6px;transition:color .4s;}
+  .demo-counter.d-updated{color:var(--green);}
+  .demo-health{display:inline-block;border:1px solid;border-radius:20px;padding:3px 10px;font-size:.65rem;font-weight:700;transition:all .4s;}
+  .demo-health.deficit{border-color:var(--red);color:var(--red);}
+  .demo-health.healthy{border-color:var(--green);color:var(--green);}
 </style>
 </head>
 <body>
@@ -666,6 +746,8 @@
   <button class="clarity-tab" onclick="switchView('calc')" data-tip="Tax calculators for NZ & Australia — income tax, GST, returns, year-on-year">🧮 CALCULATOR</button>
   <button class="clarity-tab" onclick="switchView('receipts')" data-tip="Capture and store receipts for tax deductions — camera or file upload">📷 RECEIPTS</button>
   <button class="clarity-tab" onclick="switchView('backup')" data-tip="Back up your data to Google Drive or download a ZIP — never lose your data">☁ BACKUP</button>
+  <button class="clarity-tab" onclick="switchView('help')" data-tip="Quick help — tap any topic for simple step-by-step instructions" style="border-color:rgba(192,64,255,.4);color:var(--accent);">? HELP</button>
+  <button class="nav-theme-btn" id="themeToggle" onclick="toggleTheme()" data-tip="Switch between dark and light mode">🌙</button>
 </nav>
 
 <!-- ── DASHBOARD VIEW ── -->
@@ -706,9 +788,9 @@
 
 <!-- Controls -->
 <div class="top-controls">
-  <div class="control-group">
+  <div class="control-group" data-tip="Choose your display currency — all amounts convert automatically">
     <label class="ctrl-label">CURRENCY</label>
-    <select id="currencySelect" class="ctrl-select" onchange="setCurrency(this.value)" data-tip="Choose your display currency — all amounts convert automatically">
+    <select id="currencySelect" class="ctrl-select" onchange="setCurrency(this.value)">
       <option value="AUD">🇦🇺 AUD</option>
       <option value="NZD">🇳🇿 NZD</option>
       <option value="USD">🇺🇸 USD</option>
@@ -719,22 +801,11 @@
       <option value="SGD">🇸🇬 SGD</option>
     </select>
   </div>
-  <div class="control-group">
-    <label class="ctrl-label">RESET PAID</label>
-    <button class="btn" onclick="resetAllPaid()" style="padding:4px 12px;font-size:0.7rem;" data-tip="Start a fresh billing period — marks all paid items as unpaid so you can track again">New Period</button>
+  <div class="control-group" data-tip="Mark all bills as unpaid to start a fresh pay period">
+    <label class="ctrl-label">NEW PERIOD</label>
+    <button class="btn" onclick="resetAllPaid()" style="padding:5px 14px;font-size:0.72rem;">↺ Reset Paid</button>
   </div>
-  <div class="control-group" style="margin-left:auto;">
-    <label class="ctrl-label">SYNC</label>
-    <span class="sync-badge unset" id="syncBadge" onclick="openSyncModal()" data-tip="Connect cloud sync — your budget then saves automatically across all your devices">☁ SETUP SYNC</span>
-  </div>
-  <div class="control-group">
-    <label class="ctrl-label">THEME</label>
-    <button class="theme-btn" id="themeToggle" onclick="toggleTheme()" data-tip="Switch between dark and light mode">🌙</button>
-  </div>
-  <div class="control-group">
-    <label class="ctrl-label">HELP</label>
-    <a href="guide.html" target="_blank" class="btn btn-guide" style="padding:6px 16px;font-size:0.72rem;text-decoration:none;" data-tip="Open the full step-by-step user guide — explains every feature with examples">? Guide</a>
-  </div>
+<span class="sync-badge unset" id="syncBadge" onclick="openDriveModal()" data-tip="Save your budget to Google Drive" style="display:none;"></span>
 </div>
 
 <!-- Period Toggle -->
@@ -914,9 +985,10 @@
   <button class="btn primary" onclick="openAddSection()" data-tip="Add a new category to your budget — e.g. Transport, Food, Entertainment">+ ADD SECTION</button>
   <button class="btn csv-btn" onclick="toggleCsvPanel()" data-tip="Upload a bank statement CSV to automatically detect and import your expenses">📂 IMPORT CSV</button>
   <button class="btn csv-btn" onclick="exportCSV()" data-tip="Download your entire budget as a spreadsheet you can open in Excel or Google Sheets">⬇ EXPORT CSV</button>
-  <button class="btn" onclick="exportData()" data-tip="Save a full backup of your budget data as a JSON file — keep this somewhere safe">EXPORT JSON</button>
-  <button class="btn" onclick="importData()" data-tip="Restore your budget from a previously saved JSON backup file">IMPORT JSON</button>
-  <button class="btn" onclick="exportPDF()" data-tip="Print or save a PDF summary of your current budget">🖨 PRINT / PDF</button>
+  <button class="btn" onclick="exportData()" style="border-color:rgba(0,255,153,.5);color:var(--green);" data-tip="Save a full backup of your budget data as a JSON file">SAVE FILE</button>
+  <button class="btn" onclick="importData()" data-tip="Restore your budget from a previously saved JSON backup file">LOAD FILE</button>
+  <button class="btn" onclick="openDriveModal()" style="border-color:rgba(192,64,255,.5);color:var(--accent);" data-tip="Backup your budget to Google Drive">GOOGLE DRIVE</button>
+  <button class="btn" onclick="exportPDF()" data-tip="Print or save a PDF summary of your current budget">PRINT</button>
   <button class="btn danger" onclick="resetData()" data-tip="⚠ Clear ALL data and start from scratch — this cannot be undone">RESET</button>
   <button class="btn" onclick="changePin()" data-tip="Change your 4-digit dashboard access PIN">🔒 CHANGE PIN</button>
 </div>
@@ -963,23 +1035,19 @@
   </div>
 </div>
 
-<!-- Sync Setup Modal -->
-<div class="sync-overlay" id="syncOverlay">
+<!-- Google Drive Backup Modal -->
+<div class="sync-overlay" id="driveOverlay">
   <div class="sync-modal">
-    <h3>☁ CLOUD SYNC SETUP</h3>
-    <p>Sync your financial data across all devices for free using JSONBin.io.<br>
-    Create a free account at <strong>jsonbin.io</strong>, then create a new bin and paste the details below.</p>
-    <label>BIN ID</label>
-    <input type="text" id="syncBinInput" placeholder="e.g. 6618a3..." autocomplete="off" />
-    <label>MASTER KEY (starts with $2a...)</label>
-    <input type="password" id="syncKeyInput" placeholder="Your JSONBin master key" autocomplete="off" />
-    <p id="syncModalMsg" style="font-size:0.72rem;color:var(--accent);min-height:18px;margin-bottom:4px;"></p>
+    <h3>☁ GOOGLE DRIVE BACKUP</h3>
+    <p>Backup your Clarity data to Google Drive. You need a Google OAuth Client ID.<br><br>
+    <strong style="color:var(--accent2)">Setup:</strong> console.cloud.google.com → Create project → Enable Drive API → Credentials → OAuth 2.0 Client ID → Web app → add <em>file://</em> to authorised origins.</p>
+    <label>GOOGLE CLIENT ID</label>
+    <input type="text" id="driveClientInput" placeholder="your-id.apps.googleusercontent.com" autocomplete="off" />
+    <p id="driveModalMsg" style="font-size:0.72rem;color:var(--accent);min-height:18px;margin-bottom:4px;"></p>
     <div class="modal-btns">
-      <button class="btn" onclick="closeSyncModal()">CANCEL</button>
-      <button class="btn" style="background:rgba(255,85,119,0.15);color:#ff5577;border-color:rgba(255,85,119,0.3);" onclick="clearSync()">CLEAR</button>
-      <button class="btn primary" onclick="saveSyncSettings()">SAVE & SYNC</button>
+      <button class="btn" onclick="closeDriveModal()">CANCEL</button>
+      <button class="btn primary" onclick="connectDrive()">CONNECT & BACKUP</button>
     </div>
-    <a class="sync-help-link" href="https://jsonbin.io" target="_blank" rel="noopener">→ Open JSONBin.io to get your credentials</a>
   </div>
 </div>
 
@@ -991,6 +1059,216 @@
 </div>
 
 </div><!-- /dashView -->
+
+<!-- ══════════════════════════════════════════════════════════════ -->
+<!-- HELP VIEW                                                       -->
+<!-- ══════════════════════════════════════════════════════════════ -->
+<div id="helpView" class="view-panel">
+  <div style="max-width:960px;margin:0 auto;padding:0 4px;">
+
+    <!-- Hero -->
+    <div class="help-hero">
+      <div style="font-size:2rem;margin-bottom:10px;">?</div>
+      <h2>How to Use Clarity</h2>
+      <p>Tap a topic below for simple step-by-step instructions</p>
+    </div>
+
+    <!-- Topic grid (default view) -->
+    <div id="helpTopicGrid">
+      <div class="help-topic-grid">
+        <div class="help-topic-card" onclick="showGuide('g-income')">
+          <div class="help-topic-icon">💰</div>
+          <div class="help-topic-name">Setting my income</div>
+          <div class="help-topic-desc">Enter your take-home pay so Clarity can calculate your balance</div>
+        </div>
+        <div class="help-topic-card" onclick="showGuide('g-addbill')">
+          <div class="help-topic-icon">📋</div>
+          <div class="help-topic-name">Adding a bill</div>
+          <div class="help-topic-desc">Add rent, power, subscriptions or any regular expense</div>
+        </div>
+        <div class="help-topic-card" onclick="showGuide('g-markpaid')">
+          <div class="help-topic-icon">✅</div>
+          <div class="help-topic-name">Marking bills paid</div>
+          <div class="help-topic-desc">Tick off what you've paid each time your pay comes in</div>
+        </div>
+        <div class="help-topic-card" onclick="showGuide('g-newperiod')">
+          <div class="help-topic-icon">🔄</div>
+          <div class="help-topic-name">New pay period</div>
+          <div class="help-topic-desc">Reset your ticks at the start of each pay cycle</div>
+        </div>
+        <div class="help-topic-card" onclick="showGuide('g-backup')">
+          <div class="help-topic-icon">☁️</div>
+          <div class="help-topic-name">Backing up my data</div>
+          <div class="help-topic-desc">Save to Google Drive so you never lose your budget</div>
+        </div>
+        <div class="help-topic-card" onclick="showGuide('g-numbers')">
+          <div class="help-topic-icon">📊</div>
+          <div class="help-topic-name">Reading the numbers</div>
+          <div class="help-topic-desc">What INCOME, BALANCE, SAVINGS % and HEALTH mean</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Guide: Income ── -->
+    <div class="help-guide" id="g-income">
+      <div class="help-guide-header">
+        <button class="help-guide-back" onclick="showGuide(null)">← All topics</button>
+        <span class="help-guide-title">💰 Setting your income</span>
+      </div>
+      <div class="help-demo" id="demo-income">
+        <div class="demo-screen">
+          <div class="demo-section-lbl">💰 INCOME</div>
+          <div class="demo-row" id="di-row">
+            <div class="demo-circle">○</div>
+            <span class="demo-rname">Salary / Wages</span>
+            <span class="demo-ramt" id="di-amt">$1,200.00</span>
+            <span class="demo-pencil" id="di-pencil">✏</span>
+            <div class="demo-modal" id="di-modal">
+              <div class="demo-modal-lbl">SET INCOME (fortnightly)</div>
+              <div class="demo-modal-val" id="di-val"></div>
+              <div class="demo-modal-btn" id="di-btn" style="opacity:0;">SAVE ✓</div>
+            </div>
+          </div>
+          <div class="demo-sum" style="margin-top:10px;">
+            <div class="demo-sum-block"><span class="demo-sum-lbl">INCOME</span><span class="demo-sum-val income" id="di-sincome">$1,200</span></div>
+            <div class="demo-sum-block"><span class="demo-sum-lbl">BALANCE</span><span class="demo-sum-val balance" id="di-sbal" style="color:var(--red);">-$84</span></div>
+            <div class="demo-sum-block"><span class="demo-sum-lbl">HEALTH</span><div class="demo-health deficit" id="di-health">✕ DEFICIT</div></div>
+          </div>
+        </div>
+      </div>
+      <div class="help-step"><div class="help-step-num">1</div><div class="help-step-body"><h4>Go to the Dashboard tab</h4><p>Tap <strong>📊 DASHBOARD</strong> at the top. Your income card is near the top of the page.</p></div></div>
+      <div class="help-step"><div class="help-step-num">2</div><div class="help-step-body"><h4>Find the INCOME card</h4><p>Look for the card labelled <strong>INCOME</strong> showing a dollar amount. There's a small pencil ✏ icon next to it.</p></div></div>
+      <div class="help-step"><div class="help-step-num">3</div><div class="help-step-body"><h4>Tap the pencil and type your pay</h4><p>Enter the amount you actually receive in your bank — after tax. If paid fortnightly, enter your fortnightly take-home amount.</p><div class="help-tip-box">💡 Your income is set once. Use the WEEKLY / FORTNIGHTLY / MONTHLY buttons to see it recalculated for different timeframes — you don't need to change your income each time.</div></div></div>
+      <div class="help-step"><div class="help-step-num">4</div><div class="help-step-body"><h4>Press Enter — done!</h4><p>Your BALANCE and HEALTH score update instantly.</p></div></div>
+    </div>
+
+    <!-- ── Guide: Add a bill ── -->
+    <div class="help-guide" id="g-addbill">
+      <div class="help-guide-header">
+        <button class="help-guide-back" onclick="showGuide(null)">← All topics</button>
+        <span class="help-guide-title">📋 Adding a bill</span>
+      </div>
+      <div class="help-demo" id="demo-addbill">
+        <div class="demo-screen">
+          <div class="demo-section-lbl">🏠 HOUSING</div>
+          <div class="demo-row d-paid"><div class="demo-circle d-checked">✓</div><span class="demo-rname">Rent</span><span class="demo-ramt">$900.00</span><span class="demo-rfreq">Fortnightly</span></div>
+          <div class="demo-row" id="dab-newrow" style="display:none;">
+            <div class="demo-circle">○</div>
+            <span class="demo-rname" id="dab-name"></span>
+            <span class="demo-ramt" id="dab-amt" style="opacity:0;"></span>
+            <span class="demo-rfreq" id="dab-freq" style="opacity:0;">Monthly</span>
+          </div>
+          <div class="demo-add-btn" id="dab-addbtn">＋ Add item</div>
+        </div>
+      </div>
+      <div class="help-step"><div class="help-step-num">1</div><div class="help-step-body"><h4>Scroll to the right section</h4><p>On the Dashboard, bills are grouped by category — HOUSING, UTILITIES, SUBSCRIPTIONS, FOOD &amp; DAILY, etc. Scroll to find the right one.</p></div></div>
+      <div class="help-step"><div class="help-step-num">2</div><div class="help-step-body"><h4>Tap "+ Add item"</h4><p>At the bottom of each section there's a small <strong>+ Add item</strong> row. Tap it to add a new bill.</p></div></div>
+      <div class="help-step"><div class="help-step-num">3</div><div class="help-step-body"><h4>Type the name and amount</h4><p>A new row appears. Type the bill name (e.g. <em>Power bill</em>), then tap the amount and enter what you pay.</p></div></div>
+      <div class="help-step"><div class="help-step-num">4</div><div class="help-step-body"><h4>Choose how often you pay it</h4><p>Tap the frequency — Weekly, Fortnightly, Monthly, Quarterly or Yearly. Clarity converts it automatically across all views.</p><div class="help-tip-box">💡 Not sure of the exact amount? Enter your best guess — tap the amount any time to update it.</div></div></div>
+    </div>
+
+    <!-- ── Guide: Mark paid ── -->
+    <div class="help-guide" id="g-markpaid">
+      <div class="help-guide-header">
+        <button class="help-guide-back" onclick="showGuide(null)">← All topics</button>
+        <span class="help-guide-title">✅ Marking bills as paid</span>
+      </div>
+      <div class="help-demo" id="demo-markpaid">
+        <div class="demo-screen">
+          <div class="demo-section-lbl">🔌 UTILITIES</div>
+          <div class="demo-row" id="dmp-row1"><div class="demo-circle" id="dmp-c1">○</div><span class="demo-rname">Power bill</span><span class="demo-ramt">$120.00</span><span class="demo-rfreq">Monthly</span></div>
+          <div class="demo-row" id="dmp-row2"><div class="demo-circle" id="dmp-c2">○</div><span class="demo-rname">Internet</span><span class="demo-ramt">$79.00</span><span class="demo-rfreq">Monthly</span></div>
+          <div class="demo-row" id="dmp-row3"><div class="demo-circle" id="dmp-c3">○</div><span class="demo-rname">Phone</span><span class="demo-ramt">$45.00</span><span class="demo-rfreq">Monthly</span></div>
+          <div class="demo-counter" id="dmp-counter">0 of 3 paid this period</div>
+        </div>
+      </div>
+      <div class="help-step"><div class="help-step-num">1</div><div class="help-step-body"><h4>Find the bill you've paid</h4><p>On the Dashboard, scroll to the bill — for example <em>Rent</em> or <em>Power bill</em>.</p></div></div>
+      <div class="help-step"><div class="help-step-num">2</div><div class="help-step-body"><h4>Tap the circle on the left</h4><p>Each bill has a circle (○) on the far left. Tap it — it turns <strong style="color:var(--green)">green ✓</strong> and the row dims to show it's done.</p></div></div>
+      <div class="help-step"><div class="help-step-num">3</div><div class="help-step-body"><h4>Watch your BALANCE update</h4><p>As you tick off bills, the balance at the top reflects what's left unpaid. This helps you see at a glance what still needs to come out of your account.</p><div class="help-tip-box">💡 Tap a green tick again to un-mark it if you made a mistake.</div></div></div>
+    </div>
+
+    <!-- ── Guide: New pay period ── -->
+    <div class="help-guide" id="g-newperiod">
+      <div class="help-guide-header">
+        <button class="help-guide-back" onclick="showGuide(null)">← All topics</button>
+        <span class="help-guide-title">🔄 Starting a new pay period</span>
+      </div>
+      <div class="help-demo" id="demo-newperiod">
+        <div class="demo-screen">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
+            <span style="font-size:.65rem;color:var(--muted);">NEW PERIOD</span>
+            <span class="demo-action-btn" id="dnp-btn">↺ Reset Paid</span>
+          </div>
+          <div class="demo-row d-paid" id="dnp-r1"><div class="demo-circle d-checked" id="dnp-c1">✓</div><span class="demo-rname">Rent</span><span class="demo-ramt">$900.00</span></div>
+          <div class="demo-row d-paid" id="dnp-r2"><div class="demo-circle d-checked" id="dnp-c2">✓</div><span class="demo-rname">Power bill</span><span class="demo-ramt">$120.00</span></div>
+          <div class="demo-row d-paid" id="dnp-r3"><div class="demo-circle d-checked" id="dnp-c3">✓</div><span class="demo-rname">Internet</span><span class="demo-ramt">$79.00</span></div>
+          <div class="demo-callout" id="dnp-msg">All ticks cleared — fresh period started! ✓</div>
+        </div>
+      </div>
+      <div class="help-step"><div class="help-step-num">1</div><div class="help-step-body"><h4>When to do this</h4><p>Each time your pay arrives in the bank, reset Clarity so you can track your bills fresh for the new period.</p></div></div>
+      <div class="help-step"><div class="help-step-num">2</div><div class="help-step-body"><h4>Find NEW PERIOD</h4><p>In the control bar near the top of the Dashboard, tap <strong>↺ Reset Paid</strong> under the NEW PERIOD label.</p></div></div>
+      <div class="help-step"><div class="help-step-num">3</div><div class="help-step-body"><h4>Confirm the reset</h4><p>A confirmation pop-up appears. Tap OK — all the green ticks clear and every bill goes back to unpaid. Your bill names and amounts stay exactly as they were.</p><div class="help-tip-box">⚠️ Only reset when your new pay has arrived. The ticks cannot be undone after resetting.</div></div></div>
+    </div>
+
+    <!-- ── Guide: Backup ── -->
+    <div class="help-guide" id="g-backup">
+      <div class="help-guide-header">
+        <button class="help-guide-back" onclick="showGuide(null)">← All topics</button>
+        <span class="help-guide-title">☁️ Backing up your data</span>
+      </div>
+      <div class="help-demo" id="demo-backup">
+        <div class="demo-screen">
+          <div class="demo-nav">
+            <div class="demo-nav-tab">📊 DASH</div>
+            <div class="demo-nav-tab">🧮 CALC</div>
+            <div class="demo-nav-tab">📷 RECEIPTS</div>
+            <div class="demo-nav-tab" id="dbu-tab">☁ BACKUP</div>
+            <div class="demo-nav-tab">? HELP</div>
+          </div>
+          <div id="dbu-content">
+            <div style="font-size:.72rem;color:var(--muted);margin-bottom:8px;">Your budget is saved on this device only.</div>
+            <div class="demo-drive-btn" id="dbu-btn">☁ CONNECT &amp; BACKUP TO GOOGLE DRIVE</div>
+            <div class="demo-callout" id="dbu-done">✔ DRIVE SAVED — your data is safe!</div>
+          </div>
+        </div>
+      </div>
+      <div class="help-step"><div class="help-step-num">1</div><div class="help-step-body"><h4>Why this matters</h4><p>Clarity saves your budget on your device only. If you get a new phone or clear your browser, your data is gone — unless you back it up.</p></div></div>
+      <div class="help-step"><div class="help-step-num">2</div><div class="help-step-body"><h4>Tap the ☁ BACKUP tab</h4><p>At the top of the page, tap the <strong>☁ BACKUP</strong> tab to open the backup screen.</p></div></div>
+      <div class="help-step"><div class="help-step-num">3</div><div class="help-step-body"><h4>Connect your Google account</h4><p>Tap <strong>CONNECT &amp; BACKUP</strong>. A Google sign-in window opens — sign in and tap Allow. Only needs to be done once.</p></div></div>
+      <div class="help-step"><div class="help-step-num">4</div><div class="help-step-body"><h4>Your budget is saved!</h4><p>A green ✔ DRIVE SAVED message confirms it worked. Your data is now safely in your Google Drive.</p><div class="help-tip-box">💡 Come back and tap backup whenever you make changes. Takes 2 seconds.</div></div></div>
+    </div>
+
+    <!-- ── Guide: Reading numbers ── -->
+    <div class="help-guide" id="g-numbers">
+      <div class="help-guide-header">
+        <button class="help-guide-back" onclick="showGuide(null)">← All topics</button>
+        <span class="help-guide-title">📊 Reading your numbers</span>
+      </div>
+      <div class="help-demo" id="demo-numbers">
+        <div class="demo-screen">
+          <div class="demo-sum" id="dn-sum">
+            <div class="demo-sum-block" id="dn-b0"><span class="demo-sum-lbl">INCOME</span><span class="demo-sum-val income">$2,400</span></div>
+            <div class="demo-sum-block" id="dn-b1"><span class="demo-sum-lbl">EXPENSES</span><span class="demo-sum-val expense">$1,980</span></div>
+            <div class="demo-sum-block" id="dn-b2"><span class="demo-sum-lbl">BALANCE</span><span class="demo-sum-val balance">$420</span></div>
+            <div class="demo-sum-block" id="dn-b3"><span class="demo-sum-lbl">SAVINGS %</span><span class="demo-sum-val savings">17.5%</span></div>
+            <div class="demo-sum-block" id="dn-b4"><span class="demo-sum-lbl">HEALTH</span><div class="demo-health" id="dn-health" style="border-color:var(--orange,#ffaa00);color:var(--orange,#ffaa00);font-size:.58rem;">⚠ WARNING</div></div>
+          </div>
+          <div class="demo-callout" id="dn-callout">← tap each block to learn what it means</div>
+        </div>
+      </div>
+      <div class="help-step"><div class="help-step-num">1</div><div class="help-step-body"><h4>INCOME</h4><p>Your take-home pay for the selected period — the money that actually lands in your bank account after tax.</p></div></div>
+      <div class="help-step"><div class="help-step-num">2</div><div class="help-step-body"><h4>EXPENSES</h4><p>All your bills added up. Clarity converts every bill to the current period automatically (e.g. a monthly bill becomes a fortnightly amount in fortnightly view).</p></div></div>
+      <div class="help-step"><div class="help-step-num">3</div><div class="help-step-body"><h4>BALANCE</h4><p>What's left after all your bills. This is your spending money — or savings if you don't spend it. Aim for this to be positive.</p></div></div>
+      <div class="help-step"><div class="help-step-num">4</div><div class="help-step-body"><h4>SAVINGS %</h4><p>What percentage of your income you keep after bills. Higher is better — aim for 20%+.</p></div></div>
+      <div class="help-step"><div class="help-step-num">5</div><div class="help-step-body"><h4>HEALTH score</h4><p>A quick summary of how your budget looks right now:</p>
+        <div class="help-tip-box" style="background:rgba(0,255,153,.08);border-color:rgba(0,255,153,.3);color:var(--green);margin-top:8px;">✓ HEALTHY — saving 20%+ of income</div>
+        <div class="help-tip-box" style="background:rgba(255,170,0,.08);border-color:rgba(255,170,0,.3);color:var(--orange);margin-top:6px;">⚠ WARNING — saving 5–19%, getting tight</div>
+        <div class="help-tip-box" style="background:rgba(255,85,119,.08);border-color:rgba(255,85,119,.3);color:var(--red);margin-top:6px;">✕ DEFICIT — spending more than you earn</div>
+      </div></div>
+    </div>
+
+  </div>
+</div>
 
 <!-- ══════════════════════════════════════════════════════════════ -->
 <!-- CALCULATOR VIEW                                                -->
@@ -1508,7 +1786,7 @@ function load(){
   const saved=localStorage.getItem(DATA_KEY);
   if(saved){try{data=JSON.parse(saved);currentPeriod=data.period||'fortnightly';currentCurrency=data.currency||_INST_CURRENCY;}catch(e){data=JSON.parse(JSON.stringify(DEFAULT_DATA));}}
 }
-function save(){data.period=currentPeriod;data.currency=currentCurrency;localStorage.setItem(DATA_KEY,JSON.stringify(data));if(!DEMO_MODE)syncSave();}
+function save(){data.period=currentPeriod;data.currency=currentCurrency;localStorage.setItem(DATA_KEY,JSON.stringify(data));}
 
 // ─── SAVINGS GOALS ────────────────────────────────────────────
 const PERIOD_MULTIPLIERS={weekly:12/52,fortnightly:12/26,monthly:1,quarterly:3,yearly:12};
@@ -1785,13 +2063,6 @@ function saveSnapshot(){
 // ─── PDF EXPORT ───────────────────────────────────────────────
 function exportPDF(){window.print();}
 
-// ─── JSONBIN.IO SYNC ──────────────────────────────────────────
-const SYNC_BIN_KEY=_SYNC_INST_BIN;
-const SYNC_API_KEY=_SYNC_INST_API;
-let _syncBusy=false;
-
-function getSyncCreds(){return{binId:localStorage.getItem(SYNC_BIN_KEY),apiKey:localStorage.getItem(SYNC_API_KEY)};}
-
 function setSyncBadge(state,label){
   const b=document.getElementById('syncBadge');if(!b)return;
   b.className='sync-badge '+state;
@@ -1799,62 +2070,64 @@ function setSyncBadge(state,label){
   b.textContent=(icons[state]||'☁')+' '+label;
 }
 
-async function syncLoad(){
-  const{binId,apiKey}=getSyncCreds();
-  if(!binId||!apiKey){setSyncBadge('unset','SETUP SYNC');return;}
-  setSyncBadge('syncing','SYNCING...');
-  try{
-    const r=await fetch(`https://api.jsonbin.io/v3/b/${binId}/latest`,{headers:{'X-Master-Key':apiKey}});
-    if(!r.ok){setSyncBadge('error','SYNC ERROR');return;}
-    const j=await r.json();
-    const remote=j.record;
-    if(remote&&remote.sections){
-      data=remote;currentPeriod=data.period||'fortnightly';currentCurrency=data.currency||'AUD';
-      localStorage.setItem(DATA_KEY,JSON.stringify(data));
-      render();
+// ─── GOOGLE DRIVE BACKUP ─────────────────────────────────────
+let driveAccessToken=null;
+let driveFileId=localStorage.getItem('clarity_drive_file_id')||null;
+
+function openDriveModal(){
+  const saved=localStorage.getItem('clarity_gdrive_client_id')||'';
+  document.getElementById('driveClientInput').value=saved;
+  document.getElementById('driveModalMsg').textContent='';
+  document.getElementById('driveOverlay').classList.add('open');
+}
+function closeDriveModal(){document.getElementById('driveOverlay').classList.remove('open');}
+
+function connectDrive(){
+  const cid=document.getElementById('driveClientInput').value.trim();
+  const msg=document.getElementById('driveModalMsg');
+  if(!cid){msg.style.color='var(--red)';msg.textContent='Client ID required.';return;}
+  if(!window.google?.accounts?.oauth2){msg.style.color='var(--red)';msg.textContent='Google API not loaded yet — try again.';return;}
+  localStorage.setItem('clarity_gdrive_client_id',cid);
+  closeDriveModal();
+  const tc=google.accounts.oauth2.initTokenClient({
+    client_id:cid,
+    scope:'https://www.googleapis.com/auth/drive.file',
+    callback:async(resp)=>{
+      if(resp.error){showToast('Drive auth failed: '+resp.error,'error');return;}
+      driveAccessToken=resp.access_token;
+      await saveToDrive();
     }
-    setSyncBadge('synced','SYNCED');
-  }catch(e){setSyncBadge('error','OFFLINE');}
+  });
+  tc.requestAccessToken({prompt:driveFileId?'':'consent'});
 }
 
-async function syncSave(){
-  const{binId,apiKey}=getSyncCreds();
-  if(!binId||!apiKey)return;
-  if(_syncBusy)return;_syncBusy=true;
-  setSyncBadge('syncing','SAVING...');
+async function saveToDrive(){
+  const payload=JSON.stringify({title:'Clarity Budget — '+new Date().toLocaleDateString(),savedAt:new Date().toISOString(),data});
+  const badge=document.getElementById('syncBadge');
   try{
-    const r=await fetch(`https://api.jsonbin.io/v3/b/${binId}`,{method:'PUT',headers:{'Content-Type':'application/json','X-Master-Key':apiKey},body:JSON.stringify(data)});
-    if(r.ok){setSyncBadge('synced','SYNCED');}
-    else{setSyncBadge('error','SYNC ERROR');}
-  }catch(e){setSyncBadge('error','OFFLINE');}
-  finally{_syncBusy=false;}
-}
-
-function openSyncModal(){
-  const{binId,apiKey}=getSyncCreds();
-  document.getElementById('syncBinInput').value=binId||'';
-  document.getElementById('syncKeyInput').value=apiKey||'';
-  document.getElementById('syncModalMsg').textContent='';
-  document.getElementById('syncOverlay').classList.add('open');
-}
-function closeSyncModal(){document.getElementById('syncOverlay').classList.remove('open');}
-function clearSync(){
-  localStorage.removeItem(SYNC_BIN_KEY);localStorage.removeItem(SYNC_API_KEY);
-  setSyncBadge('unset','SETUP SYNC');closeSyncModal();
-}
-async function saveSyncSettings(){
-  const binId=document.getElementById('syncBinInput').value.trim();
-  const apiKey=document.getElementById('syncKeyInput').value.trim();
-  const msg=document.getElementById('syncModalMsg');
-  if(!binId||!apiKey){msg.style.color='var(--red)';msg.textContent='Both fields are required.';return;}
-  msg.style.color='var(--accent)';msg.textContent='Testing connection...';
-  try{
-    const r=await fetch(`https://api.jsonbin.io/v3/b/${binId}/latest`,{headers:{'X-Master-Key':apiKey}});
-    if(!r.ok){msg.style.color='var(--red)';msg.textContent='Could not connect. Check your Bin ID and Key.';return;}
-    localStorage.setItem(SYNC_BIN_KEY,binId);localStorage.setItem(SYNC_API_KEY,apiKey);
-    msg.style.color='#00ff99';msg.textContent='Connected! Syncing now...';
-    setTimeout(()=>{closeSyncModal();syncLoad();},900);
-  }catch(e){msg.style.color='var(--red)';msg.textContent='Network error. Are you online?';}
+    if(driveFileId){
+      await fetch(`https://www.googleapis.com/upload/drive/v3/files/${driveFileId}?uploadType=media`,{
+        method:'PATCH',
+        headers:{Authorization:`Bearer ${driveAccessToken}`,'Content-Type':'application/json'},
+        body:payload
+      });
+    }else{
+      const boundary='clarity_boundary';
+      const meta=JSON.stringify({name:'clarity_budget.json',mimeType:'application/json'});
+      const body=`--${boundary}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n${meta}\r\n--${boundary}\r\nContent-Type: application/json\r\n\r\n${payload}\r\n--${boundary}--`;
+      const res=await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart',{
+        method:'POST',
+        headers:{Authorization:`Bearer ${driveAccessToken}`,'Content-Type':`multipart/related; boundary=${boundary}`},
+        body
+      });
+      const json=await res.json();
+      driveFileId=json.id;
+      localStorage.setItem('clarity_drive_file_id',driveFileId);
+    }
+    if(badge){badge.className='sync-badge synced';badge.textContent='☁ DRIVE SAVED';}
+    setTimeout(()=>{if(badge){badge.className='sync-badge unset';badge.textContent='☁ Save to Drive';}},3000);
+    showToast('Backed up to Google Drive ✓');
+  }catch(e){showToast('Drive backup failed — check console','error');console.error(e);}
 }
 
 // ─── PERIOD ───────────────────────────────────────────────────
@@ -2431,7 +2704,7 @@ function pinError(msg){
   document.querySelector('.pin-box').classList.add('pin-shake');
   setTimeout(()=>document.querySelector('.pin-box').classList.remove('pin-shake'),400);
 }
-function unlockDashboard(){document.getElementById('pinGate').style.display='none';document.getElementById('appWrap').style.display='block';syncLoad();}
+function unlockDashboard(){document.getElementById('pinGate').style.display='none';document.getElementById('appWrap').style.display='block';}
 
 // ─── CHANGE PIN ───────────────────────────────────────────────
 function changePin(){document.getElementById('pinOldInput').value='';document.getElementById('pinNewInput').value='';document.getElementById('pinConfirmInput').value='';document.getElementById('pinChangeMsg').textContent='';document.getElementById('pinModal').classList.add('open');}
@@ -2450,7 +2723,7 @@ function savePinChange(){
 
 // ─── CSV DROP ZONE EVENTS ────────────────────────────────────
 document.addEventListener('DOMContentLoaded',()=>{
-  syncLoad(); // PIN removed — load data directly
+  // Google Drive backup available via GOOGLE DRIVE button
   const zone=document.getElementById('csvDropZone');
   if(zone){
     zone.addEventListener('dragover',e=>{e.preventDefault();zone.classList.add('drag-over');});
@@ -2560,7 +2833,7 @@ function switchView(view){
   document.querySelectorAll('.view-panel').forEach(p=>p.classList.remove('active'));
   document.querySelectorAll('.clarity-tab').forEach(t=>t.classList.remove('active'));
   document.getElementById(view+'View').classList.add('active');
-  const tabs=['dash','calc','receipts','backup'];
+  const tabs=['dash','calc','receipts','backup','help'];
   const idx=tabs.indexOf(view);
   const navTabs=document.querySelectorAll('.clarity-tab');
   if(navTabs[idx])navTabs[idx].classList.add('active');
@@ -3148,7 +3421,7 @@ document.getElementById('copyrightYear').textContent=new Date().getFullYear();
 load();
 
 // Close overlay on background click
-document.getElementById('syncOverlay').addEventListener('click',e=>{if(e.target===document.getElementById('syncOverlay'))closeSyncModal();});
+document.getElementById('driveOverlay').addEventListener('click',e=>{if(e.target===document.getElementById('driveOverlay'))closeDriveModal();});
 document.getElementById('goalOverlay').addEventListener('click',e=>{if(e.target===document.getElementById('goalOverlay'))closeGoalModal();});
 document.getElementById('goalNameInput').addEventListener('keydown',e=>{if(e.key==='Enter')confirmAddGoal();});
 
@@ -3182,6 +3455,224 @@ document.querySelectorAll('.period-btn').forEach(b=>b.classList.remove('active')
 document.querySelector(`.period-btn[onclick="setPeriod('${currentPeriod}')"]`).classList.add('active');
 document.getElementById('currencySelect').value=currentCurrency;
 if(!DEMO_MODE){initCharts();render();}
+
+// ─── HELP TAB ─────────────────────────────────────────────────────────────
+const _demoTimers = {};
+function showGuide(id){
+  document.querySelectorAll('.help-guide').forEach(g=>g.classList.remove('active'));
+  document.getElementById('helpTopicGrid').style.display=id?'none':'';
+  // Stop all running demo loops
+  Object.keys(_demoTimers).forEach(k=>{clearTimeout(_demoTimers[k]);delete _demoTimers[k];});
+  if(id){
+    const g=document.getElementById(id);
+    if(g){g.classList.add('active');window.scrollTo({top:0,behavior:'smooth'});}
+    // Start the relevant demo
+    const demoFn = {
+      'g-income': _demoIncome,
+      'g-addbill': _demoAddBill,
+      'g-markpaid': _demoMarkPaid,
+      'g-newperiod': _demoNewPeriod,
+      'g-backup': _demoBackup,
+      'g-numbers': _demoNumbers,
+    }[id];
+    if(demoFn){ setTimeout(demoFn, 600); }
+  }
+}
+
+// ── Demo helpers ──────────────────────────────────────────────────────────
+function _demoSleep(ms,key){ return new Promise(r=>{ _demoTimers[key]=setTimeout(r,ms); }); }
+function _demoLoop(key,fn){ (async()=>{ while(true){ try{ await fn(); await _demoSleep(1200,key+'_pause'); }catch(e){break;} } })(); }
+
+// ── Demo 1: Income ────────────────────────────────────────────────────────
+function _demoIncome(){
+  const K='income';
+  _demoLoop(K, async()=>{
+    const pencil=document.getElementById('di-pencil');
+    const modal=document.getElementById('di-modal');
+    const val=document.getElementById('di-val');
+    const btn=document.getElementById('di-btn');
+    const sincome=document.getElementById('di-sincome');
+    const sbal=document.getElementById('di-sbal');
+    const health=document.getElementById('di-health');
+    if(!pencil)return;
+    // Reset
+    modal.classList.remove('d-show'); pencil.classList.remove('d-glow');
+    val.textContent=''; btn.style.opacity='0';
+    sincome.textContent='$1,200'; sbal.textContent='-$84'; sbal.style.color='var(--red)';
+    health.textContent='✕ DEFICIT'; health.className='demo-health deficit';
+    await _demoSleep(800,K);
+    // Pencil glows
+    pencil.classList.add('d-glow');
+    await _demoSleep(700,K);
+    // Modal opens
+    modal.classList.add('d-show');
+    await _demoSleep(500,K);
+    // Type amount
+    const typed='$2,400.00';
+    for(let i=0;i<typed.length;i++){
+      val.textContent=typed.slice(0,i+1);
+      await _demoSleep(80,K);
+    }
+    btn.style.opacity='1';
+    await _demoSleep(700,K);
+    // Save — update summary
+    modal.classList.remove('d-show'); pencil.classList.remove('d-glow');
+    sincome.textContent='$2,400';
+    sbal.textContent='+$1,116'; sbal.style.color='var(--accent)';
+    health.textContent='✓ HEALTHY'; health.className='demo-health healthy';
+    await _demoSleep(2000,K);
+  });
+}
+
+// ── Demo 2: Add Bill ──────────────────────────────────────────────────────
+function _demoAddBill(){
+  const K='addbill';
+  _demoLoop(K, async()=>{
+    const addbtn=document.getElementById('dab-addbtn');
+    const newrow=document.getElementById('dab-newrow');
+    const name=document.getElementById('dab-name');
+    const amt=document.getElementById('dab-amt');
+    const freq=document.getElementById('dab-freq');
+    if(!addbtn)return;
+    // Reset
+    newrow.style.display='none'; name.textContent=''; amt.style.opacity='0'; freq.style.opacity='0';
+    addbtn.classList.remove('d-glow');
+    await _demoSleep(800,K);
+    // Add btn glows
+    addbtn.classList.add('d-glow');
+    await _demoSleep(700,K);
+    // Row appears
+    newrow.style.display='flex'; addbtn.classList.remove('d-glow');
+    await _demoSleep(300,K);
+    // Type name
+    const nm='Power bill';
+    for(let i=0;i<nm.length;i++){ name.textContent=nm.slice(0,i+1); await _demoSleep(75,K); }
+    await _demoSleep(400,K);
+    // Type amount
+    amt.style.opacity='1'; amt.textContent='$';
+    const amtStr='$185.00';
+    for(let i=1;i<amtStr.length;i++){ amt.textContent=amtStr.slice(0,i+1); await _demoSleep(90,K); }
+    await _demoSleep(400,K);
+    // Frequency appears
+    freq.style.opacity='1';
+    await _demoSleep(2000,K);
+  });
+}
+
+// ── Demo 3: Mark Paid ─────────────────────────────────────────────────────
+function _demoMarkPaid(){
+  const K='markpaid';
+  _demoLoop(K, async()=>{
+    const rows=[['dmp-row1','dmp-c1'],['dmp-row2','dmp-c2'],['dmp-row3','dmp-c3']];
+    const counter=document.getElementById('dmp-counter');
+    if(!counter)return;
+    // Reset all
+    rows.forEach(([r,c])=>{
+      const row=document.getElementById(r); const circ=document.getElementById(c);
+      if(row){row.classList.remove('d-paid');} if(circ){circ.classList.remove('d-checked','d-pulse');circ.textContent='○';}
+    });
+    counter.textContent='0 of 3 paid this period'; counter.classList.remove('d-updated');
+    await _demoSleep(900,K);
+    // Tick each one
+    for(let i=0;i<rows.length;i++){
+      const [r,c]=rows[i];
+      const row=document.getElementById(r); const circ=document.getElementById(c);
+      circ.classList.add('d-pulse');
+      await _demoSleep(450,K);
+      circ.classList.remove('d-pulse'); circ.classList.add('d-checked'); circ.textContent='✓';
+      row.classList.add('d-paid');
+      counter.textContent=`${i+1} of 3 paid this period`; counter.classList.add('d-updated');
+      await _demoSleep(700,K);
+    }
+    await _demoSleep(1500,K);
+  });
+}
+
+// ── Demo 4: New Period ────────────────────────────────────────────────────
+function _demoNewPeriod(){
+  const K='newperiod';
+  _demoLoop(K, async()=>{
+    const btn=document.getElementById('dnp-btn');
+    const msg=document.getElementById('dnp-msg');
+    const rows=[['dnp-r1','dnp-c1'],['dnp-r2','dnp-c2'],['dnp-r3','dnp-c3']];
+    if(!btn)return;
+    // Ensure all paid
+    rows.forEach(([r,c])=>{
+      const row=document.getElementById(r); const circ=document.getElementById(c);
+      if(row) row.classList.add('d-paid');
+      if(circ){ circ.classList.add('d-checked'); circ.textContent='✓'; }
+    });
+    msg.classList.remove('d-show'); btn.classList.remove('d-glow');
+    await _demoSleep(900,K);
+    // Button glows
+    btn.classList.add('d-glow');
+    await _demoSleep(700,K);
+    // Reset rows
+    btn.classList.remove('d-glow');
+    rows.forEach(([r,c])=>{
+      const row=document.getElementById(r); const circ=document.getElementById(c);
+      if(row) row.classList.remove('d-paid');
+      if(circ){ circ.classList.remove('d-checked'); circ.textContent='○'; }
+    });
+    msg.classList.add('d-show');
+    await _demoSleep(2200,K);
+    msg.classList.remove('d-show');
+    await _demoSleep(400,K);
+  });
+}
+
+// ── Demo 5: Backup ────────────────────────────────────────────────────────
+function _demoBackup(){
+  const K='backup';
+  _demoLoop(K, async()=>{
+    const tab=document.getElementById('dbu-tab');
+    const drvbtn=document.getElementById('dbu-btn');
+    const done=document.getElementById('dbu-done');
+    if(!tab)return;
+    // Reset
+    tab.classList.remove('d-active'); drvbtn.className='demo-drive-btn'; done.classList.remove('d-show');
+    await _demoSleep(800,K);
+    // Highlight BACKUP tab
+    tab.classList.add('d-active');
+    await _demoSleep(800,K);
+    // Drive button glows
+    drvbtn.classList.add('d-glow');
+    await _demoSleep(700,K);
+    // Success
+    drvbtn.classList.remove('d-glow'); drvbtn.classList.add('d-done');
+    done.classList.add('d-show');
+    await _demoSleep(2200,K);
+  });
+}
+
+// ── Demo 6: Numbers ───────────────────────────────────────────────────────
+function _demoNumbers(){
+  const K='numbers';
+  const blocks=[
+    {id:'dn-b0', callout:'💰 INCOME — your take-home pay for the period'},
+    {id:'dn-b1', callout:'📋 EXPENSES — all your bills added together'},
+    {id:'dn-b2', callout:'⚖ BALANCE — what\'s left after bills'},
+    {id:'dn-b3', callout:'📈 SAVINGS % — aim for 20%+'},
+    {id:'dn-b4', callout:'🏥 HEALTH — overall budget snapshot'},
+  ];
+  _demoLoop(K, async()=>{
+    const callout=document.getElementById('dn-callout');
+    if(!callout)return;
+    // Reset
+    blocks.forEach(b=>{ const el=document.getElementById(b.id); if(el) el.classList.remove('d-lit'); });
+    callout.classList.remove('d-show'); callout.textContent='';
+    await _demoSleep(600,K);
+    for(const b of blocks){
+      const el=document.getElementById(b.id); if(!el) continue;
+      el.classList.add('d-lit');
+      callout.textContent=b.callout; callout.classList.add('d-show');
+      await _demoSleep(1400,K);
+      el.classList.remove('d-lit'); callout.classList.remove('d-show');
+      await _demoSleep(300,K);
+    }
+    await _demoSleep(400,K);
+  });
+}
 </script>
 </body>
 </html>
