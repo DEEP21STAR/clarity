@@ -1197,6 +1197,7 @@
   <div class="wfd-copy">© 2026 Whetū Digital Ltd. &nbsp;·&nbsp; <a href="mailto:hello@whetudigital.co.nz">hello@whetudigital.co.nz</a></div>
   <span class="wfd-ded">Built with care for Mimi <span class="wfd-heart">♥</span></span>
   <span class="wfd-badge">Licensed Dashboard — Whetū Digital 2026</span>
+  <span id="copyrightYear" style="display:none"></span>
 </div>
 
 </div><!-- /dashView -->
@@ -4009,7 +4010,7 @@ async function syncToGoogleDrive(token){
 }
 
 // ─── INIT ─────────────────────────────────────────────────────
-document.getElementById('copyrightYear').textContent=new Date().getFullYear();
+var _cyrEl=document.getElementById('copyrightYear'); if(_cyrEl) _cyrEl.textContent=new Date().getFullYear();
 load();
 
 // Close overlay on background click
