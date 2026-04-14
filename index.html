@@ -1158,7 +1158,7 @@
   background-size:300% 100%;
   -webkit-background-clip:text;background-clip:text;
   -webkit-text-fill-color:transparent;color:transparent;
-  animation:wfdSwing 8.5s ease-in-out infinite, wfdAurora 7s ease-in-out infinite;
+  animation:wfdSwing 8.5s ease-in-out infinite,wfdGlow 9s ease-in-out infinite,wfdAurora 7s ease-in-out infinite;
   transform-style:preserve-3d;margin-bottom:6px}
 .wfd-logo::after{
   content:'';position:absolute;top:0;bottom:0;width:55px;
@@ -1167,10 +1167,15 @@
 @keyframes wfdSwing{
   0%  {transform:perspective(700px) rotateY(-22deg) rotateX(8deg)  translateZ(-10px)}
   18% {transform:perspective(700px) rotateY(6deg)   rotateX(-5deg) translateZ(18px)}
-  36% {transform:perspective(700px) rotateY(-12deg) rotateX(4deg)  translateZ(5px)}
-  54% {transform:perspective(700px) rotateY(18deg)  rotateX(-7deg) translateZ(22px)}
-  72% {transform:perspective(700px) rotateY(-6deg)  rotateX(3deg)  translateZ(-5px)}
+  38% {transform:perspective(700px) rotateY(24deg)  rotateX(9deg)  translateZ(-8px)}
+  55% {transform:perspective(700px) rotateY(-4deg)  rotateX(-7deg) translateZ(22px)}
+  74% {transform:perspective(700px) rotateY(-20deg) rotateX(5deg)  translateZ(-12px)}
   100%{transform:perspective(700px) rotateY(-22deg) rotateX(8deg)  translateZ(-10px)}}
+@keyframes wfdGlow{
+  0%,88%,100%{filter:drop-shadow(0 0 8px rgba(16,216,255,.6)) drop-shadow(0 0 18px rgba(192,64,255,.3))}
+  89%{filter:drop-shadow(-4px 0 rgba(16,216,255,.95)) drop-shadow(4px 0 rgba(192,64,255,.95))}
+  91%{filter:drop-shadow(4px 0 rgba(16,216,255,.95)) drop-shadow(-4px 0 rgba(192,64,255,.95))}
+  95%{filter:drop-shadow(0 0 12px rgba(16,216,255,.5)) drop-shadow(0 0 30px rgba(192,64,255,.25))}}
 @keyframes wfdAurora{0%{background-position:100% 50%}50%{background-position:0% 50%}100%{background-position:100% 50%}}
 @keyframes wfdShimmer{0%{left:-120%;opacity:0}10%{opacity:.6}90%{opacity:.5}100%{left:120%;opacity:0}}
 .wfd-tagline{font-size:12px;color:rgba(180,200,220,.5);letter-spacing:2px;margin:0 0 10px}
