@@ -1149,10 +1149,34 @@
 </div>
 
 <!-- Copyright -->
-<div class="copyright-footer">
-  © <span id="copyrightYear"></span> <strong>Whetū Digital</strong> · Aotearoa, New Zealand · <a href="https://whetudigital.co.nz" target="_blank" class="site-link">whetudigital.co.nz</a>
-  <span style="margin:0 8px;opacity:0.4;">·</span>
-  Built with care for <span id="clientName" class="client-name">Mimi</span>
+<style>
+.wfd-footer{background:linear-gradient(135deg,#04050f,#070c1e);border-top:1px solid rgba(16,216,255,.15);padding:22px 24px 20px;text-align:center;margin-top:32px}
+.wfd-logo{font-size:22px;font-weight:900;letter-spacing:.2em;display:inline-block;
+  background:linear-gradient(90deg,#fff 0%,#10d8ff 25%,#c040ff 55%,#fff 80%,#10d8ff 100%);
+  background-size:300% 100%;-webkit-background-clip:text;background-clip:text;
+  -webkit-text-fill-color:transparent;color:transparent;
+  animation:wfdGlow 2s ease-in-out infinite alternate,wfdAurora 4s ease-in-out infinite;margin-bottom:6px}
+@keyframes wfdGlow{from{filter:drop-shadow(0 0 8px rgba(0,230,255,.4))}to{filter:drop-shadow(0 0 20px rgba(0,230,255,.8)) drop-shadow(0 0 40px rgba(192,64,255,.4))}}
+@keyframes wfdAurora{0%{background-position:100% 50%}50%{background-position:0% 50%}100%{background-position:100% 50%}}
+.wfd-tagline{font-size:12px;color:rgba(180,200,220,.5);letter-spacing:2px;margin:0 0 10px}
+.wfd-copy{font-size:11px;color:rgba(140,160,180,.4);letter-spacing:1px;margin-bottom:12px}
+.wfd-copy a{color:rgba(0,230,255,.4);text-decoration:none}
+.wfd-ded{font-size:14px;letter-spacing:2px;margin:0 0 10px;display:block;
+  background:linear-gradient(90deg,rgba(255,255,255,.7) 0%,#fff 40%,#ffb3c6 70%,rgba(255,255,255,.7) 100%);
+  background-size:300% 100%;-webkit-background-clip:text;background-clip:text;
+  -webkit-text-fill-color:transparent;animation:wfdDedA 4s ease-in-out infinite,wfdDedG 3s ease-in-out infinite alternate}
+@keyframes wfdDedA{0%{background-position:100% 50%}50%{background-position:0% 50%}100%{background-position:100% 50%}}
+@keyframes wfdDedG{from{filter:drop-shadow(0 0 4px rgba(255,160,180,.3))}to{filter:drop-shadow(0 0 14px rgba(255,160,180,.9))}}
+.wfd-heart{-webkit-text-fill-color:#ff6b8a;color:#ff6b8a;display:inline-block;animation:wfdHB 1.4s ease-in-out infinite}
+@keyframes wfdHB{0%,100%{transform:scale(1)}14%{transform:scale(1.35)}28%{transform:scale(1)}42%{transform:scale(1.2)}56%{transform:scale(1)}}
+.wfd-badge{display:inline-block;padding:4px 14px;border-radius:20px;background:rgba(0,230,255,.06);border:1px solid rgba(0,230,255,.2);font-size:11px;color:rgba(140,160,180,.6);letter-spacing:1px}
+</style>
+<div class="wfd-footer">
+  <div class="wfd-logo">WHETŪ DIGITAL</div>
+  <div class="wfd-tagline">Digital Tools for Modern Living — Aotearoa New Zealand</div>
+  <div class="wfd-copy">© 2026 Whetū Digital Ltd. &nbsp;·&nbsp; <a href="mailto:hello@whetudigital.co.nz">hello@whetudigital.co.nz</a></div>
+  <span class="wfd-ded">Built with care for Mimi <span class="wfd-heart">♥</span></span>
+  <span class="wfd-badge">Licensed Dashboard — Whetū Digital 2026</span>
 </div>
 
 </div><!-- /dashView -->
