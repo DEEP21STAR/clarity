@@ -1,8 +1,12 @@
 import React, { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
-import type { RecurringBill, AccountBalance, Mode, Country, Transaction, Debt } from './types'
-import { SEED_BILLS } from './constants'
+import type { RecurringBill, AccountBalance, Mode, Country, Transaction, Debt, CreditCardAccount, DeviceRepayment, PeriodicBill } from './types'
+import { SEED_BILLS, SEED_CREDIT_CARDS, SEED_DEVICE_REPAYMENTS, SEED_PERIODIC_BILLS } from './constants'
 
-const STORAGE_KEY = 'clarity-dashboard-state-v3'
+// Bumped v3 -> v4: bill set changed (Gas/Electricity moved to periodicBills,
+// GEM VISA amounts/due-days updated to real figures) and three new data
+// shapes were added. A stale v3 blob would merge in old bill ids and miss
+// the new sections entirely, so it's not reused.
+const STORAGE_KEY = 'clarity-dashboard-state-v4'
 
 export interface AppState {
   mode: Mode
@@ -13,6 +17,9 @@ export interface AppState {
   debts: Debt[]
   savingsGoal: number
   grossAnnualIncome: number
+  creditCards: CreditCardAccount[]
+  deviceRepayments: DeviceRepayment[]
+  periodicBills: PeriodicBill[]
 }
 
 const DEFAULT_STATE: AppState = {
@@ -28,6 +35,9 @@ const DEFAULT_STATE: AppState = {
   debts: [],
   savingsGoal: 5000,
   grossAnnualIncome: 65000,
+  creditCards: SEED_CREDIT_CARDS,
+  deviceRepayments: SEED_DEVICE_REPAYMENTS,
+  periodicBills: SEED_PERIODIC_BILLS,
 }
 
 function loadState(): AppState {

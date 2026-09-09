@@ -1,9 +1,9 @@
-import type { TaxBracket, Debt, RecurringBill, BillFrequency, UpcomingWindow, Transaction } from './types'
+import type { TaxBracket, Debt, RecurringBill, BillFrequency, UpcomingWindow, Transaction, InstallmentPlan, PeriodicBill } from './types'
 import {
   NZ_TAX_BRACKETS, NZ_ACC_LEVY_RATE, NZ_ACC_LEVY_CAP,
   AU_TAX_BRACKETS, AU_MEDICARE_LEVY_RATE, AU_MEDICARE_LEVY_LOW_THRESHOLD,
   AU_LITO_MAX, AU_LITO_FULL_THRESHOLD, AU_LITO_TAPER_STAGE1_END, AU_LITO_TAPER_RATE_1, AU_LITO_TAPER_RATE_2,
-  NZ_GST_RATE, AU_GST_RATE, INCOME_ANCHOR,
+  NZ_GST_RATE, AU_GST_RATE, INCOME_ANCHOR, INSTALLMENT_AMBER_RISK_THRESHOLD_PER_MONTH,
 } from './constants'
 
 // ---------------------------------------------------------------------------
@@ -386,12 +386,12 @@ export function convertPeriodAmount(monthlyAmount: number, period: 'daily' | 'we
 // Never a hardcoded lookup table.
 // ---------------------------------------------------------------------------
 
-function parseIsoDateUTC(iso: string): Date {
+export function parseIsoDateUTC(iso: string): Date {
   const [y, m, d] = iso.split('-').map(Number)
   return new Date(Date.UTC(y, m - 1, d))
 }
 
-const MS_PER_DAY = 86400000
+export const MS_PER_DAY = 86400000
 const MS_PER_WEEK = MS_PER_DAY * 7
 
 /** True if `dateIso` is one of the alternating combined-pay Fridays, counting from the anchor. */
@@ -473,4 +473,94 @@ export function totalBillsInWindow(bills: RecurringBill[], startIso: string, end
 
 export function round2(n: number): number {
   return Math.round((n + Number.EPSILON) * 100) / 100
+}
+
+// ---------------------------------------------------------------------------
+// Installment plan severity (GEM VISA "My Plans" style tracker)
+// ---------------------------------------------------------------------------
+
+export type PlanSeverity = 'normal' | 'amber' | 'red'
+
+/** Required monthly payment to clear a plan on schedule. Infinity when 0 months remain but a balance is still owed. */
+export function requiredMonthlyPayment(plan: InstallmentPlan): number {
+  if (plan.monthsRemaining <= 0) return plan.remaining > 0 ? Infinity : 0
+  return round2(plan.remaining / plan.monthsRemaining)
+}
+
+/**
+ * 'red' = plan is literally expired and accruing the card's real Expired Plan
+ * Rate right now — unambiguous, unconditional.
+ * 'amber' = still interest-free, but the required monthly payment is high
+ * enough to flag ("Expiry Risk"). The exact cutoff (INSTALLMENT_AMBER_RISK_THRESHOLD_PER_MONTH)
+ * is a judgment call, not a number Deep gave — see the comment on that constant.
+ */
+export function getPlanSeverity(plan: InstallmentPlan): PlanSeverity {
+  if (plan.expired) return 'red'
+  if (requiredMonthlyPayment(plan) >= INSTALLMENT_AMBER_RISK_THRESHOLD_PER_MONTH) return 'amber'
+  return 'normal'
+}
+
+/** Percentage paid off, clamped to [0, 100] for progress-bar rendering (remaining can exceed total post-expiry — never shown as negative progress). */
+export function planProgressPercent(plan: InstallmentPlan): number {
+  if (plan.total <= 0) return 0
+  const paidOff = ((plan.total - plan.remaining) / plan.total) * 100
+  return Math.max(0, Math.min(100, round2(paidOff)))
+}
+
+// ---------------------------------------------------------------------------
+// Periodic (usage-metered) bills — projected-charge gauge + fortnightly smoothing
+// ---------------------------------------------------------------------------
+
+/** Days between two ISO dates (endIso - startIso), can be negative. */
+export function daysBetweenIso(startIso: string, endIso: string): number {
+  const start = parseIsoDateUTC(startIso)
+  const end = parseIsoDateUTC(endIso)
+  return Math.round((end.getTime() - start.getTime()) / MS_PER_DAY)
+}
+
+/** Days remaining until periodEndIso, clamped to 0 (never negative). */
+export function daysRemainingInPeriod(periodEndIso: string, todayIso: string): number {
+  return Math.max(0, daysBetweenIso(todayIso, periodEndIso))
+}
+
+/** How far through its billing period a periodic bill is, 0-100, for the gauge arc. */
+export function periodProgressPercent(periodStartIso: string, periodEndIso: string, todayIso: string): number {
+  const totalDays = daysBetweenIso(periodStartIso, periodEndIso)
+  if (totalDays <= 0) return 100
+  const elapsedDays = daysBetweenIso(periodStartIso, todayIso)
+  return Math.max(0, Math.min(100, round2((elapsedDays / totalDays) * 100)))
+}
+
+const MIN_FORTNIGHTS_DIVISOR = 0.5 // guards against a blow-up when very close to period end
+
+/** Fortnights remaining until period end, floored at MIN_FORTNIGHTS_DIVISOR so the suggested amount never spikes near the deadline. */
+export function fortnightsRemaining(periodEndIso: string, todayIso: string): number {
+  const days = daysRemainingInPeriod(periodEndIso, todayIso)
+  return Math.max(days / 14, MIN_FORTNIGHTS_DIVISOR)
+}
+
+/**
+ * Deep's own words: "I like to Pay small amounts fortnightly otherwise its a
+ * big lump sum to pay." Suggested set-aside = (projected charge for the
+ * in-progress period − any credit balance) ÷ fortnights remaining until the
+ * period ends. Never negative.
+ */
+export function suggestedFortnightlySetAside(bill: PeriodicBill, todayIso: string): number {
+  const net = Math.max(0, bill.projectedCharge - (bill.inCredit ? bill.creditAmount : 0))
+  return round2(net / fortnightsRemaining(bill.gaugePeriodEnd, todayIso))
+}
+
+/**
+ * The smoothed fortnightly contribution from periodic bills, prorated into a
+ * [startIso, endIso] window the same way a fortnightly RecurringBill would be —
+ * this is what feeds Live Funds Available, NOT the lump-sum due dates (which
+ * stay visible on the gauge cards for context but are not double-counted here).
+ */
+export function totalPeriodicSmoothedInWindow(bills: PeriodicBill[], startIso: string, endIso: string, todayIso: string): number {
+  const windowDays = daysBetweenIso(startIso, endIso) + 1
+  let total = 0
+  for (const bill of bills) {
+    total += suggestedFortnightlySetAside(bill, todayIso) * (windowDays / 14)
+  }
+  return round2(total)
 }

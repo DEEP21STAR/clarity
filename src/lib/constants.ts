@@ -1,4 +1,4 @@
-import type { RecurringBill, TaxBracket, IncomeAnchor } from './types'
+import type { RecurringBill, TaxBracket, IncomeAnchor, CreditCardAccount, DeviceRepayment, PeriodicBill } from './types'
 
 /**
  * NZ income tax brackets — 2026-27 tax year (1 Apr 2026 - 31 Mar 2027).
@@ -49,22 +49,112 @@ export const NZ_GST_RATE = 0.15
 export const AU_GST_RATE = 0.10
 
 /**
- * Deep's real recurring bills, exact figures given directly 2026-09-10.
- * All due days default to 1st of month as a clearly-labelled ESTIMATE —
- * Deep will supply real due dates and correct these himself.
+ * Deep's real recurring bills. Gas and Electricity are NOT here — they're
+ * usage-metered periodic bills now (see SEED_PERIODIC_BILLS below), tracked
+ * with a projected-charge gauge and fortnightly smoothing instead of a flat
+ * monthly figure. GEM VISA entries carry the real current minimum payments
+ * (2026-09-10) — the richer per-plan breakdown lives in SEED_CREDIT_CARDS;
+ * these RecurringBill rows exist only so the minimum payment counts as a
+ * real recurring cash outflow in the Upcoming Payments window math.
  */
 export const SEED_BILLS: RecurringBill[] = [
   { id: 'bill-rent', name: 'Rent', amount: 1960, frequency: 'monthly', dueDay: 1, dueDayIsEstimate: true, category: 'housing', active: true },
-  { id: 'bill-gas', name: 'Gas', amount: 150, frequency: 'monthly', dueDay: 1, dueDayIsEstimate: true, category: 'utilities', active: true },
-  { id: 'bill-electricity', name: 'Electricity', amount: 100, frequency: 'monthly', dueDay: 1, dueDayIsEstimate: true, category: 'utilities', active: true },
-  { id: 'bill-internet-mobile', name: 'Internet & Mobile', amount: 200, frequency: 'monthly', dueDay: 1, dueDayIsEstimate: true, category: 'utilities', active: true },
+  {
+    id: 'bill-internet-mobile', name: 'Internet & Mobile', amount: 147.25, frequency: 'monthly', dueDay: 1, dueDayIsEstimate: true, category: 'utilities', active: true,
+    note: 'Telstra Sep 2026 cycle: previous bill $96.66, payment received $150.00 CR, credit carried forward $53.34 CR, total new charges $200.59 → amount due $147.25. Will vary by cycle; due-day still a placeholder.',
+  },
   { id: 'bill-water', name: 'Water', amount: 50, frequency: 'monthly', dueDay: 1, dueDayIsEstimate: true, category: 'utilities', active: true },
-  { id: 'bill-spotify', name: 'Spotify', amount: 17.99, frequency: 'monthly', dueDay: 1, dueDayIsEstimate: true, category: 'subscription', active: true },
-  { id: 'bill-google-storage', name: 'Google Storage', amount: 2.99, frequency: 'monthly', dueDay: 1, dueDayIsEstimate: true, category: 'subscription', active: true },
+  { id: 'bill-spotify', name: 'Spotify', amount: 17.99, frequency: 'monthly', dueDay: 2, dueDayIsEstimate: false, category: 'subscription', active: true },
+  { id: 'bill-google-one', name: 'Google One', amount: 2.99, frequency: 'monthly', dueDay: 12, dueDayIsEstimate: false, category: 'subscription', active: true },
   { id: 'bill-car-insurance', name: 'Car Insurance', amount: 140, frequency: 'monthly', dueDay: 1, dueDayIsEstimate: true, category: 'insurance', active: true },
   { id: 'bill-contents-home-insurance', name: 'Contents Home Insurance', amount: 60, frequency: 'monthly', dueDay: 1, dueDayIsEstimate: true, category: 'insurance', active: true },
-  { id: 'bill-gem-visa-deep', name: 'GEM VISA Deep', amount: 350, frequency: 'monthly', dueDay: 1, dueDayIsEstimate: true, category: 'debt', active: true },
-  { id: 'bill-gem-visa-mimi', name: 'GEM VISA Mimi', amount: 200, frequency: 'monthly', dueDay: 1, dueDayIsEstimate: true, category: 'debt', active: true },
+  {
+    id: 'bill-gem-visa-deep', name: 'GEM VISA Deep', amount: 305.33, frequency: 'monthly', dueDay: 17, dueDayIsEstimate: false, category: 'debt', active: true,
+    note: 'Real minimum payment due 17 Sep 2026. Full card + plan breakdown is in the Installment Plans section below.',
+  },
+  {
+    id: 'bill-gem-visa-mimi', name: 'GEM VISA Mimi', amount: 0, frequency: 'monthly', dueDay: 1, dueDayIsEstimate: true, category: 'debt', active: true,
+    note: 'No minimum payment currently required on this card. Two plans on it are already expired and accruing 29.99% p.a. — see Installment Plans below.',
+  },
+]
+
+/**
+ * Judgment call, not Deep's own number: a plan is flagged "Expiry Risk" (amber)
+ * when its required-monthly-payment (remaining ÷ months remaining) is at or
+ * above this figure. Chosen so Deep's real "Purchases Jun–Jul 2026" plan
+ * ($5,119.73 / 4 months = $1,279.93/mo) flags, while his "Purchases May–Jun
+ * 2026" plan ($1,762.22 / 3 months = $587.41/mo) does NOT — that plan is
+ * elevated relative to his smaller plans but not in the same league. Adjust
+ * this constant if it doesn't match Deep's real sense of "too much to pay."
+ */
+export const INSTALLMENT_AMBER_RISK_THRESHOLD_PER_MONTH = 1000
+
+/** Real GEM VISA data, given directly by Deep 2026-09-10 (screenshots of Latitude's "My Plans" UI). */
+export const SEED_CREDIT_CARDS: CreditCardAccount[] = [
+  {
+    id: 'card-gem-visa-deep',
+    name: 'GEM VISA Deep',
+    balance: 9900.25,
+    availableToSpend: 299.75,
+    minPayment: 305.33,
+    minPaymentDueDate: '2026-09-17',
+    rates: { purchase: 0.2899, cashAdvance: 0.2999, interestFreePlan: 0, expiredPlanRate: 0.2999 },
+    plans: [
+      { id: 'plan-deep-1', name: 'Purchases May–Jun 2026', total: 1915.99, remaining: 1762.22, monthsTotal: 6, monthsRemaining: 3, expired: false },
+      { id: 'plan-deep-2', name: 'Purchases Jun–Jul 2026', total: 5119.73, remaining: 5119.73, monthsTotal: 6, monthsRemaining: 4, expired: false },
+      { id: 'plan-deep-3', name: 'The Good Guys Hoppers CRO', total: 3167.00, remaining: 1230.21, monthsTotal: 50, monthsRemaining: 25, expired: false },
+      { id: 'plan-deep-4', name: 'The Good Guys Online Store', total: 1208.00, remaining: 748.96, monthsTotal: 50, monthsRemaining: 29, expired: false },
+    ],
+  },
+  {
+    id: 'card-gem-visa-mimi',
+    name: 'GEM VISA Mimi',
+    balance: 3027.79,
+    creditLimit: 4000,
+    availableToSpend: 922.21,
+    minPayment: 0,
+    rates: { purchase: 0.2899, cashAdvance: 0.2999, interestFreePlan: 0, expiredPlanRate: 0.2999 },
+    plans: [
+      { id: 'plan-mimi-1', name: 'Gem Visa interest free #1', total: 302.50, remaining: 200.49, monthsTotal: 0, monthsRemaining: 0, expired: true },
+      // Remaining ($644.01) is genuinely HIGHER than total ($519.37) — interest has already
+      // accrued onto the balance since expiry. Shown honestly, never clamped to plan total.
+      { id: 'plan-mimi-2', name: 'Gem Visa interest free #2', total: 519.37, remaining: 644.01, monthsTotal: 0, monthsRemaining: 0, expired: true },
+    ],
+  },
+]
+
+/** Real device repayment, given directly by Deep 2026-09-10. Plain repayment — no interest, no risk styling. */
+export const SEED_DEVICE_REPAYMENTS: DeviceRepayment[] = [
+  { id: 'device-galaxy-z-fold7', name: 'Galaxy Z Fold7', monthlyAmount: 44.70, remaining: 983.40, paymentsTotal: 36, paymentsRemaining: 22 },
+]
+
+/**
+ * Real Gas + Electricity data, given directly by Deep 2026-09-10 (screenshots
+ * of the Red Energy app). Deep wants to pay these in smoothed fortnightly
+ * set-asides rather than a lump sum — see suggestedFortnightlySetAside() in
+ * logic.ts, and note the smoothed amount is what feeds Upcoming Payments'
+ * Live Funds Available math, not these lump figures (avoids double-counting).
+ */
+export const SEED_PERIODIC_BILLS: PeriodicBill[] = [
+  {
+    id: 'periodic-gas',
+    name: 'Gas',
+    pendingBill: { amount: 300.27, dueDate: '2026-09-17', periodStart: '2026-07-04', periodEnd: '2026-08-28' },
+    gaugePeriodStart: '2026-08-29',
+    gaugePeriodEnd: '2026-10-28',
+    projectedCharge: 369.18,
+    inCredit: false,
+    creditAmount: 0,
+  },
+  {
+    id: 'periodic-electricity',
+    name: 'Electricity',
+    gaugePeriodStart: '2026-07-21',
+    gaugePeriodEnd: '2026-10-20',
+    projectedCharge: 341.97,
+    inCredit: true,
+    creditAmount: 82.70,
+  },
 ]
 
 /**

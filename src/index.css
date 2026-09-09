@@ -74,3 +74,18 @@ body {
 @media (prefers-reduced-motion: reduce) {
   .overspend-alert { animation: none; box-shadow: 0 0 40px 8px rgba(255,45,85,0.35) inset; }
 }
+
+/* Card-level "active high-interest" pulse for expired installment plans — same
+   red-shifted language as the overspend alert but subtler, since it decorates
+   a small card rather than the page's hero element. */
+@keyframes plan-expired-pulse {
+  0% { box-shadow: 0 0 0 0 rgba(255, 45, 85, 0.4), 0 0 16px 2px rgba(255, 45, 85, 0.18) inset; }
+  50% { box-shadow: 0 0 0 5px rgba(255, 45, 85, 0), 0 0 26px 4px rgba(255, 45, 85, 0.32) inset; }
+  100% { box-shadow: 0 0 0 0 rgba(255, 45, 85, 0), 0 0 16px 2px rgba(255, 45, 85, 0.18) inset; }
+}
+.plan-expired-alert {
+  animation: plan-expired-pulse 2.2s ease-in-out infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .plan-expired-alert { animation: none; box-shadow: 0 0 20px 3px rgba(255,45,85,0.28) inset; }
+}

@@ -3,10 +3,12 @@ import gsap from 'gsap'
 import { useStore } from '@/lib/store'
 import { StatCard } from './StatCard'
 import { CountUp } from './CountUp'
-import { addDaysIso, totalBillsInWindow, totalIncomeInWindow, windowLengthDays } from '@/lib/logic'
+import { addDaysIso, totalBillsInWindow, totalIncomeInWindow, totalPeriodicSmoothedInWindow, windowLengthDays } from '@/lib/logic'
 import { cn, formatCurrency, todayIso } from '@/lib/utils'
 import type { UpcomingWindow, RecurringBill, BillFrequency } from '@/lib/types'
 import { Plus, Trash2, Info } from 'lucide-react'
+import { CreditCardAccountPanel, DeviceRepaymentCard } from './InstallmentPlanTracker'
+import { PeriodicBillGauge } from './PeriodicBillGauge'
 
 const WINDOWS: { id: UpcomingWindow; label: string }[] = [
   { id: 'week', label: 'Week' },
@@ -27,7 +29,18 @@ export function UpcomingPayments() {
   const windowEnd = useMemo(() => addDaysIso(today, windowLengthDays(window_) - 1), [today, window_])
 
   const incomeInWindow = useMemo(() => totalIncomeInWindow(today, windowEnd), [today, windowEnd])
-  const billsInWindow = useMemo(() => totalBillsInWindow(state.bills, today, windowEnd), [state.bills, today, windowEnd])
+  const flatBillsInWindow = useMemo(() => totalBillsInWindow(state.bills, today, windowEnd), [state.bills, today, windowEnd])
+  // Gas/Electricity are periodic bills now — Deep pays them in smoothed fortnightly
+  // set-asides, so that smoothed contribution (not the lump due-date amount) is
+  // what counts toward Live Funds Available here, to avoid double-counting.
+  const periodicSmoothedInWindow = useMemo(
+    () => totalPeriodicSmoothedInWindow(state.periodicBills, today, windowEnd, today),
+    [state.periodicBills, today, windowEnd]
+  )
+  const billsInWindow = useMemo(
+    () => Math.round((flatBillsInWindow + periodicSmoothedInWindow) * 100) / 100,
+    [flatBillsInWindow, periodicSmoothedInWindow]
+  )
   const hsbc = state.balances.find((b) => b.id === 'hsbc')?.value ?? 0
   const overdraft = state.balances.find((b) => b.id === 'overdraft')?.value ?? 0
   const savings = state.balances.find((b) => b.id === 'savings')?.value ?? 0
@@ -156,7 +169,7 @@ export function UpcomingPayments() {
             <CountUp value={billsInWindow} prefix="$" />
           </div>
           <p className="text-xs text-white/45 mt-2">
-            Prorated from monthly bill totals — due-days are placeholders (1st of month) until you correct them below.
+            Prorated from monthly bill totals, plus Gas/Electricity's smoothed fortnightly set-asides (not their lump due-dates — see Periodic Bills below). Due-days on the flat bills are placeholders (1st of month) until you correct them.
           </p>
         </StatCard>
       </div>
@@ -169,6 +182,31 @@ export function UpcomingPayments() {
           <BalanceInput id="savings" label="Savings" value={savings} onChange={(v) => updateBalance('savings', v)} />
         </div>
       </StatCard>
+
+      {/* Periodic bills — Gas & Electricity, projected-charge gauge + fortnightly smoothing */}
+      <div>
+        <h3 className="text-lg font-semibold text-white/85 mb-3">Periodic Bills</h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {state.periodicBills.map((bill, i) => (
+            <PeriodicBillGauge key={bill.id} bill={bill} delay={0.05 * i} />
+          ))}
+        </div>
+      </div>
+
+      {/* Installment plan trackers — GEM VISA cards + device repayment */}
+      <div>
+        <h3 className="text-lg font-semibold text-white/85 mb-3">Installment Plans</h3>
+        <div className="space-y-4">
+          {state.creditCards.map((card, i) => (
+            <CreditCardAccountPanel key={card.id} card={card} delay={0.05 * i} />
+          ))}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {state.deviceRepayments.map((device, i) => (
+              <DeviceRepaymentCard key={device.id} device={device} delay={0.05 * i} />
+            ))}
+          </div>
+        </div>
+      </div>
 
       {/* Bills manager — every field editable */}
       <BillsManager bills={state.bills} onUpdate={updateBill} onAdd={addBill} onRemove={removeBill} />
@@ -242,11 +280,18 @@ function BillsManager({ bills, onUpdate, onAdd, onRemove }: {
             {bills.map((bill) => (
               <tr key={bill.id} className="border-t border-white/5">
                 <td className="py-2 pr-2">
-                  <input
-                    value={bill.name}
-                    onChange={(e) => onUpdate(bill.id, { name: e.target.value })}
-                    className="bg-transparent outline-none border-b border-transparent focus:border-cyan-400/50 w-32"
-                  />
+                  <div className="flex items-center gap-1">
+                    <input
+                      value={bill.name}
+                      onChange={(e) => onUpdate(bill.id, { name: e.target.value })}
+                      className="bg-transparent outline-none border-b border-transparent focus:border-cyan-400/50 w-32"
+                    />
+                    {bill.note && (
+                      <span title={bill.note} className="shrink-0">
+                        <Info className="w-3 h-3 text-white/30" aria-label={bill.note} />
+                      </span>
+                    )}
+                  </div>
                 </td>
                 <td className="py-2 pr-2">
                   <div className="flex items-center gap-1">
