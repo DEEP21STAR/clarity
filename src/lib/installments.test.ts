@@ -87,4 +87,28 @@ describe('periodic bill gauge + fortnightly smoothing — real Gas/Electricity d
     const expected = perBillDaily7(gas) + perBillDaily7(electricity)
     expect(totalPeriodicSmoothedInWindow([gas, electricity], today, end, today)).toBeCloseTo(expected, 1)
   })
+
+  it('a bill with smoothingEnabled=false is excluded from the window total entirely (informational only, per the add/edit form toggle)', () => {
+    const end = '2026-09-16'
+    const gasWithSmoothingOff: PeriodicBill = { ...gas, smoothingEnabled: false }
+    const windowDays = 7
+    const electricityOnly = suggestedFortnightlySetAside(electricity, today) * (windowDays / 14)
+    expect(totalPeriodicSmoothedInWindow([gasWithSmoothingOff, electricity], today, end, today)).toBeCloseTo(electricityOnly, 1)
+  })
+
+  it('a brand-new bill added via the form (no pendingBill, smoothingEnabled true) still produces a sane suggested fortnightly figure', () => {
+    const newBill: PeriodicBill = {
+      id: 'periodic-new',
+      name: 'Water (usage)',
+      gaugePeriodStart: '2026-09-01',
+      gaugePeriodEnd: '2026-11-30',
+      projectedCharge: 120,
+      inCredit: false,
+      creditAmount: 0,
+      smoothingEnabled: true,
+    }
+    const result = suggestedFortnightlySetAside(newBill, today)
+    expect(result).toBeGreaterThan(0)
+    expect(Number.isFinite(result)).toBe(true)
+  })
 })

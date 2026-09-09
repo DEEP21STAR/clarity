@@ -81,6 +81,8 @@ export interface PeriodicBill {
   projectedCharge: number
   inCredit: boolean
   creditAmount: number
+  /** When false, this bill's smoothed fortnightly amount is excluded from the Upcoming Payments funds math (informational only). Defaults to true. */
+  smoothingEnabled: boolean
 }
 
 export interface AccountBalance {

@@ -5,10 +5,11 @@ import { StatCard } from './StatCard'
 import { CountUp } from './CountUp'
 import { addDaysIso, totalBillsInWindow, totalIncomeInWindow, totalPeriodicSmoothedInWindow, windowLengthDays } from '@/lib/logic'
 import { cn, formatCurrency, todayIso } from '@/lib/utils'
-import type { UpcomingWindow, RecurringBill, BillFrequency } from '@/lib/types'
+import type { UpcomingWindow, RecurringBill, BillFrequency, PeriodicBill } from '@/lib/types'
 import { Plus, Trash2, Info } from 'lucide-react'
 import { CreditCardAccountPanel, DeviceRepaymentCard } from './InstallmentPlanTracker'
 import { PeriodicBillGauge } from './PeriodicBillGauge'
+import { PeriodicBillForm, type PeriodicBillFormValues } from './PeriodicBillForm'
 
 const WINDOWS: { id: UpcomingWindow; label: string }[] = [
   { id: 'week', label: 'Week' },
@@ -20,10 +21,11 @@ interface Allocation { food: number; fuel: number; personal: number }
 const DEFAULT_ALLOCATION: Allocation = { food: 40, fuel: 25, personal: 35 }
 
 export function UpcomingPayments() {
-  const { state, updateBill, addBill, removeBill, updateBalance } = useStore()
+  const { state, updateBill, addBill, removeBill, updateBalance, addPeriodicBill, updatePeriodicBill, removePeriodicBill } = useStore()
   const [window_, setWindow] = useState<UpcomingWindow>('week')
   const [allocation, setAllocation] = useState<Allocation>(DEFAULT_ALLOCATION)
   const liveRef = useRef<HTMLDivElement>(null)
+  const [periodicFormMode, setPeriodicFormMode] = useState<'none' | 'add' | string>('none') // 'string' = editing that bill's id
 
   const today = todayIso()
   const windowEnd = useMemo(() => addDaysIso(today, windowLengthDays(window_) - 1), [today, window_])
@@ -185,11 +187,52 @@ export function UpcomingPayments() {
 
       {/* Periodic bills — Gas & Electricity, projected-charge gauge + fortnightly smoothing */}
       <div>
-        <h3 className="text-lg font-semibold text-white/85 mb-3">Periodic Bills</h3>
+        <div className="flex items-center justify-between mb-3">
+          <h3 className="text-lg font-semibold text-white/85">Periodic Bills</h3>
+          {periodicFormMode === 'none' && (
+            <button
+              onClick={() => setPeriodicFormMode('add')}
+              className="flex items-center gap-1 text-xs text-cyan-300 hover:text-cyan-200"
+            >
+              <Plus className="w-3 h-3" /> Add periodic bill
+            </button>
+          )}
+        </div>
+
+        {periodicFormMode === 'add' && (
+          <div className="mb-4">
+            <PeriodicBillForm
+              onCancel={() => setPeriodicFormMode('none')}
+              onSave={(values) => {
+                addPeriodicBill(toPeriodicBill(values))
+                setPeriodicFormMode('none')
+              }}
+            />
+          </div>
+        )}
+
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {state.periodicBills.map((bill, i) => (
-            <PeriodicBillGauge key={bill.id} bill={bill} delay={0.05 * i} />
-          ))}
+          {state.periodicBills.map((bill, i) =>
+            periodicFormMode === bill.id ? (
+              <PeriodicBillForm
+                key={bill.id}
+                existing={bill}
+                onCancel={() => setPeriodicFormMode('none')}
+                onSave={(values) => {
+                  updatePeriodicBill(bill.id, toPeriodicBill(values, bill))
+                  setPeriodicFormMode('none')
+                }}
+              />
+            ) : (
+              <PeriodicBillGauge
+                key={bill.id}
+                bill={bill}
+                delay={0.05 * i}
+                onEdit={() => setPeriodicFormMode(bill.id)}
+                onRemove={() => removePeriodicBill(bill.id)}
+              />
+            )
+          )}
         </div>
       </div>
 
@@ -212,6 +255,21 @@ export function UpcomingPayments() {
       <BillsManager bills={state.bills} onUpdate={updateBill} onAdd={addBill} onRemove={removeBill} />
     </div>
   )
+}
+
+/** Converts the add/edit form's plain values into a real PeriodicBill — preserves id/pendingBill when editing an existing bill. */
+function toPeriodicBill(values: PeriodicBillFormValues, existing?: PeriodicBill): PeriodicBill {
+  return {
+    id: existing?.id ?? `periodic-${Date.now()}`,
+    name: values.name.trim(),
+    pendingBill: existing?.pendingBill,
+    gaugePeriodStart: values.gaugePeriodStart,
+    gaugePeriodEnd: values.gaugePeriodEnd,
+    projectedCharge: values.projectedCharge,
+    inCredit: values.inCredit,
+    creditAmount: values.inCredit ? values.creditAmount : 0,
+    smoothingEnabled: values.smoothingEnabled,
+  }
 }
 
 function AllocationTile({ label, amount, pct, glowFrom, glowTo, onChange }: { label: string; amount: number; pct: number; glowFrom: string; glowTo: string; onChange: (v: number) => void }) {

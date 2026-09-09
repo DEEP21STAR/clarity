@@ -560,6 +560,7 @@ export function totalPeriodicSmoothedInWindow(bills: PeriodicBill[], startIso: s
   const windowDays = daysBetweenIso(startIso, endIso) + 1
   let total = 0
   for (const bill of bills) {
+    if (bill.smoothingEnabled === false) continue // excluded by request — informational only, not counted in funds math
     total += suggestedFortnightlySetAside(bill, todayIso) * (windowDays / 14)
   }
   return round2(total)

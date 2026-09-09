@@ -66,6 +66,9 @@ interface StoreContextValue {
   addDebt: (debt: Debt) => void
   removeDebt: (id: string) => void
   updateDebt: (id: string, patch: Partial<Debt>) => void
+  addPeriodicBill: (bill: PeriodicBill) => void
+  removePeriodicBill: (id: string) => void
+  updatePeriodicBill: (id: string, patch: Partial<PeriodicBill>) => void
 }
 
 const StoreContext = createContext<StoreContextValue | null>(null)
@@ -97,6 +100,10 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     addDebt: (debt) => setState((s) => ({ ...s, debts: [...s.debts, debt] })),
     removeDebt: (id) => setState((s) => ({ ...s, debts: s.debts.filter((d) => d.id !== id) })),
     updateDebt: (id, patch) => setState((s) => ({ ...s, debts: s.debts.map((d) => (d.id === id ? { ...d, ...patch } : d)) })),
+    addPeriodicBill: (bill) => setState((s) => ({ ...s, periodicBills: [...s.periodicBills, bill] })),
+    removePeriodicBill: (id) => setState((s) => ({ ...s, periodicBills: s.periodicBills.filter((b) => b.id !== id) })),
+    updatePeriodicBill: (id, patch) =>
+      setState((s) => ({ ...s, periodicBills: s.periodicBills.map((b) => (b.id === id ? { ...b, ...patch } : b)) })),
   }), [state])
 
   return <StoreContext.Provider value={value}>{children}</StoreContext.Provider>

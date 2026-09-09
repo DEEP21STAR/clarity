@@ -145,6 +145,7 @@ export const SEED_PERIODIC_BILLS: PeriodicBill[] = [
     projectedCharge: 369.18,
     inCredit: false,
     creditAmount: 0,
+    smoothingEnabled: true,
   },
   {
     id: 'periodic-electricity',
@@ -154,6 +155,7 @@ export const SEED_PERIODIC_BILLS: PeriodicBill[] = [
     projectedCharge: 341.97,
     inCredit: true,
     creditAmount: 82.70,
+    smoothingEnabled: true,
   },
 ]
 

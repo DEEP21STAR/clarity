@@ -5,7 +5,7 @@ import { CountUp } from './CountUp'
 import { daysRemainingInPeriod, periodProgressPercent, suggestedFortnightlySetAside } from '@/lib/logic'
 import { cn, formatCurrency, todayIso } from '@/lib/utils'
 import type { PeriodicBill } from '@/lib/types'
-import { CheckCircle2, Clock } from 'lucide-react'
+import { CheckCircle2, Clock, Pencil, Trash2 } from 'lucide-react'
 
 const RADIUS = 54
 const CIRCUMFERENCE = 2 * Math.PI * RADIUS
@@ -16,7 +16,17 @@ function shortDate(iso: string): string {
 }
 
 /** Projected-charges gauge for a usage-metered periodic bill (gas/power style), with fortnightly-smoothing suggestion. */
-export function PeriodicBillGauge({ bill, delay = 0 }: { bill: PeriodicBill; delay?: number }) {
+export function PeriodicBillGauge({
+  bill,
+  delay = 0,
+  onEdit,
+  onRemove,
+}: {
+  bill: PeriodicBill
+  delay?: number
+  onEdit?: () => void
+  onRemove?: () => void
+}) {
   const today = todayIso()
   const progress = periodProgressPercent(bill.gaugePeriodStart, bill.gaugePeriodEnd, today)
   const daysLeft = daysRemainingInPeriod(bill.gaugePeriodEnd, today)
@@ -36,6 +46,25 @@ export function PeriodicBillGauge({ bill, delay = 0 }: { bill: PeriodicBill; del
 
   return (
     <StatCard label={bill.name} glow={bill.inCredit ? 'success' : 'cyan'} tilt={false} delay={delay}>
+      {(onEdit || onRemove) && (
+        <div className="absolute top-3 right-3 z-20 flex gap-2">
+          {onEdit && (
+            <button onClick={onEdit} className="text-white/30 hover:text-cyan-300" aria-label={`Edit ${bill.name}`}>
+              <Pencil className="w-3.5 h-3.5" />
+            </button>
+          )}
+          {onRemove && (
+            <button onClick={onRemove} className="text-white/30 hover:text-rose-400" aria-label={`Remove ${bill.name}`}>
+              <Trash2 className="w-3.5 h-3.5" />
+            </button>
+          )}
+        </div>
+      )}
+      {bill.smoothingEnabled === false && (
+        <span className="absolute top-3 left-1/2 -translate-x-1/2 z-20 text-[10px] px-2 py-0.5 rounded-full bg-white/10 text-white/50 border border-white/15">
+          smoothing off
+        </span>
+      )}
       <div className="mt-4 flex flex-col md:flex-row items-center gap-6">
         {/* Gauge */}
         <div className="relative shrink-0" style={{ width: 140, height: 140 }}>
