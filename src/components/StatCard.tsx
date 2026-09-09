@@ -65,8 +65,8 @@ export function StatCard({ label, glow = 'cyan', tilt = true, className, childre
       )}
       style={{ transformStyle: 'preserve-3d' }}
     >
-      <span className={cn('label-tab font-semibold', c.text)}>{label}</span>
       <div className={cn('absolute inset-x-0 top-0 h-[2px] bg-gradient-to-r opacity-70', c.grad)} />
+      <span className={cn('label-tab font-semibold relative z-10', c.text)}>{label}</span>
       {children}
     </div>
   )
