@@ -1,0 +1,326 @@
+import { useEffect, useMemo, useRef, useState } from 'react'
+import gsap from 'gsap'
+import { useStore } from '@/lib/store'
+import { StatCard } from './StatCard'
+import { CountUp } from './CountUp'
+import { addDaysIso, totalBillsInWindow, totalIncomeInWindow, windowLengthDays } from '@/lib/logic'
+import { cn, formatCurrency, todayIso } from '@/lib/utils'
+import type { UpcomingWindow, RecurringBill, BillFrequency } from '@/lib/types'
+import { Plus, Trash2, Info } from 'lucide-react'
+
+const WINDOWS: { id: UpcomingWindow; label: string }[] = [
+  { id: 'week', label: 'Week' },
+  { id: 'fortnight', label: 'Fortnight' },
+  { id: 'month', label: 'Month' },
+]
+
+interface Allocation { food: number; fuel: number; personal: number }
+const DEFAULT_ALLOCATION: Allocation = { food: 40, fuel: 25, personal: 35 }
+
+export function UpcomingPayments() {
+  const { state, updateBill, addBill, removeBill, updateBalance } = useStore()
+  const [window_, setWindow] = useState<UpcomingWindow>('week')
+  const [allocation, setAllocation] = useState<Allocation>(DEFAULT_ALLOCATION)
+  const liveRef = useRef<HTMLDivElement>(null)
+
+  const today = todayIso()
+  const windowEnd = useMemo(() => addDaysIso(today, windowLengthDays(window_) - 1), [today, window_])
+
+  const incomeInWindow = useMemo(() => totalIncomeInWindow(today, windowEnd), [today, windowEnd])
+  const billsInWindow = useMemo(() => totalBillsInWindow(state.bills, today, windowEnd), [state.bills, today, windowEnd])
+  const hsbc = state.balances.find((b) => b.id === 'hsbc')?.value ?? 0
+  const overdraft = state.balances.find((b) => b.id === 'overdraft')?.value ?? 0
+  const savings = state.balances.find((b) => b.id === 'savings')?.value ?? 0
+
+  const liveFundsAvailable = useMemo(
+    () => Math.round((hsbc + overdraft + incomeInWindow - billsInWindow) * 100) / 100,
+    [hsbc, overdraft, incomeInWindow, billsInWindow]
+  )
+  const isOverspent = liveFundsAvailable < 0
+
+  const foodAmount = (liveFundsAvailable * allocation.food) / 100
+  const fuelAmount = (liveFundsAvailable * allocation.fuel) / 100
+  const personalAmount = (liveFundsAvailable * allocation.personal) / 100
+
+  // GSAP entrance for the hero card, and a distinct "shockwave" burst the moment it flips negative.
+  const wasOverspent = useRef(isOverspent)
+  useEffect(() => {
+    if (!liveRef.current) return
+    if (isOverspent && !wasOverspent.current) {
+      gsap.fromTo(
+        liveRef.current,
+        { scale: 1 },
+        { scale: 1.04, duration: 0.18, yoyo: true, repeat: 3, ease: 'power1.inOut' }
+      )
+    }
+    wasOverspent.current = isOverspent
+  }, [isOverspent])
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <h2 className="text-2xl font-bold tracking-tight text-white">Upcoming Payments</h2>
+        <p className="text-sm text-white/50 mt-1">
+          What's actually left for food, fuel and personal spending until pay day.
+        </p>
+      </div>
+
+      {/* Window toggle */}
+      <div className="flex gap-2">
+        {WINDOWS.map((w) => (
+          <button
+            key={w.id}
+            onClick={() => setWindow(w.id)}
+            className={cn(
+              'px-4 py-2 rounded-full text-sm font-medium border transition-all',
+              window_ === w.id
+                ? 'bg-gradient-to-r from-cyan-400 to-purple-500 text-black border-transparent shadow-[0_0_25px_-5px_rgba(34,211,238,0.6)]'
+                : 'border-white/10 text-white/60 hover:text-white hover:border-white/30'
+            )}
+          >
+            {w.label}
+          </button>
+        ))}
+      </div>
+
+      {/* HERO: LIVE FUNDS AVAILABLE — the centerpiece of the entire section */}
+      <div
+        ref={liveRef}
+        className={cn(
+          'relative rounded-3xl border-2 p-8 md:p-10 text-center overflow-hidden',
+          isOverspent ? 'border-rose-500/60 overspend-alert' : 'border-cyan-400/40 shadow-[0_0_80px_-15px_rgba(34,211,238,0.5)]'
+        )}
+        style={{
+          background: isOverspent
+            ? 'radial-gradient(circle at 50% 0%, rgba(255,45,85,0.18), rgba(11,13,20,0.95))'
+            : 'radial-gradient(circle at 50% 0%, rgba(34,211,238,0.14), rgba(11,13,20,0.95))',
+        }}
+      >
+        <div
+          className="absolute -inset-1 opacity-40 pointer-events-none"
+          style={{
+            background: isOverspent
+              ? 'linear-gradient(120deg, transparent, rgba(255,45,85,0.35), transparent)'
+              : 'linear-gradient(120deg, transparent, rgba(34,211,238,0.25), transparent, rgba(168,85,247,0.25), transparent)',
+            animation: 'aurora-drift 9s ease-in-out infinite',
+          }}
+        />
+        <div className="relative z-10">
+          <p className={cn('text-xs font-bold uppercase tracking-[0.25em]', isOverspent ? 'text-rose-300' : 'text-cyan-300')}>
+            Live Funds Available
+          </p>
+          <div
+            className={cn(
+              'mt-3 text-6xl md:text-8xl font-black tabular-nums tracking-tight',
+              isOverspent
+                ? 'text-rose-300 drop-shadow-[0_0_35px_rgba(255,45,85,0.6)]'
+                : 'text-transparent bg-clip-text bg-gradient-to-r from-cyan-300 via-teal-200 to-purple-300 drop-shadow-[0_0_35px_rgba(34,211,238,0.35)]'
+            )}
+          >
+            <CountUp value={liveFundsAvailable} prefix="$" decimals={2} duration={1.2} />
+          </div>
+          {isOverspent ? (
+            <p className="mt-3 text-rose-200 font-semibold text-sm md:text-base animate-pulse">
+              ⚠ OVERSPENT for this {window_} — funds run out before pay day. Cut spend or move money in.
+            </p>
+          ) : (
+            <p className="mt-3 text-white/60 text-sm md:text-base">
+              HSBC + Overdraft + income landing this {window_}, minus bills due — what's actually free to spend.
+            </p>
+          )}
+
+          {/* Food / Fuel / Personal breakdown — the whole point of this feature */}
+          <div className="mt-8 grid grid-cols-1 md:grid-cols-3 gap-4 text-left">
+            <AllocationTile label="Food Shopping" amount={foodAmount} pct={allocation.food} glowFrom="from-emerald-400" glowTo="to-cyan-400" onChange={(v) => setAllocation((a) => ({ ...a, food: v }))} />
+            <AllocationTile label="Fuel" amount={fuelAmount} pct={allocation.fuel} glowFrom="from-amber-400" glowTo="to-orange-500" onChange={(v) => setAllocation((a) => ({ ...a, fuel: v }))} />
+            <AllocationTile label="Personal" amount={personalAmount} pct={allocation.personal} glowFrom="from-purple-400" glowTo="to-pink-500" onChange={(v) => setAllocation((a) => ({ ...a, personal: v }))} />
+          </div>
+          <p className="mt-4 text-[11px] text-white/35 flex items-center justify-center gap-1">
+            <Info className="w-3 h-3" /> Split is an editable estimate (sliders below) — adjust to match how you actually spend.
+          </p>
+        </div>
+      </div>
+
+      {/* Supporting stats: income / bills for the window */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <StatCard label={`Income — this ${window_}`} glow="success">
+          <div className="mt-4 text-3xl font-bold text-emerald-300 tabular-nums">
+            <CountUp value={incomeInWindow} prefix="$" />
+          </div>
+          <p className="text-xs text-white/45 mt-2">
+            Real alternating pay pattern: $600 every Friday, +$500 fortnightly bonus on combined-pay Fridays (this Fri 11 Sep 2026 is combined).
+          </p>
+        </StatCard>
+        <StatCard label={`Bills due — this ${window_} (estimate)`} glow="amber">
+          <div className="mt-4 text-3xl font-bold text-amber-300 tabular-nums">
+            <CountUp value={billsInWindow} prefix="$" />
+          </div>
+          <p className="text-xs text-white/45 mt-2">
+            Prorated from monthly bill totals — due-days are placeholders (1st of month) until you correct them below.
+          </p>
+        </StatCard>
+      </div>
+
+      {/* Account balances — HSBC / Overdraft / Savings, fully editable */}
+      <StatCard label="Accounts" glow="purple" tilt={false}>
+        <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-4">
+          <BalanceInput id="hsbc" label="HSBC" value={hsbc} onChange={(v) => updateBalance('hsbc', v)} />
+          <BalanceInput id="overdraft" label="Overdraft" value={overdraft} onChange={(v) => updateBalance('overdraft', v)} />
+          <BalanceInput id="savings" label="Savings" value={savings} onChange={(v) => updateBalance('savings', v)} />
+        </div>
+      </StatCard>
+
+      {/* Bills manager — every field editable */}
+      <BillsManager bills={state.bills} onUpdate={updateBill} onAdd={addBill} onRemove={removeBill} />
+    </div>
+  )
+}
+
+function AllocationTile({ label, amount, pct, glowFrom, glowTo, onChange }: { label: string; amount: number; pct: number; glowFrom: string; glowTo: string; onChange: (v: number) => void }) {
+  return (
+    <div className="rounded-xl border border-white/10 bg-black/30 p-4">
+      <div className="flex items-center justify-between">
+        <span className="text-xs font-semibold uppercase tracking-wide text-white/60">{label}</span>
+        <span className="text-[10px] text-white/35">{pct}%</span>
+      </div>
+      <div className={cn('mt-2 text-2xl font-bold tabular-nums text-transparent bg-clip-text bg-gradient-to-r', glowFrom, glowTo)}>
+        {formatCurrency(amount)}
+      </div>
+      <input
+        type="range"
+        min={0}
+        max={100}
+        value={pct}
+        onChange={(e) => onChange(Number(e.target.value))}
+        className="w-full mt-3 accent-cyan-400"
+      />
+    </div>
+  )
+}
+
+function BalanceInput({ label, value, onChange }: { id: string; label: string; value: number; onChange: (v: number) => void }) {
+  return (
+    <div className="rounded-xl border border-white/10 bg-black/30 p-4">
+      <label className="text-xs font-semibold uppercase tracking-wide text-white/60">{label}</label>
+      <div className="mt-2 flex items-center gap-1">
+        <span className="text-white/40">$</span>
+        <input
+          type="number"
+          step="0.01"
+          value={value}
+          onChange={(e) => onChange(parseFloat(e.target.value) || 0)}
+          className="w-full bg-transparent text-xl font-bold tabular-nums text-white outline-none border-b border-white/10 focus:border-cyan-400/60"
+        />
+      </div>
+    </div>
+  )
+}
+
+const FREQUENCIES: BillFrequency[] = ['weekly', 'fortnightly', 'monthly']
+
+function BillsManager({ bills, onUpdate, onAdd, onRemove }: {
+  bills: RecurringBill[]
+  onUpdate: (id: string, patch: Partial<RecurringBill>) => void
+  onAdd: (bill: RecurringBill) => void
+  onRemove: (id: string) => void
+}) {
+  return (
+    <StatCard label="Recurring Bills" glow="cyan" tilt={false}>
+      <div className="mt-4 overflow-x-auto">
+        <table className="w-full text-sm">
+          <thead>
+            <tr className="text-left text-white/40 text-xs uppercase tracking-wide">
+              <th className="pb-2 pr-2">Name</th>
+              <th className="pb-2 pr-2">Amount</th>
+              <th className="pb-2 pr-2">Frequency</th>
+              <th className="pb-2 pr-2">Due day</th>
+              <th className="pb-2 pr-2">Active</th>
+              <th className="pb-2" />
+            </tr>
+          </thead>
+          <tbody>
+            {bills.map((bill) => (
+              <tr key={bill.id} className="border-t border-white/5">
+                <td className="py-2 pr-2">
+                  <input
+                    value={bill.name}
+                    onChange={(e) => onUpdate(bill.id, { name: e.target.value })}
+                    className="bg-transparent outline-none border-b border-transparent focus:border-cyan-400/50 w-32"
+                  />
+                </td>
+                <td className="py-2 pr-2">
+                  <div className="flex items-center gap-1">
+                    <span className="text-white/40">$</span>
+                    <input
+                      type="number"
+                      step="0.01"
+                      value={bill.amount}
+                      onChange={(e) => onUpdate(bill.id, { amount: parseFloat(e.target.value) || 0 })}
+                      className="bg-transparent outline-none border-b border-transparent focus:border-cyan-400/50 w-20 tabular-nums"
+                    />
+                  </div>
+                </td>
+                <td className="py-2 pr-2">
+                  <select
+                    value={bill.frequency}
+                    onChange={(e) => onUpdate(bill.id, { frequency: e.target.value as BillFrequency })}
+                    className="bg-black/40 rounded px-2 py-1 text-xs outline-none border border-white/10"
+                  >
+                    {FREQUENCIES.map((f) => <option key={f} value={f}>{f}</option>)}
+                  </select>
+                </td>
+                <td className="py-2 pr-2">
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="number"
+                      min={1}
+                      max={31}
+                      value={bill.dueDay}
+                      onChange={(e) => onUpdate(bill.id, { dueDay: Number(e.target.value) || 1 })}
+                      className="bg-transparent outline-none border-b border-transparent focus:border-cyan-400/50 w-10 tabular-nums"
+                    />
+                    {bill.dueDayIsEstimate && (
+                      <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-amber-500/15 text-amber-300 border border-amber-500/30">
+                        estimated
+                      </span>
+                    )}
+                  </div>
+                </td>
+                <td className="py-2 pr-2">
+                  <input
+                    type="checkbox"
+                    checked={bill.active}
+                    onChange={(e) => onUpdate(bill.id, { active: e.target.checked })}
+                    className="accent-cyan-400 w-4 h-4"
+                  />
+                </td>
+                <td className="py-2">
+                  <button onClick={() => onRemove(bill.id)} className="text-white/30 hover:text-rose-400">
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+        <button
+          onClick={() =>
+            onAdd({
+              id: `bill-${Date.now()}`,
+              name: 'New bill',
+              amount: 0,
+              frequency: 'monthly',
+              dueDay: 1,
+              dueDayIsEstimate: true,
+              category: 'other',
+              active: true,
+            })
+          }
+          className="mt-3 flex items-center gap-1 text-xs text-cyan-300 hover:text-cyan-200"
+        >
+          <Plus className="w-3 h-3" /> Add bill
+        </button>
+      </div>
+    </StatCard>
+  )
+}
