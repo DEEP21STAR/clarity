@@ -1,0 +1,76 @@
+@import "tailwindcss";
+
+:root {
+  --bg-void: #05060a;
+  --bg-panel: #0b0d14;
+  --cyan: #22d3ee;
+  --purple: #a855f7;
+  --pink: #ec4899;
+  --amber: #f59e0b;
+  --danger: #ff2d55;
+  --success: #34d399;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html, body, #root {
+  min-height: 100%;
+}
+
+body {
+  background: radial-gradient(1200px 800px at 20% -10%, rgba(34, 211, 238, 0.08), transparent),
+    radial-gradient(1200px 800px at 90% 10%, rgba(168, 85, 247, 0.10), transparent),
+    var(--bg-void);
+  color: #e6e8ee;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  overflow-x: hidden;
+}
+
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, var(--cyan), var(--purple));
+  border-radius: 8px;
+}
+
+/* Shared cut-corner label border, used by StatCard family */
+.label-cut {
+  position: relative;
+}
+.label-cut .label-tab {
+  position: absolute;
+  top: -0.65em;
+  left: 1rem;
+  padding: 0 0.5rem;
+  font-size: 0.65rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  background: var(--bg-panel);
+}
+
+@keyframes aurora-drift {
+  0% { transform: translate3d(0,0,0) rotate(0deg); }
+  50% { transform: translate3d(2%, -3%, 0) rotate(6deg); }
+  100% { transform: translate3d(0,0,0) rotate(0deg); }
+}
+
+@keyframes overspend-pulse-ring {
+  0% { box-shadow: 0 0 0 0 rgba(255, 45, 85, 0.55), 0 0 30px 6px rgba(255, 45, 85, 0.25) inset; }
+  50% { box-shadow: 0 0 0 14px rgba(255, 45, 85, 0), 0 0 55px 14px rgba(255, 45, 85, 0.45) inset; }
+  100% { box-shadow: 0 0 0 0 rgba(255, 45, 85, 0), 0 0 30px 6px rgba(255, 45, 85, 0.25) inset; }
+}
+
+@keyframes overspend-hue {
+  0%, 100% { filter: hue-rotate(0deg); }
+  50% { filter: hue-rotate(-18deg); }
+}
+
+.overspend-alert {
+  animation: overspend-pulse-ring 1.6s ease-in-out infinite, overspend-hue 3.2s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .overspend-alert { animation: none; box-shadow: 0 0 40px 8px rgba(255,45,85,0.35) inset; }
+}
