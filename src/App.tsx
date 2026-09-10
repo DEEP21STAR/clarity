@@ -241,16 +241,29 @@ function AppContent() {
                   <WifiOff className="w-3 h-3" /> Offline
                 </span>
               )}
-              <SegmentedControl
-                size="sm"
-                value={state.householdView}
-                onChange={setHouseholdView}
-                options={[
-                  { value: 'deep', label: 'Deep' },
-                  { value: 'mimi', label: 'Mimi' },
-                  { value: 'combined', label: 'Combined' },
-                ]}
-              />
+              {/* Overnight audit found a real gap: this is the only Deep/Mimi/Combined toggle in
+                  the app (global header, visible on every tab), but householdView is only
+                  actually READ in one place — UpcomingPayments.tsx's credit card filter. Every
+                  other tab (Dashboard's income/bills stats included) always shows the full
+                  combined household figures regardless of this toggle's position, since gross
+                  income and total fixed bills are tracked as single household-level numbers,
+                  not split per-person anywhere except the dedicated Household Bill Split card.
+                  That's a real, defensible design (there's no separate "Deep's income" field to
+                  show), but a global header toggle silently doing nothing on 8 of 9 tabs reads
+                  as broken rather than intentional — this tooltip makes the real scope honest
+                  instead of leaving it to look like a bug. */}
+              <span title="Filters which GEM VISA card(s) show on Upcoming Payments. Every other tab (including this Dashboard) always shows the full combined household total — income and bills aren't tracked per-person.">
+                <SegmentedControl
+                  size="sm"
+                  value={state.householdView}
+                  onChange={setHouseholdView}
+                  options={[
+                    { value: 'deep', label: 'Deep' },
+                    { value: 'mimi', label: 'Mimi' },
+                    { value: 'combined', label: 'Combined' },
+                  ]}
+                />
+              </span>
               <button
                 type="button"
                 onClick={() => window.dispatchEvent(new CustomEvent('clarity:open-command-palette'))}

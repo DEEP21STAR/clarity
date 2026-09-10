@@ -163,7 +163,7 @@ export function Debts() {
             const entry = plan.entries.find((e) => e.debtId === debt.id)
             const isCardDebt = cardDebtIds.has(debt.id)
             return (
-              <div key={debt.id} className={cn('flex items-center gap-3 rounded-xl border p-3', isCardDebt ? 'border-cyan-400/20 bg-cyan-500/5' : 'border-white/10 bg-black/30')}>
+              <div key={debt.id} className={cn('flex flex-wrap items-center gap-3 rounded-xl border p-3', isCardDebt ? 'border-cyan-400/20 bg-cyan-500/5' : 'border-white/10 bg-black/30')}>
                 <div className="w-7 h-7 rounded-full bg-gradient-to-r from-cyan-400 to-purple-500 text-black flex items-center justify-center text-xs font-bold shrink-0">
                   {i + 1}
                 </div>
@@ -187,7 +187,12 @@ export function Debts() {
                   )}
                   <span className="text-white/40 text-xs">% APR</span>
                 </div>
-                <div className="text-xs text-white/50 w-28 text-right">
+                {/* Overnight audit found a real mobile bug: at 375px this fixed-width detail
+                    block, plus the icon/name/balance/APR before it, genuinely didn't fit one
+                    row — it was rendering truncated at the card's edge (confirmed via a real
+                    375px screenshot). flex-wrap on the row (above) + a full-width second line
+                    below sm: fixes it without hiding any real information. */}
+                <div className="text-xs text-white/50 w-full sm:w-28 pl-10 sm:pl-0 text-left sm:text-right">
                   {entry ? `${entry.monthsToPayoff}mo · ${formatCurrency(entry.totalInterestPaid)} int.` : '—'}
                 </div>
                 {!isCardDebt && debt.balance > 0 && (

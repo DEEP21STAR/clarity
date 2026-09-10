@@ -7,6 +7,12 @@ import { Refrigerator, ShoppingCart } from 'lucide-react'
  * to reconstruct the Three.js scene from scratch. #9, Round 20: the placeholder's icon
  * is now a real animated "filling" shopping cart (CSS keyframe bob, see .cart-fill-icon
  * in index.css) instead of a static fridge glyph — still explicitly NOT the fridge scene.
+ *
+ * Overnight audit found a real bug in this file's own copy, not just the fridge scene:
+ * the placeholder text claimed "a real shopping list still works below" — but no shopping
+ * list component has ever existed in this file. Corrected to describe what's actually here
+ * (nothing yet) rather than a feature that was never built. Building a real shopping list
+ * is a genuine future feature, not something to invent mid-audit — flagged honestly instead.
  */
 export function ShoppingExpenses() {
   return (
@@ -24,8 +30,8 @@ export function ShoppingExpenses() {
           <p className="text-white/70 font-medium">3D fridge view — coming back soon</p>
           <p className="text-xs text-white/40 mt-2 max-w-sm">
             The interactive 3D fridge & pantry scene is set aside for now by request. This
-            placeholder is honest about that rather than a rebuilt half-version — a real
-            shopping list still works below.
+            placeholder is honest about that rather than a rebuilt half-version — this whole
+            tab is just this placeholder for now; a real shopping list isn't built yet.
           </p>
           <Refrigerator className="w-4 h-4 text-purple-400/40 mt-3" aria-hidden="true" />
         </div>

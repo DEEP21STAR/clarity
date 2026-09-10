@@ -289,7 +289,16 @@ export function Dashboard() {
           <p className="text-sm text-white/50 mt-1">Net income, fixed costs, and rule-based insights at a glance.</p>
         </div>
         <div className="flex gap-2">
-          <SegmentedControl value={mode} onChange={setMode} options={[{ value: 'personal', label: 'Personal' }, { value: 'business', label: 'Business' }]} />
+          {/* Overnight audit found the same real gap as the header's household toggle: mode
+              only actually filters Transactions/the accountant CSV export (see
+              DataExportPanel.tsx) — it changes nothing else on THIS tab, or anywhere else.
+              Toggling it right here, on the tab where it visibly does nothing, is exactly the
+              "is this broken?" moment the audit was looking for — honest tooltip instead of
+              silent no-op. Country, right next to it, genuinely does recompute this tab's
+              tax/net figures (verified live) and needs no such disclosure. */}
+          <span title="Only affects Transactions and the accountant CSV export (Tools) — this tab's income/bills figures are the same in both modes.">
+            <SegmentedControl value={mode} onChange={setMode} options={[{ value: 'personal', label: 'Personal' }, { value: 'business', label: 'Business' }]} />
+          </span>
           <SegmentedControl value={country} onChange={setCountry} options={[{ value: 'NZ', label: 'NZ' }, { value: 'AU', label: 'AU' }]} />
         </div>
       </div>
