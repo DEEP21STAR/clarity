@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react'
 import { StoreProvider, useStore } from '@/lib/store'
 import { BootSequence } from './components/BootSequence'
 import { Dashboard } from './components/Dashboard'
@@ -13,6 +13,7 @@ import { Tools } from './components/Tools'
 import { PinGate } from './components/PinGate'
 import { AmbientBackground } from './components/AmbientBackground'
 import { CommandPalette, type PaletteCommand } from './components/CommandPalette'
+import { ThumbnailPrecacher } from './components/ThumbnailPrecacher'
 import { SegmentedControl } from './components/SegmentedControl'
 import { ToastProvider, useToast } from './components/Toast'
 import { NotificationBell } from './components/NotificationBell'
@@ -37,6 +38,27 @@ const TABS: { id: TabId; label: string; icon: typeof LayoutDashboard }[] = [
   { id: 'shopping', label: 'Shopping & Expenses', icon: ShoppingCart },
   { id: 'tools', label: 'Tools', icon: Wrench },
 ]
+
+/**
+ * Round 21 follow-up — real per-tab colour ownership for the nav bar, matching the same
+ * "each section owns a colour" pattern already used everywhere else in the app (Net Worth
+ * green, Debts red/pink, etc — both kept here deliberately to match). Fed to each nav button
+ * as a `--tab-accent` CSS custom property (not a Tailwind utility class — a runtime-computed
+ * hex can't be a static Tailwind class without it being purged from the build), consumed by
+ * the real hover/rest-state rules in index.css. Nine genuinely distinct hues, chosen so no two
+ * adjacent tabs in the bar share a hue family.
+ */
+const TAB_ACCENTS: Record<TabId, string> = {
+  dashboard: '#22d3ee',
+  upcoming: '#f59e0b',
+  networth: '#34d399',
+  calendar: '#60a5fa',
+  transactions: '#a78bfa',
+  budgets: '#e879f9',
+  debts: '#fb7185',
+  shopping: '#fb923c',
+  tools: '#2dd4bf',
+}
 
 /** Subtle time-of-day ambient tint — cooler in the morning, warmer in the evening. Same idea as the time-of-day theming already used on Deep's Omarchy desktop. */
 function useTimeOfDayTint(): string {
@@ -172,6 +194,23 @@ function AppContent() {
     run: () => goTo(t.id),
   }))
 
+  // Same tab-id -> component mapping as the real <main> below, extracted so
+  // ThumbnailPrecacher can render any tab's real content off-screen too.
+  const renderTabContent = (id: string) => {
+    switch (id as TabId) {
+      case 'dashboard': return <Dashboard />
+      case 'upcoming': return <UpcomingPayments />
+      case 'networth': return <NetWorth />
+      case 'calendar': return <BillCalendar />
+      case 'transactions': return <Transactions />
+      case 'budgets': return <Budgets />
+      case 'debts': return <Debts />
+      case 'shopping': return <ShoppingExpenses />
+      case 'tools': return <Tools />
+      default: return null
+    }
+  }
+
   return (
     <div className={cn('min-h-screen relative ambient-drift', tint)}>
       <AmbientBackground healthScore={healthScore} />
@@ -234,11 +273,12 @@ function AppContent() {
                   key={t.id}
                   data-tab={t.id}
                   onClick={() => goTo(t.id)}
+                  style={{ '--tab-accent': TAB_ACCENTS[t.id] } as CSSProperties}
                   className={cn(
                     'nav-tab relative flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-all',
                     isActive
                       ? 'nav-tab-active bg-gradient-to-r from-cyan-400/20 to-purple-500/20 border border-cyan-400/30'
-                      : 'text-white/50 hover:text-white hover:bg-white/5'
+                      : 'nav-tab-inactive'
                   )}
                 >
                   <Icon className="nav-icon w-3.5 h-3.5" />
@@ -270,6 +310,11 @@ function AppContent() {
           {tab === 'tools' && <Tools />}
         </main>
       </div>
+      {/* Coordinator follow-up fix, verified live — the ⌘K hover-preview mechanism itself
+          worked, but only cached a thumbnail AFTER a real visit, so most tabs legitimately
+          showed "No preview yet" on a genuine first use. Pre-warms every NOT-YET-CACHED tab
+          off-screen, one at a time, staggered — see ThumbnailPrecacher.tsx's doc comment. */}
+      <ThumbnailPrecacher tabIds={TABS.map((t) => t.id)} skipId={tab} renderTab={renderTabContent} />
     </div>
   )
 }

@@ -241,19 +241,54 @@ button:not(:disabled):active {
 .nav-tab-active {
   animation: nav-tab-glow-pulse 2.6s ease-in-out infinite;
 }
-.nav-tab:not(.nav-tab-active):hover {
-  box-shadow: 0 0 12px -2px rgba(34, 211, 238, 0.4);
-}
 @media (prefers-reduced-motion: reduce) {
   .nav-tab-active { animation: none; }
 }
 
-/* Top-nav icons — subtle glow on hover, gentle persistent pulse when active (lighter touch than the bill-category icons). */
-.nav-icon {
-  transition: filter 0.2s ease-out, transform 0.2s ease-out;
+/* Real per-tab colour ownership on the 7 inactive tabs — a direct fix for "only the active tab
+   has any colour": a flat-grey bar with a 5% white hover bump read as basically invisible in
+   real use. `--tab-accent` is set per-button from TAB_ACCENTS in App.tsx (a real hex per tab,
+   the same "section owns a colour" pattern the rest of the app already uses — Net Worth green,
+   Debts red/pink, etc). Rest state gets a small, genuinely visible (not 5%-opacity) accent dot
+   so the bar reads as "9 tabs with real identity" even before any interaction; hover tints the
+   icon+label to that tab's real colour plus a coloured glow, not just a white brightening. */
+.nav-tab-inactive {
+  color: rgba(255, 255, 255, 0.55);
+  transition: color 0.18s ease-out, background-color 0.18s ease-out, box-shadow 0.18s ease-out;
 }
-.nav-tab:hover .nav-icon {
-  filter: drop-shadow(0 0 4px rgba(34, 211, 238, 0.7));
+.nav-tab-inactive::before {
+  content: '';
+  position: absolute;
+  left: 50%;
+  bottom: -0.3rem;
+  width: 4px;
+  height: 4px;
+  border-radius: 999px;
+  background: var(--tab-accent, #22d3ee);
+  transform: translateX(-50%) scale(1);
+  opacity: 0.55;
+  transition: opacity 0.18s ease-out, transform 0.18s ease-out;
+}
+.nav-tab-inactive:hover {
+  color: var(--tab-accent, #22d3ee);
+  background-color: color-mix(in oklab, var(--tab-accent, #22d3ee) 14%, transparent);
+  box-shadow: 0 0 14px -3px color-mix(in oklab, var(--tab-accent, #22d3ee) 65%, transparent);
+}
+.nav-tab-inactive:hover::before {
+  opacity: 1;
+  transform: translateX(-50%) scale(1.6);
+}
+@media (prefers-reduced-motion: reduce) {
+  .nav-tab-inactive, .nav-tab-inactive::before { transition: none; }
+}
+
+/* Top-nav icons — real accent-coloured glow on hover (was a fixed cyan for every tab regardless
+   of which one), gentle persistent pulse when active (lighter touch than the bill-category icons). */
+.nav-icon {
+  transition: filter 0.2s ease-out, transform 0.2s ease-out, color 0.18s ease-out;
+}
+.nav-tab-inactive:hover .nav-icon {
+  filter: drop-shadow(0 0 5px color-mix(in oklab, var(--tab-accent, #22d3ee) 80%, transparent));
   transform: scale(1.08);
 }
 @keyframes nav-icon-active-glow {

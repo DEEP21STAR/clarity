@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef } from 'react'
+import { useEffect, useMemo } from 'react'
 import { StatCard } from './StatCard'
 import { useStore } from '@/lib/store'
 import { calcSpendPaceAlerts, updateStreak } from '@/lib/logic'
@@ -6,6 +6,16 @@ import { formatCurrency, todayIso } from '@/lib/utils'
 import { AlertTriangle, Flame, Award } from 'lucide-react'
 
 const MILESTONE_LABEL: Record<number, string> = { 7: '7-day streak', 30: '30-day streak', 100: '100-day streak' }
+
+// Module-level (not per-instance) guard — deliberately NOT a useRef. Round 21's
+// ThumbnailPrecacher can genuinely mount a second, off-screen instance of this component
+// (Upcoming Payments' tab tree, pre-warming its ⌘K preview thumbnail) at the same time the
+// real visible instance exists. Two per-instance refs would both pass their own "haven't
+// checked yet" guard and BOTH call the once-per-day streak-advance mutation below — a real
+// double-fire race that could double-advance or miscompute the streak. A single flag shared
+// by every instance on the page makes the real once-per-day check fire exactly once,
+// regardless of how many components read this file mount this render.
+let streakCheckedThisPageLoad = false
 
 /**
  * Manual spend-vs-allocation tracker for Food/Fuel/Personal, the predictive
@@ -26,7 +36,6 @@ export function SpendPaceTracker({
 }) {
   const { state, updateSpendTracker, resetSpendTracker, setStreak } = useStore()
   const today = todayIso()
-  const checkedRef = useRef(false)
 
   const alerts = useMemo(
     () => calcSpendPaceAlerts(state.spendTracker, allocation, windowStart, windowEnd, today),
@@ -35,9 +44,12 @@ export function SpendPaceTracker({
 
   // Once-per-real-day streak check. Honest limitation: this only runs on a
   // day Deep actually opens the app (no backend to check automatically).
+  // Module-level streakCheckedThisPageLoad guard (see its own comment above) — NOT a
+  // per-instance useRef — so a second simultaneous mount (e.g. ThumbnailPrecacher's
+  // off-screen pre-render of this same tab) can never double-fire this mutation.
   useEffect(() => {
-    if (checkedRef.current) return
-    checkedRef.current = true
+    if (streakCheckedThisPageLoad) return
+    streakCheckedThisPageLoad = true
     if (state.streak.lastCheckedDate === today) return
     const { streak, newMilestone } = updateStreak(state.streak, alerts.length === 0, today)
     setStreak(streak)
