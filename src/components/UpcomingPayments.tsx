@@ -3,7 +3,7 @@ import gsap from 'gsap'
 import { useStore } from '@/lib/store'
 import { StatCard } from './StatCard'
 import { CountUp } from './CountUp'
-import { addDaysIso, totalBillsInWindow, totalIncomeInWindow, totalPeriodicSmoothedInWindow, totalSinkingFundsSmoothedInWindow, windowLengthDays, isBillAmountChanged } from '@/lib/logic'
+import { addDaysIso, totalBillsInWindow, totalIncomeInWindow, totalPeriodicSmoothedInWindow, totalSinkingFundsSmoothedInWindow, windowLengthDays, isBillAmountChanged, nextMonthlyDueDate, daysBetweenIso } from '@/lib/logic'
 import { cn, formatCurrency, todayIso } from '@/lib/utils'
 import type { UpcomingWindow, RecurringBill, BillFrequency, PeriodicBill } from '@/lib/types'
 import { Plus, Trash2, Info, AlertTriangle } from 'lucide-react'
@@ -19,6 +19,7 @@ import { HouseholdSplit } from './HouseholdSplit'
 import { BillIcon } from './BillIcons'
 import { SegmentedControl } from './SegmentedControl'
 import { Disclosure } from './Disclosure'
+import { DueBadge } from './DueBadge'
 import { fireConfetti } from '@/lib/confetti'
 
 const WINDOWS: { id: UpcomingWindow; label: string }[] = [
@@ -401,7 +402,7 @@ function BillsManager({ bills, onUpdate, onAdd, onRemove }: {
                   </select>
                 </td>
                 <td className="py-2 pr-2">
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 flex-wrap">
                     <input
                       type="number"
                       min={1}
@@ -414,6 +415,9 @@ function BillsManager({ bills, onUpdate, onAdd, onRemove }: {
                       <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-amber-500/15 text-amber-300 border border-amber-500/30">
                         estimated
                       </span>
+                    )}
+                    {bill.active && bill.frequency === 'monthly' && (
+                      <DueBadge daysUntil={daysBetweenIso(todayIso(), nextMonthlyDueDate(bill.dueDay, todayIso()))} />
                     )}
                   </div>
                 </td>

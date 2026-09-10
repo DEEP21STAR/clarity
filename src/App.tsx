@@ -16,7 +16,7 @@ import { CommandPalette, type PaletteCommand } from './components/CommandPalette
 import { SegmentedControl } from './components/SegmentedControl'
 import { cn } from '@/lib/utils'
 import {
-  LayoutDashboard, CalendarClock, Receipt, PieChart, CreditCard, ShoppingCart, Wrench, TrendingUp, CalendarDays,
+  LayoutDashboard, CalendarClock, Receipt, PieChart, CreditCard, ShoppingCart, Wrench, TrendingUp, CalendarDays, Command,
 } from 'lucide-react'
 
 type TabId = 'dashboard' | 'upcoming' | 'transactions' | 'budgets' | 'debts' | 'networth' | 'calendar' | 'shopping' | 'tools'
@@ -102,7 +102,16 @@ function AppContent() {
                   { value: 'combined', label: 'Combined' },
                 ]}
               />
-              <span className="text-xs text-white/30 hidden md:inline">⌘K for quick actions</span>
+              <button
+                type="button"
+                onClick={() => window.dispatchEvent(new CustomEvent('clarity:open-command-palette'))}
+                title="Quick actions: search and jump straight to any tab, or open a specific GEM VISA installment plan — press ⌘K (Ctrl+K) anytime, or click here."
+                className="hidden md:inline-flex items-center gap-1.5 text-xs text-white/40 hover:text-cyan-300 border border-white/10 hover:border-cyan-400/30 rounded-full px-2.5 py-1 transition-colors"
+              >
+                <Command className="w-3 h-3" />
+                <span>Quick actions</span>
+                <kbd className="text-[10px] text-white/30 border border-white/10 rounded px-1 ml-0.5">⌘K</kbd>
+              </button>
             </div>
           </div>
           <nav className="max-w-6xl mx-auto px-4 pb-3 flex gap-1 overflow-x-auto">

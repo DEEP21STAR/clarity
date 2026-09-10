@@ -7,7 +7,7 @@ import {
   AU_TAX_BRACKETS, AU_MEDICARE_LEVY_RATE, AU_MEDICARE_LEVY_LOW_THRESHOLD,
   AU_LITO_MAX, AU_LITO_FULL_THRESHOLD, AU_LITO_TAPER_STAGE1_END, AU_LITO_TAPER_RATE_1, AU_LITO_TAPER_RATE_2,
   NZ_GST_RATE, AU_GST_RATE, INCOME_ANCHOR, INSTALLMENT_AMBER_RISK_THRESHOLD_PER_MONTH,
-  SPEND_PACE_ALERT_BUFFER, HEALTH_SCORE_WEIGHTS,
+  SPEND_PACE_ALERT_BUFFER, HEALTH_SCORE_WEIGHTS, DUE_DATE_DANGER_WITHIN_DAYS, DUE_DATE_WARN_WITHIN_DAYS,
 } from './constants'
 
 // ---------------------------------------------------------------------------
@@ -534,6 +534,34 @@ export function daysRemainingInPeriod(periodEndIso: string, todayIso: string): n
   return Math.max(0, daysBetweenIso(todayIso, periodEndIso))
 }
 
+// ---------------------------------------------------------------------------
+// Shared traffic-light due-date colour system — ONE function, reused by every
+// bill/plan/due-date UI element (Recurring Bills, Periodic Bill gauges, GEM
+// VISA minimum payments, Bill Calendar) so red/amber/green can never drift
+// out of sync between components, and always recomputes from real "today"
+// rather than being set once and going stale.
+// ---------------------------------------------------------------------------
+
+export type DueSeverity = 'ok' | 'warn' | 'danger'
+
+/** daysUntil may be negative (already overdue). Thresholds documented in constants.ts — judgment calls, not Deep's own numbers. */
+export function dueDateSeverity(daysUntil: number): DueSeverity {
+  if (daysUntil <= DUE_DATE_DANGER_WITHIN_DAYS) return 'danger'
+  if (daysUntil <= DUE_DATE_WARN_WITHIN_DAYS) return 'warn'
+  return 'ok'
+}
+
+/** Full-phrase label for a traffic-light badge, e.g. "3 days overdue" / "due today" / "due in 6 days". */
+export function dueInLabel(daysUntil: number): string {
+  if (daysUntil < 0) {
+    const overdue = Math.abs(daysUntil)
+    return `${overdue} day${overdue === 1 ? '' : 's'} overdue`
+  }
+  if (daysUntil === 0) return 'due today'
+  if (daysUntil === 1) return 'due tomorrow'
+  return `due in ${daysUntil} days`
+}
+
 /** How far through its billing period a periodic bill is, 0-100, for the gauge arc. */
 export function periodProgressPercent(periodStartIso: string, periodEndIso: string, todayIso: string): number {
   const totalDays = daysBetweenIso(periodStartIso, periodEndIso)
@@ -996,7 +1024,7 @@ export function buildAccountantCsv(transactions: Transaction[], mode: Mode, peri
 // model, not placeholder copy.
 // ---------------------------------------------------------------------------
 
-function nextMonthlyDueDate(dueDay: number, todayIsoStr: string): string {
+export function nextMonthlyDueDate(dueDay: number, todayIsoStr: string): string {
   const today = parseIsoDateUTC(todayIsoStr)
   const y = today.getUTCFullYear()
   const m = today.getUTCMonth()
@@ -1022,9 +1050,16 @@ export interface InsightsTickerInputs {
   todayIso: string
 }
 
-export function buildInsightsTicker(inputs: InsightsTickerInputs): string[] {
+/** Ticker item type drives icon selection in InsightsTicker.tsx — kept structured (not a bare string) specifically so the UI can vary the icon per insight, not one generic dot for everything. `severity` is only set for 'bill' items, reusing the same shared traffic-light scale as every other due-date element. */
+export interface TickerItem {
+  type: 'bill' | 'health' | 'streak' | 'price' | 'default'
+  text: string
+  severity?: DueSeverity
+}
+
+export function buildInsightsTicker(inputs: InsightsTickerInputs): TickerItem[] {
   const { bills, periodicBills, sinkingFunds, healthScoreHistory, streak, todayIso: today } = inputs
-  const messages: string[] = []
+  const items: TickerItem[] = []
 
   // Nearest 3 upcoming due items across bills / periodic pending bills / sinking funds.
   const upcoming: { name: string; date: string }[] = []
@@ -1041,7 +1076,7 @@ export function buildInsightsTicker(inputs: InsightsTickerInputs): string[] {
   upcoming.sort((a, b) => a.date.localeCompare(b.date))
   for (const u of upcoming.slice(0, 3)) {
     const days = daysBetweenIso(today, u.date)
-    if (days >= 0) messages.push(`${u.name} due ${daysUntilLabel(days)}`)
+    if (days >= 0) items.push({ type: 'bill', text: `${u.name} due ${daysUntilLabel(days)}`, severity: dueDateSeverity(days) })
   }
 
   // Real health-score trend, only if there's genuinely a prior day to compare against.
@@ -1050,24 +1085,24 @@ export function buildInsightsTicker(inputs: InsightsTickerInputs): string[] {
     const latest = sorted[sorted.length - 1]
     const previous = sorted[sorted.length - 2]
     const delta = latest.score - previous.score
-    if (delta > 0) messages.push(`Health score up ${delta} point${delta === 1 ? '' : 's'} since yesterday`)
-    else if (delta < 0) messages.push(`Health score down ${Math.abs(delta)} point${Math.abs(delta) === 1 ? '' : 's'} since yesterday`)
-    else messages.push(`Health score steady at ${latest.score}/100`)
+    if (delta > 0) items.push({ type: 'health', text: `Health score up ${delta} point${delta === 1 ? '' : 's'} since yesterday` })
+    else if (delta < 0) items.push({ type: 'health', text: `Health score down ${Math.abs(delta)} point${Math.abs(delta) === 1 ? '' : 's'} since yesterday` })
+    else items.push({ type: 'health', text: `Health score steady at ${latest.score}/100` })
   }
 
   // Streak.
   if (streak.current > 0) {
-    messages.push(`${streak.current}-day streak — staying on pace`)
+    items.push({ type: 'streak', text: `${streak.current}-day streak — staying on pace` })
   }
 
   // Real price-increase flags.
   for (const b of bills) {
     if (isBillAmountChanged(b)) {
-      messages.push(`${b.name} changed from $${b.previousAmount!.toFixed(2)} to $${b.amount.toFixed(2)}`)
+      items.push({ type: 'price', text: `${b.name} changed from $${b.previousAmount!.toFixed(2)} to $${b.amount.toFixed(2)}` })
     }
   }
 
-  return messages.length > 0 ? messages : ['All bills on track — nothing urgent right now']
+  return items.length > 0 ? items : [{ type: 'default', text: 'All bills on track — nothing urgent right now' }]
 }
 
 // ---------------------------------------------------------------------------

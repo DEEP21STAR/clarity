@@ -1,11 +1,12 @@
 import { useEffect, useRef, useState } from 'react'
 import gsap from 'gsap'
 import { StatCard } from './StatCard'
-import { getPlanSeverity, planProgressPercent, requiredMonthlyPayment, planPayoffWithExtra } from '@/lib/logic'
-import { cn, formatCurrency } from '@/lib/utils'
+import { getPlanSeverity, planProgressPercent, requiredMonthlyPayment, planPayoffWithExtra, daysBetweenIso } from '@/lib/logic'
+import { cn, formatCurrency, todayIso } from '@/lib/utils'
 import type { CreditCardAccount, InstallmentPlan, DeviceRepayment } from '@/lib/types'
 import { AlertTriangle, Flame, CheckCircle2, Sliders } from 'lucide-react'
 import { BillIcon } from './BillIcons'
+import { DueBadge } from './DueBadge'
 
 /** One installment plan card — skinned in the app's neon-aurora language, inspired by (not copied from) Latitude's "My Plans" UI. */
 export function InstallmentPlanCard({ plan, delay = 0, expiredPlanRate = 0 }: { plan: InstallmentPlan; delay?: number; expiredPlanRate?: number }) {
@@ -142,7 +143,11 @@ export function CreditCardAccountPanel({ card, delay = 0 }: { card: CreditCardAc
           <div className="text-lg font-bold tabular-nums text-amber-300">
             {card.minPayment > 0 ? formatCurrency(card.minPayment) : 'None due'}
           </div>
-          {card.minPaymentDueDate && <div className="text-[10px] text-white/35 mt-0.5">due {card.minPaymentDueDate}</div>}
+          {card.minPaymentDueDate && (
+            <div className="mt-1">
+              <DueBadge daysUntil={daysBetweenIso(todayIso(), card.minPaymentDueDate)} />
+            </div>
+          )}
         </div>
         <div>
           <div className="text-xs text-white/40 uppercase tracking-wide">Expired Plan Rate</div>

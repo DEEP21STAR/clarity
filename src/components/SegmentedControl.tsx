@@ -36,9 +36,11 @@ export function SegmentedControl<T extends string>({
           key={o.value}
           onClick={() => onChange(o.value)}
           className={cn(
-            'relative z-10 font-medium capitalize whitespace-nowrap',
+            'relative z-10 capitalize whitespace-nowrap',
             size === 'sm' ? 'px-2.5 py-1' : 'px-3 py-1.5',
-            value === o.value ? 'text-black' : 'text-white/50 hover:text-white'
+            // Active label: solid black + semibold on the light cyan->purple thumb (see .segmented-thumb
+            // comment in index.css for the real contrast fix this pairs with — both endpoints verified >=11.8:1).
+            value === o.value ? 'text-black font-semibold' : 'text-white/50 font-medium hover:text-white'
           )}
         >
           {o.label}

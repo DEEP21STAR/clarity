@@ -1,9 +1,16 @@
 import { useMemo, useState } from 'react'
 import { useStore } from '@/lib/store'
 import { StatCard } from './StatCard'
-import { formatCurrency } from '@/lib/utils'
+import { formatCurrency, todayIso } from '@/lib/utils'
+import { daysBetweenIso, dueDateSeverity, type DueSeverity } from '@/lib/logic'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { BillIcon } from './BillIcons'
+
+const CALENDAR_ENTRY_TEXT: Record<DueSeverity, string> = {
+  ok: 'text-cyan-300',
+  warn: 'text-amber-300',
+  danger: 'text-rose-300',
+}
 
 const WEEKDAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
 
@@ -14,25 +21,28 @@ export function BillCalendar() {
 
   const grid = useMemo(() => buildMonthGrid(cursor.year, cursor.month), [cursor])
 
+  const today = todayIso()
+
   const entriesByDay = useMemo(() => {
-    const map = new Map<number, { name: string; amount: number }[]>()
+    const map = new Map<number, { name: string; amount: number; dateIso: string }[]>()
+    const daysInMonth = new Date(cursor.year, cursor.month + 1, 0).getDate()
+    const isoOf = (day: number) => `${cursor.year}-${String(cursor.month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`
     for (const bill of state.bills) {
       if (!bill.active || bill.frequency !== 'monthly') continue
-      const daysInMonth = new Date(cursor.year, cursor.month + 1, 0).getDate()
       const day = Math.min(bill.dueDay, daysInMonth)
-      map.set(day, [...(map.get(day) ?? []), { name: bill.name, amount: bill.amount }])
+      map.set(day, [...(map.get(day) ?? []), { name: bill.name, amount: bill.amount, dateIso: isoOf(day) }])
     }
     for (const pb of state.periodicBills) {
       if (!pb.pendingBill) continue
       const d = new Date(pb.pendingBill.dueDate)
       if (d.getFullYear() === cursor.year && d.getMonth() === cursor.month) {
-        map.set(d.getDate(), [...(map.get(d.getDate()) ?? []), { name: pb.name, amount: pb.pendingBill.amount }])
+        map.set(d.getDate(), [...(map.get(d.getDate()) ?? []), { name: pb.name, amount: pb.pendingBill.amount, dateIso: pb.pendingBill.dueDate }])
       }
     }
     for (const fund of state.sinkingFunds) {
       const d = new Date(fund.targetDate)
       if (d.getFullYear() === cursor.year && d.getMonth() === cursor.month) {
-        map.set(d.getDate(), [...(map.get(d.getDate()) ?? []), { name: fund.name, amount: fund.targetAmount }])
+        map.set(d.getDate(), [...(map.get(d.getDate()) ?? []), { name: fund.name, amount: fund.targetAmount, dateIso: fund.targetDate }])
       }
     }
     return map
@@ -67,12 +77,30 @@ export function BillCalendar() {
                 <>
                   <div className="text-[10px] text-white/40">{day}</div>
                   <div className="space-y-0.5 mt-0.5">
-                    {(entriesByDay.get(day) ?? []).slice(0, 3).map((e, j) => (
-                      <div key={j} title={`${e.name}: ${formatCurrency(e.amount)}`} className="flex items-center gap-1 text-[9px] text-cyan-300 truncate">
-                        <BillIcon name={e.name} className="w-2.5 h-2.5 shrink-0" />
-                        <span className="truncate">{e.name}</span>
-                      </div>
-                    ))}
+                    {(entriesByDay.get(day) ?? []).slice(0, 3).map((e, j) => {
+                      const daysUntil = daysBetweenIso(today, e.dateIso)
+                      // A calendar cell already in the past isn't "overdue" — recurring bills have
+                      // no paid-tracking, so a day-of-month that's already gone by this month was
+                      // very likely already paid. Only today-or-future cells get real traffic-light
+                      // urgency; past cells stay neutral so the calendar doesn't cry wolf on history.
+                      const severity = daysUntil >= 0 ? dueDateSeverity(daysUntil) : null
+                      const textClass = severity ? CALENDAR_ENTRY_TEXT[severity] : 'text-white/35'
+                      const tooltip = severity === 'danger' ? 'due very soon / overdue'
+                        : severity === 'warn' ? 'due soon'
+                        : severity === 'ok' ? 'not due soon'
+                        : 'already passed this month'
+                      return (
+                        <div
+                          key={j}
+                          title={`${e.name}: ${formatCurrency(e.amount)} — ${tooltip}`}
+                          className={`flex items-center gap-1 text-[9px] truncate ${textClass}`}
+                        >
+                          <BillIcon name={e.name} className="w-2.5 h-2.5 shrink-0" />
+                          <span className="truncate">{e.name}</span>
+                          {severity && severity !== 'ok' && <span className={`w-1 h-1 rounded-full shrink-0 ${severity === 'danger' ? 'bg-rose-400' : 'bg-amber-400'} animate-pulse`} />}
+                        </div>
+                      )
+                    })}
                   </div>
                 </>
               )}

@@ -44,8 +44,16 @@ export function CommandPalette({ tabCommands }: { tabCommands: PaletteCommand[] 
       }
       if (e.key === 'Escape') setOpen(false)
     }
+    // Lets the header's "quick actions" button open the same palette without duplicating
+    // the open logic — a plain custom event, same reach-through pattern already used by
+    // planCommands' tab-click-then-scroll above, rather than threading open state as a prop.
+    const openHandler = () => setOpen(true)
     window.addEventListener('keydown', handler)
-    return () => window.removeEventListener('keydown', handler)
+    window.addEventListener('clarity:open-command-palette', openHandler)
+    return () => {
+      window.removeEventListener('keydown', handler)
+      window.removeEventListener('clarity:open-command-palette', openHandler)
+    }
   }, [])
 
   useEffect(() => { setSelected(0) }, [query])

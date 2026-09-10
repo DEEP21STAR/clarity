@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { buildInsightsTicker, buildDashboardHeadline, applyBillAmountChange } from './logic'
+import { buildInsightsTicker, buildDashboardHeadline, applyBillAmountChange, dueDateSeverity, dueInLabel } from './logic'
 import type { RecurringBill, PeriodicBill, SinkingFund, StreakState } from './types'
 
 describe('buildInsightsTicker — real rotating content from the actual data model', () => {
@@ -15,41 +15,77 @@ describe('buildInsightsTicker — real rotating content from the actual data mod
   const sinkingFunds: SinkingFund[] = []
   const streak: StreakState = { current: 5, best: 10, lastCheckedDate: '2026-09-10', milestonesHit: [] }
 
-  it('surfaces the real nearest due date, computed from today, not hardcoded', () => {
-    const messages = buildInsightsTicker({ bills, periodicBills, sinkingFunds, healthScoreHistory: [], streak, todayIso: '2026-09-10' })
-    expect(messages.some((m) => m.includes('Gas due'))).toBe(true)
+  it('surfaces the real nearest due date, computed from today, not hardcoded, tagged as a bill-type item', () => {
+    const items = buildInsightsTicker({ bills, periodicBills, sinkingFunds, healthScoreHistory: [], streak, todayIso: '2026-09-10' })
+    const gasItem = items.find((m) => m.text.includes('Gas due'))
+    expect(gasItem).toBeDefined()
+    expect(gasItem!.type).toBe('bill')
+    // Gas is due 2026-09-17, 7 days after today (2026-09-10) — within the amber window (<=5 fails, so this is genuinely 'ok').
+    expect(gasItem!.severity).toBe('ok')
   })
 
-  it('reports a real health-score delta only when there are 2+ real days of history', () => {
+  it('reports a real health-score delta only when there are 2+ real days of history, tagged as a health-type item', () => {
     const withHistory = buildInsightsTicker({
       bills: [], periodicBills: [], sinkingFunds: [], streak: { current: 0, best: 0, lastCheckedDate: '', milestonesHit: [] },
       healthScoreHistory: [{ date: '2026-09-09', score: 60 }, { date: '2026-09-10', score: 64 }],
       todayIso: '2026-09-10',
     })
-    expect(withHistory.some((m) => m === 'Health score up 4 points since yesterday')).toBe(true)
+    const healthItem = withHistory.find((m) => m.text === 'Health score up 4 points since yesterday')
+    expect(healthItem).toBeDefined()
+    expect(healthItem!.type).toBe('health')
 
     const withoutHistory = buildInsightsTicker({
       bills: [], periodicBills: [], sinkingFunds: [], streak: { current: 0, best: 0, lastCheckedDate: '', milestonesHit: [] },
       healthScoreHistory: [{ date: '2026-09-10', score: 64 }],
       todayIso: '2026-09-10',
     })
-    expect(withoutHistory.some((m) => m.includes('Health score'))).toBe(false)
+    expect(withoutHistory.some((m) => m.text.includes('Health score'))).toBe(false)
   })
 
-  it('includes the real streak count when active', () => {
-    const messages = buildInsightsTicker({ bills: [], periodicBills: [], sinkingFunds: [], healthScoreHistory: [], streak, todayIso: '2026-09-10' })
-    expect(messages.some((m) => m === '5-day streak — staying on pace')).toBe(true)
+  it('includes the real streak count when active, tagged as a streak-type item', () => {
+    const items = buildInsightsTicker({ bills: [], periodicBills: [], sinkingFunds: [], healthScoreHistory: [], streak, todayIso: '2026-09-10' })
+    const streakItem = items.find((m) => m.text === '5-day streak — staying on pace')
+    expect(streakItem).toBeDefined()
+    expect(streakItem!.type).toBe('streak')
   })
 
-  it('flags a real price change, using the actual old/new amounts', () => {
+  it('flags a real price change, using the actual old/new amounts, tagged as a price-type item', () => {
     const changed: RecurringBill = { ...bills[0], previousAmount: 1800 }
-    const messages = buildInsightsTicker({ bills: [changed], periodicBills: [], sinkingFunds: [], healthScoreHistory: [], streak: { current: 0, best: 0, lastCheckedDate: '', milestonesHit: [] }, todayIso: '2026-09-10' })
-    expect(messages.some((m) => m === 'Rent changed from $1800.00 to $1960.00')).toBe(true)
+    const items = buildInsightsTicker({ bills: [changed], periodicBills: [], sinkingFunds: [], healthScoreHistory: [], streak: { current: 0, best: 0, lastCheckedDate: '', milestonesHit: [] }, todayIso: '2026-09-10' })
+    const priceItem = items.find((m) => m.text === 'Rent changed from $1800.00 to $1960.00')
+    expect(priceItem).toBeDefined()
+    expect(priceItem!.type).toBe('price')
   })
 
   it('falls back to an honest default when there is genuinely nothing to say', () => {
-    const messages = buildInsightsTicker({ bills: [], periodicBills: [], sinkingFunds: [], healthScoreHistory: [], streak: { current: 0, best: 0, lastCheckedDate: '', milestonesHit: [] }, todayIso: '2026-09-10' })
-    expect(messages).toEqual(['All bills on track — nothing urgent right now'])
+    const items = buildInsightsTicker({ bills: [], periodicBills: [], sinkingFunds: [], healthScoreHistory: [], streak: { current: 0, best: 0, lastCheckedDate: '', milestonesHit: [] }, todayIso: '2026-09-10' })
+    expect(items).toEqual([{ type: 'default', text: 'All bills on track — nothing urgent right now' }])
+  })
+})
+
+describe('dueDateSeverity / dueInLabel — the shared traffic-light system every due-date UI element reuses', () => {
+  it('is danger when overdue or within the danger window (<=2 days)', () => {
+    expect(dueDateSeverity(-1)).toBe('danger')
+    expect(dueDateSeverity(0)).toBe('danger')
+    expect(dueDateSeverity(2)).toBe('danger')
+  })
+
+  it('is warn between the danger and warn windows (3-5 days)', () => {
+    expect(dueDateSeverity(3)).toBe('warn')
+    expect(dueDateSeverity(5)).toBe('warn')
+  })
+
+  it('is ok comfortably beyond the warn window (6+ days)', () => {
+    expect(dueDateSeverity(6)).toBe('ok')
+    expect(dueDateSeverity(30)).toBe('ok')
+  })
+
+  it('labels overdue, today, tomorrow, and future days correctly', () => {
+    expect(dueInLabel(-3)).toBe('3 days overdue')
+    expect(dueInLabel(-1)).toBe('1 day overdue')
+    expect(dueInLabel(0)).toBe('due today')
+    expect(dueInLabel(1)).toBe('due tomorrow')
+    expect(dueInLabel(4)).toBe('due in 4 days')
   })
 })
 

@@ -2,10 +2,22 @@ import { useEffect, useRef } from 'react'
 import gsap from 'gsap'
 import { StatCard } from './StatCard'
 import { CountUp } from './CountUp'
-import { daysRemainingInPeriod, periodProgressPercent, suggestedFortnightlySetAside } from '@/lib/logic'
+import { daysRemainingInPeriod, periodProgressPercent, suggestedFortnightlySetAside, dueDateSeverity, daysBetweenIso, type DueSeverity } from '@/lib/logic'
 import { cn, formatCurrency, todayIso } from '@/lib/utils'
 import type { PeriodicBill } from '@/lib/types'
 import { CheckCircle2, Clock, Pencil, Trash2 } from 'lucide-react'
+import { DueBadge } from './DueBadge'
+
+const PENDING_BILL_SEVERITY_CLASSES: Record<DueSeverity, string> = {
+  ok: 'border-emerald-400/30 bg-emerald-500/10',
+  warn: 'border-amber-400/30 bg-amber-500/10',
+  danger: 'border-rose-400/40 bg-rose-500/10',
+}
+const PENDING_BILL_TEXT_CLASSES: Record<DueSeverity, string> = {
+  ok: 'text-emerald-300',
+  warn: 'text-amber-300',
+  danger: 'text-rose-300',
+}
 
 const RADIUS = 54
 const CIRCUMFERENCE = 2 * Math.PI * RADIUS
@@ -112,15 +124,24 @@ export function PeriodicBillGauge({
               <CheckCircle2 className="w-4 h-4 shrink-0" /> In credit {formatCurrency(bill.creditAmount)} — no bill due right now.
             </div>
           ) : bill.pendingBill ? (
-            <div className="rounded-lg border border-amber-400/30 bg-amber-500/10 px-3 py-2 text-sm">
-              <div className="flex justify-between text-amber-300 font-semibold">
-                <span>Bill due {bill.pendingBill.dueDate}</span>
-                <span className="tabular-nums">{formatCurrency(bill.pendingBill.amount)}</span>
-              </div>
-              <div className="text-[11px] text-white/40 mt-0.5">
-                for {shortDate(bill.pendingBill.periodStart)} – {shortDate(bill.pendingBill.periodEnd)}
-              </div>
-            </div>
+            (() => {
+              const daysUntilDue = daysBetweenIso(today, bill.pendingBill.dueDate)
+              const severity = dueDateSeverity(daysUntilDue)
+              return (
+                <div className={cn('rounded-lg border px-3 py-2 text-sm', PENDING_BILL_SEVERITY_CLASSES[severity])}>
+                  <div className={cn('flex justify-between items-center font-semibold', PENDING_BILL_TEXT_CLASSES[severity])}>
+                    <span className="flex items-center gap-2">
+                      Bill due {shortDate(bill.pendingBill.dueDate)}
+                      <DueBadge daysUntil={daysUntilDue} />
+                    </span>
+                    <span className="tabular-nums">{formatCurrency(bill.pendingBill.amount)}</span>
+                  </div>
+                  <div className="text-[11px] text-white/40 mt-0.5">
+                    for {shortDate(bill.pendingBill.periodStart)} – {shortDate(bill.pendingBill.periodEnd)}
+                  </div>
+                </div>
+              )
+            })()
           ) : null}
 
           <div className={cn('rounded-lg border px-3 py-2', 'border-cyan-400/30 bg-cyan-500/10')}>

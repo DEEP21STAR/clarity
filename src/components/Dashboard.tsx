@@ -9,6 +9,23 @@ import { nzNetIncome, auNetIncome, generateInsights, monthlyEquivalent, calcFina
 import { cn, formatCurrency } from '@/lib/utils'
 import { AlertTriangle, CheckCircle2, Info, GripVertical } from 'lucide-react'
 
+/**
+ * Renders the plain-language headline with weight/gradient emphasis on just
+ * its key numbers ($ amounts, the "N/100" health score) — not the whole
+ * sentence uniformly, per the specific ask this is presentation-only
+ * splitting of a string that stays a single tested value in logic.ts.
+ */
+function renderHeadline(headline: string): ReactNode {
+  const parts = headline.split(/(\$[\d.]+|\d+\/100)/g)
+  return parts.map((part, i) =>
+    /^(\$[\d.]+|\d+\/100)$/.test(part) ? (
+      <span key={i} className="gradient-heading font-bold">{part}</span>
+    ) : (
+      <span key={i}>{part}</span>
+    )
+  )
+}
+
 export function Dashboard() {
   const { state, setMode, setCountry, setGrossAnnualIncome, setDashboardCardOrder } = useStore()
   const { mode, country, grossAnnualIncome, bills, debts, accounts } = state
@@ -160,8 +177,11 @@ export function Dashboard() {
         </div>
       </div>
 
-      {/* Plain-language headline — the literal answer in words, before any number */}
-      <p className="text-lg md:text-xl font-medium text-white/90 leading-snug">{headline}</p>
+      {/* Plain-language headline — the literal answer in words, before any number. Base
+          text bumped to full-white/semibold (the prior text-white/90 + font-medium combo
+          read as flat grey per direct feedback); the dollar figure and health-score
+          fraction specifically get gradient emphasis via renderHeadline() above. */}
+      <p className="text-xl md:text-2xl font-semibold text-white leading-snug">{renderHeadline(headline)}</p>
 
       <InsightsTicker />
 

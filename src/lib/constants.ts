@@ -199,6 +199,16 @@ export const SEED_ACCOUNTS: Account[] = [
 /** Judgment call: the spend-pace alert flags a category once its spend-pace outruns elapsed-time-pace by more than this margin (10 percentage points). */
 export const SPEND_PACE_ALERT_BUFFER = 0.10
 
+/**
+ * Judgment-call thresholds for the shared traffic-light due-date colour
+ * system (`dueDateSeverity()` in logic.ts) — used by every bill/plan/due-date
+ * UI element (Recurring Bills, Periodic Bill gauges, GEM VISA minimum
+ * payments, Bill Calendar) so red/amber/green never drifts between
+ * components. NOT Deep's own numbers — one constant each to retune.
+ */
+export const DUE_DATE_DANGER_WITHIN_DAYS = 2 // overdue, or due within this many days -> red
+export const DUE_DATE_WARN_WITHIN_DAYS = 5 // due within this many days (outside the red window) -> amber
+
 /** Financial health score component weights — see calcFinancialHealthScore() in logic.ts for the full documented formula. */
 export const HEALTH_SCORE_WEIGHTS = {
   savingsRate: 0.30,
