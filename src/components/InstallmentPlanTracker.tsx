@@ -31,6 +31,7 @@ export function InstallmentPlanCard({ plan, delay = 0, expiredPlanRate = 0 }: { 
   return (
     <div
       ref={ref}
+      id={`plan-${plan.id}`}
       className={cn(
         'rounded-xl border bg-black/30 p-4',
         borderClass,

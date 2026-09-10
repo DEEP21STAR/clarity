@@ -157,6 +157,10 @@ body {
   .icon-home, .icon-fold, .card-deal-in, .streak-badge-pop, .page-enter { animation: none; }
 }
 
+/* Time-of-day ambient tint — subtle, applied to the whole app wrapper. */
+.tint-morning { filter: hue-rotate(6deg) saturate(0.96); }
+.tint-evening { filter: hue-rotate(-8deg) saturate(1.06) brightness(1.02); }
+
 /* Print — only the accountant summary modal prints, nothing else on the page. */
 @media print {
   body * { visibility: hidden; }

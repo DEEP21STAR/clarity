@@ -20,15 +20,23 @@ export function BootSequence({ onDone }: { onDone: () => void }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
+  const skip = () => {
+    gsap.killTweensOf('.boot-line')
+    gsap.killTweensOf(ref.current)
+    setVisible(false)
+    onDone()
+  }
+
   if (!visible) return null
   return (
-    <div ref={ref} className="fixed inset-0 z-50 flex items-center justify-center bg-[#05060a]">
+    <div ref={ref} className="fixed inset-0 z-50 flex items-center justify-center bg-[#05060a] cursor-pointer" onClick={skip}>
       <div className="text-center font-mono">
         <div className="boot-line text-3xl font-black tracking-widest text-transparent bg-clip-text bg-gradient-to-r from-cyan-300 via-purple-300 to-pink-300">
           CLARITY
         </div>
         <div className="boot-line text-xs text-white/40 mt-2 tracking-[0.3em]">BUDGET SYSTEM — INITIALISING</div>
         <div className="boot-line text-[10px] text-cyan-300/60 mt-4">loading tax engine · payday model · insights</div>
+        <div className="boot-line text-[10px] text-white/25 mt-6">tap anywhere to skip</div>
       </div>
     </div>
   )
