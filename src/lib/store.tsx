@@ -100,6 +100,8 @@ interface StoreContextValue {
       have one) — but with no way to EDIT it afterward, every imported row stayed "uncategorised"
       forever, starving the new category-colour/trend features of real input. Closes that gap. */
   updateTransaction: (id: string, patch: Partial<Transaction>) => void
+  /** Round 21 — a genuine gap: CSV import + inline category edit existed, but a mistaken/duplicate import row had no way to be removed. */
+  removeTransaction: (id: string) => void
   setGrossAnnualIncome: (v: number) => void
   addDebt: (debt: Debt) => void
   removeDebt: (id: string) => void
@@ -122,6 +124,10 @@ interface StoreContextValue {
   setStreak: (streak: StreakState) => void
   setLastExportedAt: (iso: string) => void
   markDebtPaidOff: (id: string) => void
+  /** Round 21 — device repayments had no add/remove UI at all; a fully-paid-off device stayed on screen forever with no way to clear it. */
+  addDeviceRepayment: (device: DeviceRepayment) => void
+  updateDeviceRepayment: (id: string, patch: Partial<DeviceRepayment>) => void
+  removeDeviceRepayment: (id: string) => void
   setDashboardCardOrder: (order: string[]) => void
   setSoundEnabled: (enabled: boolean) => void
   /** #8 expanded — records a real amount+date payment AND reduces the real balance/remaining it targets. Returns the new record's id. */
@@ -210,11 +216,16 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     setCountry: (country) => setState((s) => ({ ...s, country })),
     addTransactions: (txs) => setState((s) => ({ ...s, transactions: [...txs, ...s.transactions] })),
     updateTransaction: (id, patch) => setState((s) => ({ ...s, transactions: s.transactions.map((t) => (t.id === id ? { ...t, ...patch } : t)) })),
+    removeTransaction: (id) => setState((s) => ({ ...s, transactions: s.transactions.filter((t) => t.id !== id) })),
     setGrossAnnualIncome: (v) => setState((s) => ({ ...s, grossAnnualIncome: v })),
     addDebt: (debt) => setState((s) => ({ ...s, debts: [...s.debts, debt] })),
     removeDebt: (id) => setState((s) => ({ ...s, debts: s.debts.filter((d) => d.id !== id) })),
     updateDebt: (id, patch) => setState((s) => ({ ...s, debts: s.debts.map((d) => (d.id === id ? { ...d, ...patch } : d)) })),
     markDebtPaidOff: (id) => setState((s) => ({ ...s, debts: s.debts.map((d) => (d.id === id ? { ...d, balance: 0 } : d)) })),
+    addDeviceRepayment: (device) => setState((s) => ({ ...s, deviceRepayments: [...s.deviceRepayments, device] })),
+    updateDeviceRepayment: (id, patch) =>
+      setState((s) => ({ ...s, deviceRepayments: s.deviceRepayments.map((d) => (d.id === id ? { ...d, ...patch } : d)) })),
+    removeDeviceRepayment: (id) => setState((s) => ({ ...s, deviceRepayments: s.deviceRepayments.filter((d) => d.id !== id) })),
     addPeriodicBill: (bill) => setState((s) => ({ ...s, periodicBills: [...s.periodicBills, bill] })),
     removePeriodicBill: (id) => setState((s) => ({ ...s, periodicBills: s.periodicBills.filter((b) => b.id !== id) })),
     updatePeriodicBill: (id, patch) =>

@@ -558,3 +558,16 @@ mark.search-hit { background: rgba(34, 211, 238, 0.35); color: #fff; border-radi
   .print-doc-num { text-align: right; font-variant-numeric: tabular-nums; }
   .print-doc-total-row td { font-weight: 700; border-top: 1pt solid #333; }
 }
+
+/* Round 21, item #3 — ⌘K palette hover-preview thumbnail pop-in. Belt-and-braces reduced-motion
+   guard: CommandPalette.tsx already withholds this class entirely when prefersReducedMotion()
+   is true, and this @media block covers the same case for anything that ever renders the class
+   without going through that check. */
+@keyframes command-preview-pop {
+  0% { opacity: 0; transform: translateX(-6px) scale(0.96); }
+  100% { opacity: 1; transform: translateX(0) scale(1); }
+}
+.command-preview-pop { animation: command-preview-pop 0.22s cubic-bezier(0.22, 1, 0.36, 1); }
+@media (prefers-reduced-motion: reduce) {
+  .command-preview-pop { animation: none; }
+}

@@ -1,7 +1,10 @@
-import React, { useEffect, useRef } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import gsap from 'gsap'
+// html2canvas-pro — see thumbnailCache.ts's comment: plain html2canvas can't parse Tailwind
+// v4's oklch colors at all, confirmed via a real failed capture, not assumed.
+import html2canvas from 'html2canvas-pro'
 import { cn, prefersReducedMotion } from '@/lib/utils'
-import { Info } from 'lucide-react'
+import { Info, Camera, Check } from 'lucide-react'
 
 export type GlowColor = 'cyan' | 'purple' | 'pink' | 'amber' | 'success' | 'danger'
 
@@ -23,12 +26,61 @@ interface StatCardProps {
   delay?: number
   /** Extra one-line detail shown via a small info icon next to the label — real hover tooltip, not decorative. */
   tooltip?: string
+  /** Round 21, item #5 — shows a small camera button that copies a real snapshot of this card to the clipboard (not a download — see the doc comment below on why). */
+  copyable?: boolean
 }
 
-/** Shared cinematic card: bordered panel, cut-in top-border label, colour-owned glow, GSAP entrance, optional 3D tilt, hover-lift + chasing-light border, optional info tooltip, focus-mode aware. */
-export function StatCard({ label, glow = 'cyan', tilt = true, className, children, delay = 0, tooltip }: StatCardProps) {
+/**
+ * Shared cinematic card: bordered panel, cut-in top-border label, colour-owned glow, GSAP
+ * entrance, optional 3D tilt, hover-lift + chasing-light border, optional info tooltip,
+ * focus-mode aware, optional "copy as image" button.
+ *
+ * The copy button writes a PNG to the clipboard via the Clipboard API rather than triggering
+ * a file download — this app is published as a claude.ai Artifact, and the viewer sandbox has
+ * already been confirmed (see DataExportPanel.tsx / downloads.ts) to silently swallow any
+ * `<a download>` or script-driven save. A user-gesture-triggered `navigator.clipboard.write`
+ * isn't a download at all, so it isn't affected — Deep pastes the result straight into Slack,
+ * an email, or a note.
+ */
+export function StatCard({ label, glow = 'cyan', tilt = true, className, children, delay = 0, tooltip, copyable }: StatCardProps) {
   const ref = useRef<HTMLDivElement>(null)
   const c = GLOW_MAP[glow]
+  const [copyState, setCopyState] = useState<'idle' | 'copying' | 'copied' | 'error'>('idle')
+
+  const copyAsImage = async () => {
+    if (!ref.current || copyState === 'copying') return
+    setCopyState('copying')
+    try {
+      const canvas = await html2canvas(ref.current, {
+        backgroundColor: '#0b0d14',
+        scale: 2,
+        logging: false,
+        // The copy button itself shouldn't appear in the copied image of its own card.
+        ignoreElements: (node) => node.hasAttribute?.('data-copy-btn') ?? false,
+        // Same real bug as thumbnailCache.ts: every card lives inside <main class="page-enter">,
+        // whose `transform-style: preserve-3d` (paired with an ancestor's `perspective`) made
+        // html2canvas-pro paint a totally blank canvas — confirmed live, not assumed. Stripped
+        // only on the throwaway clone this renders from; the live page is untouched.
+        onclone: (clonedDoc: Document) => {
+          clonedDoc.querySelectorAll('.page-enter').forEach((n) => n.classList.remove('page-enter'))
+          // Same gradient-text gap as thumbnailCache.ts — flat cyan fallback on the clone only.
+          clonedDoc.querySelectorAll<HTMLElement>('.gradient-heading').forEach((n) => {
+            n.style.background = 'none'
+            n.style.setProperty('-webkit-text-fill-color', '#67e8f9')
+            n.style.color = '#67e8f9'
+          })
+        },
+      })
+      const blob: Blob | null = await new Promise((resolve) => canvas.toBlob(resolve, 'image/png'))
+      if (!blob) throw new Error('no blob')
+      await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })])
+      setCopyState('copied')
+    } catch {
+      setCopyState('error')
+    } finally {
+      setTimeout(() => setCopyState('idle'), 2000)
+    }
+  }
 
   useEffect(() => {
     if (!ref.current) return
@@ -102,6 +154,16 @@ export function StatCard({ label, glow = 'cyan', tilt = true, className, childre
           </span>
         )}
       </span>
+      {copyable && (
+        <button
+          data-copy-btn
+          onClick={copyAsImage}
+          title={copyState === 'error' ? 'Copy failed — clipboard image write may be blocked in this view' : 'Copy this card as an image'}
+          className="absolute top-3 right-3 z-20 w-6 h-6 rounded-md flex items-center justify-center text-white/30 hover:text-cyan-300 hover:bg-white/5 transition-colors"
+        >
+          {copyState === 'copied' ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Camera className={cn('w-3.5 h-3.5', copyState === 'copying' && 'animate-pulse')} />}
+        </button>
+      )}
       <div className="relative z-10">{children}</div>
     </div>
   )

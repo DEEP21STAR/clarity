@@ -5,9 +5,9 @@ import { CountUp } from './CountUp'
 import { DataExportPanel } from './DataExportPanel'
 import { PaymentHistoryPanel } from './PaymentHistoryPanel'
 import { SegmentedControl } from './SegmentedControl'
-import { calcWfhFixedRate, gstOnExclusive, gstFromInclusive, NZ_WFH_FIXED_RATE_PER_HOUR, AU_WFH_FIXED_RATE_PER_HOUR, calcRoundUpSavings } from '@/lib/logic'
+import { calcWfhFixedRate, gstOnExclusive, gstFromInclusive, NZ_WFH_FIXED_RATE_PER_HOUR, AU_WFH_FIXED_RATE_PER_HOUR, calcRoundUpSavings, runDataHealthCheck } from '@/lib/logic'
 import { formatCurrency, todayIso } from '@/lib/utils'
-import { Plus, Trash2, Volume2, VolumeX } from 'lucide-react'
+import { Plus, Trash2, Volume2, VolumeX, AlertTriangle, Info, ShieldCheck } from 'lucide-react'
 import { useUndoableDelete } from '@/lib/useUndoableDelete'
 
 export function Tools() {
@@ -33,6 +33,15 @@ export function Tools() {
   const gstResult = useMemo(
     () => (gstDirection === 'ex' ? gstOnExclusive(gstAmount, state.country) : gstFromInclusive(gstAmount, state.country)),
     [gstDirection, gstAmount, state.country]
+  )
+
+  // Round 21, items #10/#11 — real data-integrity self-check, recomputed live from the actual
+  // current state (no manual "run" step needed — same always-fresh philosophy as every other
+  // card in this app). See runDataHealthCheck()'s doc comment in logic.ts for exactly what
+  // each finding category checks and why.
+  const healthFindings = useMemo(
+    () => runDataHealthCheck({ bills: state.bills, creditCards: state.creditCards, accounts: state.accounts }),
+    [state.bills, state.creditCards, state.accounts]
   )
 
   return (
@@ -178,6 +187,34 @@ export function Tools() {
       </StatCard>
 
       <PaymentHistoryPanel />
+
+      {/* Round 21, items #10/#11 — real data-integrity self-check: likely duplicate
+          subscriptions, active $0 bills, over-limit cards, and unexpected negative balances.
+          Plain data-consistency facts, not a financial-health opinion (that's Dashboard
+          Insights) — genuinely different question, genuinely different card. */}
+      <StatCard
+        label="Data Health Check"
+        glow={healthFindings.some((f) => f.severity === 'warning') ? 'amber' : 'success'}
+        tooltip="Checks for likely duplicate bills, active bills stuck at $0, card balances over their own stated limit, and unexpected negative balances — real data-consistency facts, not a financial opinion."
+      >
+        <div className="mt-4 space-y-2">
+          {healthFindings.map((f) => (
+            <div key={f.id} className="flex items-start gap-2 text-sm">
+              {f.severity === 'warning' ? (
+                <AlertTriangle className="w-4 h-4 text-amber-400 mt-0.5 shrink-0" />
+              ) : (
+                <Info className="w-4 h-4 text-cyan-400 mt-0.5 shrink-0" />
+              )}
+              <span className="text-white/70">{f.message}</span>
+            </div>
+          ))}
+          {healthFindings.length === 0 && (
+            <div className="flex items-center gap-2 text-sm text-emerald-300">
+              <ShieldCheck className="w-4 h-4" /> No data-consistency issues found.
+            </div>
+          )}
+        </div>
+      </StatCard>
 
       <DataExportPanel />
     </div>

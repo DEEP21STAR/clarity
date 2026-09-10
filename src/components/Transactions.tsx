@@ -1,11 +1,14 @@
-import { useMemo, useRef, useState, type ReactNode } from 'react'
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { LineChart, Line, ResponsiveContainer } from 'recharts'
 import { useStore } from '@/lib/store'
 import { StatCard } from './StatCard'
 import { CountUp } from './CountUp'
 import { importTransactionsFromCsv, categoryColor, findMatchRanges } from '@/lib/logic'
 import { formatCurrency } from '@/lib/utils'
-import { Upload, Search, Receipt } from 'lucide-react'
+import { saveFile } from '@/lib/downloads'
+import { useUndoableDelete } from '@/lib/useUndoableDelete'
+import { useToast } from './Toast'
+import { Upload, Search, Receipt, Trash2, DownloadCloud } from 'lucide-react'
 
 /** Wraps every match range in a real <mark>, not just bolding the whole string. */
 function highlightText(text: string, query: string): ReactNode {
@@ -59,12 +62,60 @@ function EditableCategory({ value, color, onSave, highlighted }: { value: string
   )
 }
 
+/** Round 21 — real CSV escaping: quotes any field containing a comma, quote, or newline, per RFC 4180. */
+function csvField(value: string): string {
+  return /[",\n]/.test(value) ? `"${value.replace(/"/g, '""')}"` : value
+}
+
+/** Round 21, item #9 — bulk-set the category on every currently-filtered row in one action. */
+function BulkRecategorize({ count, onApply }: { count: number; onApply: (category: string) => void }) {
+  const [value, setValue] = useState('')
+  return (
+    <div className="mt-2 flex items-center gap-2 text-xs">
+      <span className="text-white/40">Set category for all {count} result{count === 1 ? '' : 's'}:</span>
+      <input
+        value={value}
+        onChange={(e) => setValue(e.target.value)}
+        onKeyDown={(e) => { if (e.key === 'Enter' && value.trim()) { onApply(value.trim()); setValue('') } }}
+        placeholder="e.g. Groceries"
+        className="bg-black/30 border border-white/10 rounded px-2 py-1 outline-none focus:border-cyan-400/50 placeholder:text-white/25 w-32"
+      />
+      <button
+        onClick={() => { if (value.trim()) { onApply(value.trim()); setValue('') } }}
+        disabled={!value.trim()}
+        className="text-cyan-300 hover:text-cyan-200 disabled:text-white/20 disabled:cursor-not-allowed font-medium"
+      >
+        Apply
+      </button>
+    </div>
+  )
+}
+
 export function Transactions() {
-  const { state, addTransactions, updateTransaction } = useStore()
+  const { state, addTransactions, updateTransaction, removeTransaction } = useStore()
+  const withUndo = useUndoableDelete()
+  const { showToast } = useToast()
   const [importedCount, setImportedCount] = useState<number | null>(null)
   const [importing, setImporting] = useState(false)
   const [query, setQuery] = useState('')
   const fileRef = useRef<HTMLInputElement>(null)
+  const searchRef = useRef<HTMLInputElement>(null)
+
+  // Round 21, item #16 — press "/" anywhere on this tab to jump straight to the ledger search,
+  // the same convenience GitHub/Gmail-style apps use. Guarded so it never hijacks typing that's
+  // already happening in another input/textarea/contenteditable.
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (e.key !== '/') return
+      const target = e.target as HTMLElement | null
+      const tag = target?.tagName
+      if (tag === 'INPUT' || tag === 'TEXTAREA' || target?.isContentEditable) return
+      e.preventDefault()
+      searchRef.current?.focus()
+    }
+    window.addEventListener('keydown', handler)
+    return () => window.removeEventListener('keydown', handler)
+  }, [])
 
   const totalIn = state.transactions.filter((t) => t.amount > 0).reduce((s, t) => s + t.amount, 0)
   const totalOut = state.transactions.filter((t) => t.amount < 0).reduce((s, t) => s + t.amount, 0)
@@ -84,6 +135,27 @@ export function Transactions() {
     let running = 0
     return sorted.map((t) => { running += t.amount; return { running } })
   }, [state.transactions])
+
+  // Round 21, item #18 — exports exactly what's currently visible (respects the live search
+  // filter), not the whole ledger — so "search fuel, export" gives a real filtered CSV. Reuses
+  // the same saveFile()-then-clipboard-fallback pattern as DataExportPanel rather than an
+  // <a download> link, which the artifact viewer sandbox has already confirmed is dead.
+  const exportFiltered = async () => {
+    const header = 'Date,Category,Description,Amount'
+    const rows = filtered.map((t) => [t.date, csvField(t.category), csvField(t.description), t.amount.toFixed(2)].join(','))
+    const csv = [header, ...rows].join('\n')
+    const filename = query.trim() ? `clarity-transactions-filtered-${query.trim().slice(0, 20)}.csv` : 'clarity-transactions.csv'
+    const outcome = await saveFile(filename, csv)
+    if (outcome === 'saved') showToast(`Exported ${filtered.length} transactions.`, { tone: 'success' })
+    else {
+      try {
+        await navigator.clipboard.writeText(csv)
+        showToast(`Downloads unavailable here — copied ${filtered.length} rows as CSV instead.`, { tone: 'info' })
+      } catch {
+        showToast('Export unavailable — clipboard and downloads both blocked in this view.', { tone: 'warning' })
+      }
+    }
+  }
 
   const handleFile = async (file: File) => {
     // #34 — real skeleton shimmer while the file is actually being read/parsed (a genuine,
@@ -157,26 +229,58 @@ export function Transactions() {
           </div>
         )}
 
-        <div className="mt-4 relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-white/30" />
-          <input
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search description or category..."
-            className="w-full bg-black/30 border border-white/10 rounded-lg pl-9 pr-3 py-2 text-sm outline-none focus:border-cyan-400/50 placeholder:text-white/30"
-          />
+        <div className="mt-4 flex items-center gap-2">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-white/30" />
+            <input
+              ref={searchRef}
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Search description or category... (press / to focus)"
+              className="w-full bg-black/30 border border-white/10 rounded-lg pl-9 pr-3 py-2 text-sm outline-none focus:border-cyan-400/50 placeholder:text-white/30"
+            />
+            {!query && (
+              <kbd className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] text-white/25 border border-white/10 rounded px-1">/</kbd>
+            )}
+          </div>
+          {filtered.length > 0 && (
+            <button
+              onClick={exportFiltered}
+              title={query ? `Export the ${filtered.length} filtered rows as CSV` : 'Export the full ledger as CSV'}
+              className="shrink-0 flex items-center gap-1.5 text-xs text-white/50 hover:text-cyan-300 border border-white/10 hover:border-cyan-400/30 rounded-lg px-3 py-2 transition-colors"
+            >
+              <DownloadCloud className="w-3.5 h-3.5" /> Export{query ? ` (${filtered.length})` : ''}
+            </button>
+          )}
         </div>
+
+        {/* Round 21, item #9 (replaces a global :active press-feedback idea that turned out to
+            already exist from Round 20) — bulk re-categorize every currently-searched row in
+            one go. A CSV import routinely produces 10+ rows from the same merchant that all
+            need the same fix; doing that one click at a time via EditableCategory was real but
+            slow. Only appears once a search has actually narrowed the list down (bulk-editing
+            the WHOLE ledger from one text box is too easy to fat-finger). */}
+        {query.trim() && filtered.length > 0 && filtered.length <= 200 && (
+          <BulkRecategorize
+            count={filtered.length}
+            onApply={(category) =>
+              withUndo(`Category set to "${category}" on ${filtered.length} transaction${filtered.length === 1 ? '' : 's'}`, () => {
+                filtered.forEach((t) => updateTransaction(t.id, { category }))
+              })
+            }
+          />
+        )}
 
         <div className="mt-3 max-h-80 overflow-y-auto">
           <table className="w-full text-sm">
             <thead>
               <tr className="text-left text-white/40 text-xs uppercase tracking-wide">
-                <th className="pb-2">Date</th><th className="pb-2">Category</th><th className="pb-2">Description</th><th className="pb-2 text-right">Amount</th>
+                <th className="pb-2">Date</th><th className="pb-2">Category</th><th className="pb-2">Description</th><th className="pb-2 text-right">Amount</th><th className="pb-2" />
               </tr>
             </thead>
             <tbody>
               {filtered.slice(0, 100).map((t) => (
-                <tr key={t.id} className="border-t border-white/5">
+                <tr key={t.id} className="border-t border-white/5 group">
                   <td className="py-1.5 text-white/60 whitespace-nowrap">{t.date}</td>
                   <td className="py-1.5">
                     {/* #1 — colour-coded category accent: a real deterministic hash-from-string colour,
@@ -193,13 +297,25 @@ export function Transactions() {
                   </td>
                   <td className="py-1.5 text-white/80">{highlightText(t.description, query)}</td>
                   <td className={`py-1.5 text-right tabular-nums ${t.amount < 0 ? 'text-rose-300' : 'text-emerald-300'}`}>{formatCurrency(t.amount)}</td>
+                  <td className="py-1.5 pl-2">
+                    {/* Round 21, item #1 — a mistaken/duplicate CSV import row had no way to be
+                        removed before this; opacity-0 until row hover keeps the dense ledger from
+                        looking cluttered with 100 trash icons at rest. */}
+                    <button
+                      onClick={() => withUndo('Transaction removed', () => removeTransaction(t.id))}
+                      className="text-white/20 hover:text-rose-400 opacity-0 group-hover:opacity-100 transition-opacity"
+                      title="Remove this transaction"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  </td>
                 </tr>
               ))}
               {filtered.length === 0 && state.transactions.length > 0 && (
-                <tr><td colSpan={4} className="py-4 text-center text-white/30">No transactions match "{query}".</td></tr>
+                <tr><td colSpan={5} className="py-4 text-center text-white/30">No transactions match "{query}".</td></tr>
               )}
               {state.transactions.length === 0 && (
-                <tr><td colSpan={4} className="py-8">
+                <tr><td colSpan={5} className="py-8">
                   <div className="flex flex-col items-center text-center">
                     <Receipt className="w-6 h-6 text-white/20 mb-2" />
                     <span className="text-white/40 text-sm">No transactions yet — import a bank CSV above to get started.</span>

@@ -1019,6 +1019,120 @@ export function emergencyFundMonths(savingsBalance: number, avgMonthlyBills: num
 }
 
 /**
+ * Round 21, item #17 — the health score already turns emergency-fund coverage into a 0-6-month
+ * sub-score, but a bare number of months is abstract. This converts it into a real calendar
+ * date ("covers you until 14 Mar 2027"), using an average month length (365.25/12 = 30.4375
+ * days) rather than assuming every month is exactly 30 days, so the date stays accurate across
+ * a multi-year runway. Returns null when there's no real runway to project (zero/negative
+ * months, or no bills to divide by at all).
+ */
+export function emergencyFundRunwayDate(months: number, fromDateIso: string): string | null {
+  if (months <= 0) return null
+  const days = Math.round(months * (365.25 / 12))
+  if (days <= 0) return null
+  return addDaysIso(fromDateIso, days)
+}
+
+// ---------------------------------------------------------------------------
+// Round 21, item #11 — duplicate-subscription detector
+// ---------------------------------------------------------------------------
+
+export interface DuplicateBillWarning {
+  a: RecurringBill
+  b: RecurringBill
+}
+
+/**
+ * Flags active bill pairs that look like an accidental duplicate — e.g. a subscription
+ * re-added after being forgotten, or a bill entered twice during CSV/manual setup. Two
+ * signals, either one sufficient:
+ *   1. Identical name (case/whitespace-insensitive) + same frequency — a literal duplicate
+ *      regardless of amount (a same-named active bill twice is suspicious on its own).
+ *   2. Related name (one name contains the other, both >= 4 chars to avoid short
+ *      false-positive substrings like "TV") + same frequency + amounts within $1.50 — catches
+ *      "Netflix" vs "Netflix Premium" at the same real price, but NOT "Netflix" $9.99 vs
+ *      "Netflix Premium" $24.99 (a real price difference means these are plausibly both real).
+ * Deliberately conservative — a false "you might have a duplicate" nag is worse than missing
+ * an edge case, so unrelated names never trigger this just because they share a frequency or
+ * a coincidentally equal amount.
+ */
+export interface DataHealthFinding {
+  id: string
+  severity: 'warning' | 'info'
+  message: string
+}
+
+/**
+ * Round 21, item #10 — real data-integrity self-check, surfaced in Tools. Four genuine
+ * categories of "this is probably a mistake, not a real financial fact": likely duplicate
+ * subscriptions (item #11, via findLikelyDuplicateBills below), an active bill still sitting
+ * at $0 (setup started but never finished), a credit card balance that's somehow bigger than
+ * its own stated credit limit (a typo in one of the two numbers), and a non-Overdraft liquid
+ * account sitting negative (Overdraft is the only account expected to ever go negative).
+ * Deliberately NOT a financial-health opinion (that's Insights) — every finding here is a
+ * plain data-consistency fact, checkable without any judgment call about what's "healthy".
+ */
+export function runDataHealthCheck(params: {
+  bills: RecurringBill[]
+  creditCards: CreditCardAccount[]
+  accounts: Account[]
+}): DataHealthFinding[] {
+  const { bills, creditCards, accounts } = params
+  const findings: DataHealthFinding[] = []
+
+  for (const d of findLikelyDuplicateBills(bills)) {
+    findings.push({
+      id: `dup-${d.a.id}-${d.b.id}`,
+      severity: 'warning',
+      message: `"${d.a.name}" and "${d.b.name}" look like possible duplicates (both active, ${d.a.frequency}) — check they're not the same bill entered twice.`,
+    })
+  }
+
+  for (const b of bills) {
+    if (b.active && b.amount === 0) {
+      findings.push({ id: `zero-amount-${b.id}`, severity: 'info', message: `"${b.name}" is active with a $0 amount — likely still needs its real amount filled in.` })
+    }
+  }
+
+  for (const c of creditCards) {
+    if (c.creditLimit !== undefined && c.balance > c.creditLimit) {
+      findings.push({
+        id: `overlimit-${c.id}`,
+        severity: 'warning',
+        message: `${c.name}'s balance ($${c.balance.toFixed(2)}) exceeds its stated credit limit ($${c.creditLimit.toFixed(2)}) — check for a typo in either figure.`,
+      })
+    }
+  }
+
+  for (const a of accounts) {
+    if (a.type === 'liquid' && a.id !== 'overdraft' && a.value < 0) {
+      findings.push({ id: `negative-${a.id}`, severity: 'warning', message: `${a.name} has a negative balance ($${a.value.toFixed(2)}) — only Overdraft is expected to go negative.` })
+    }
+  }
+
+  return findings
+}
+
+export function findLikelyDuplicateBills(bills: RecurringBill[]): DuplicateBillWarning[] {
+  const active = bills.filter((b) => b.active)
+  const warnings: DuplicateBillWarning[] = []
+  for (let i = 0; i < active.length; i++) {
+    for (let j = i + 1; j < active.length; j++) {
+      const a = active[i]
+      const b = active[j]
+      if (a.frequency !== b.frequency) continue
+      const an = a.name.trim().toLowerCase()
+      const bn = b.name.trim().toLowerCase()
+      const sameName = an === bn && an.length > 0
+      const relatedName = an.length >= 4 && bn.length >= 4 && (an.includes(bn) || bn.includes(an))
+      const closeAmount = Math.abs(a.amount - b.amount) <= 1.5
+      if (sameName || (relatedName && closeAmount)) warnings.push({ a, b })
+    }
+  }
+  return warnings
+}
+
+/**
  * Wires the raw app-state fields into calcFinancialHealthScore()'s inputs —
  * extracted so store.tsx's daily snapshot effect, Dashboard.tsx's headline
  * score, and AmbientBackground's health-reactive particles (#22, Round 20)

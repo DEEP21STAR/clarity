@@ -4,7 +4,7 @@ import { StatCard } from './StatCard'
 import { getPlanSeverity, planProgressPercent, requiredMonthlyPayment, planPayoffWithExtra } from '@/lib/logic'
 import { cn, formatCurrency } from '@/lib/utils'
 import type { CreditCardAccount, InstallmentPlan, DeviceRepayment } from '@/lib/types'
-import { AlertTriangle, Flame, CheckCircle2, Sliders } from 'lucide-react'
+import { AlertTriangle, Flame, CheckCircle2, Sliders, Trash2 } from 'lucide-react'
 import { BillIcon } from './BillIcons'
 import { DueBadge } from './DueBadge'
 import { RecordPaymentButton } from './RecordPaymentForm'
@@ -174,24 +174,89 @@ export function CreditCardAccountPanel({ card, delay = 0 }: { card: CreditCardAc
   )
 }
 
-/** Plain device repayment card — deliberately neutral, no risk overlay (it's a straight repayment, not interest-bearing). */
-export function DeviceRepaymentCard({ device, delay = 0 }: { device: DeviceRepayment; delay?: number }) {
+/**
+ * Plain device repayment card — deliberately neutral, no risk overlay (it's a straight
+ * repayment, not interest-bearing). Round 21: added `onRemove` — this card had no way to
+ * be cleared before, so a device that finished paying off (0 payments remaining) or was
+ * added by mistake just sat here permanently.
+ */
+export function DeviceRepaymentCard({
+  device,
+  delay = 0,
+  onRemove,
+  onUpdate,
+}: {
+  device: DeviceRepayment
+  delay?: number
+  onRemove?: () => void
+  onUpdate?: (patch: Partial<DeviceRepayment>) => void
+}) {
   const progress = device.paymentsTotal > 0 ? ((device.paymentsTotal - device.paymentsRemaining) / device.paymentsTotal) * 100 : 0
+  const paidOff = device.paymentsRemaining <= 0
   return (
-    <StatCard label={device.name} glow="cyan" delay={delay}>
+    <StatCard label={device.name || 'Device Repayment'} glow={paidOff ? 'success' : 'cyan'} delay={delay} tilt={!onUpdate}>
+      {onUpdate && (
+        <input
+          value={device.name}
+          onChange={(e) => onUpdate({ name: e.target.value })}
+          placeholder="Device name"
+          className="mt-3 bg-transparent outline-none text-sm font-medium text-white/80 border-b border-white/10 focus:border-cyan-400/50 w-full"
+        />
+      )}
       <div className="mt-4 flex items-baseline justify-between text-sm">
         <span className="flex items-center gap-2 text-2xl font-bold tabular-nums text-cyan-200">
           <BillIcon name={device.name} className="w-5 h-5" />
-          {formatCurrency(device.monthlyAmount)}<span className="text-sm text-white/40">/mo</span>
+          {onUpdate ? (
+            <input
+              type="number"
+              step="0.01"
+              value={device.monthlyAmount}
+              onChange={(e) => onUpdate({ monthlyAmount: parseFloat(e.target.value) || 0 })}
+              className="bg-transparent outline-none border-b border-transparent focus:border-cyan-400/50 w-20 tabular-nums"
+            />
+          ) : (
+            formatCurrency(device.monthlyAmount)
+          )}
+          <span className="text-sm text-white/40">/mo</span>
         </span>
-        <span className="text-white/40 text-xs">{device.paymentsRemaining}/{device.paymentsTotal} payments left</span>
+        <span className="text-white/40 text-xs flex items-center gap-1">
+          {paidOff ? (
+            <span className="text-emerald-300 font-medium">Paid off</span>
+          ) : onUpdate ? (
+            <>
+              <input
+                type="number"
+                min={0}
+                value={device.paymentsRemaining}
+                onChange={(e) => onUpdate({ paymentsRemaining: Math.max(0, Number(e.target.value) || 0) })}
+                className="bg-transparent outline-none border-b border-transparent focus:border-cyan-400/50 w-10 tabular-nums text-right"
+              />
+              /
+              <input
+                type="number"
+                min={1}
+                value={device.paymentsTotal}
+                onChange={(e) => onUpdate({ paymentsTotal: Math.max(1, Number(e.target.value) || 1) })}
+                className="bg-transparent outline-none border-b border-transparent focus:border-cyan-400/50 w-10 tabular-nums text-right"
+              />
+              {' '}left
+            </>
+          ) : (
+            `${device.paymentsRemaining}/${device.paymentsTotal} payments left`
+          )}
+        </span>
       </div>
       <div className="mt-3 h-2 rounded-full bg-white/5 overflow-hidden">
         <div className="h-full rounded-full bg-gradient-to-r from-cyan-400 to-purple-500" style={{ width: `${progress}%` }} />
       </div>
       <p className="mt-2 text-xs text-white/40">{formatCurrency(device.remaining)} remaining — plain repayment, no interest.</p>
-      <div className="mt-2">
+      <div className="mt-2 flex items-center justify-between gap-2">
         <RecordPaymentButton targetType="deviceRepayment" targetId={device.id} targetLabel={device.name} defaultAmount={device.monthlyAmount} />
+        {onRemove && (
+          <button onClick={onRemove} title="Remove this device repayment" className="text-white/30 hover:text-rose-400 shrink-0">
+            <Trash2 className="w-3.5 h-3.5" />
+          </button>
+        )}
       </div>
     </StatCard>
   )

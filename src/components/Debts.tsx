@@ -3,12 +3,20 @@ import { LineChart, Line, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer, Ca
 import { useStore } from '@/lib/store'
 import { StatCard } from './StatCard'
 import { CountUp } from './CountUp'
-import { avalanchePlan, avalanchePayoffTimeline, categoryColor } from '@/lib/logic'
-import { formatCurrency } from '@/lib/utils'
+import { avalanchePlan, avalanchePayoffTimeline, categoryColor, addDaysIso } from '@/lib/logic'
+import { formatCurrency, todayIso } from '@/lib/utils'
 import { fireBigConfetti } from '@/lib/confetti'
 import { Plus, Trash2, CheckCircle2, PartyPopper } from 'lucide-react'
 import type { Debt } from '@/lib/types'
 import { useUndoableDelete } from '@/lib/useUndoableDelete'
+
+/** Round 21, item #12 — months-to-debt-free is abstract on its own; this turns it into a real calendar date with a year, so a multi-year payoff plan doesn't silently lose track of which year it lands in. */
+function monthsToCalendarDate(months: number, fromIso: string): string {
+  const days = Math.round(months * (365.25 / 12))
+  const dateIso = addDaysIso(fromIso, days)
+  const [y, m, d] = dateIso.split('-').map(Number)
+  return new Date(Date.UTC(y, m - 1, d)).toLocaleDateString('en-NZ', { day: 'numeric', month: 'short', year: 'numeric' })
+}
 
 export function Debts() {
   const { state, addDebt, removeDebt, updateDebt, markDebtPaidOff } = useStore()
@@ -40,6 +48,9 @@ export function Debts() {
         </StatCard>
         <StatCard label="Months to Debt-Free" glow="amber" delay={0.05}>
           <div className="mt-4 text-3xl font-bold text-amber-300 tabular-nums"><CountUp value={plan.totalMonths} decimals={0} /></div>
+          {plan.totalMonths > 0 && activeDebts.length > 0 && (
+            <p className="text-xs text-white/40 mt-2">≈ {monthsToCalendarDate(plan.totalMonths, todayIso())} at this pace.</p>
+          )}
         </StatCard>
         <StatCard label="Extra Monthly Budget" glow="cyan" delay={0.1}>
           <div className="mt-4 flex items-center gap-2">

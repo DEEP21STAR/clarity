@@ -35,7 +35,7 @@ interface Allocation { food: number; fuel: number; personal: number }
 const DEFAULT_ALLOCATION: Allocation = { food: 40, fuel: 25, personal: 35 }
 
 export function UpcomingPayments() {
-  const { state, updateBill, addBill, removeBill, addPeriodicBill, updatePeriodicBill, removePeriodicBill } = useStore()
+  const { state, updateBill, addBill, removeBill, addPeriodicBill, updatePeriodicBill, removePeriodicBill, addDeviceRepayment, updateDeviceRepayment, removeDeviceRepayment } = useStore()
   const withUndo = useUndoableDelete()
   const [window_, setWindow] = useState<UpcomingWindow>('week')
   const [allocation, setAllocation] = useState<Allocation>(DEFAULT_ALLOCATION)
@@ -287,9 +287,33 @@ export function UpcomingPayments() {
           ))}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {state.deviceRepayments.map((device, i) => (
-              <DeviceRepaymentCard key={device.id} device={device} delay={0.05 * i} />
+              <DeviceRepaymentCard
+                key={device.id}
+                device={device}
+                delay={0.05 * i}
+                onUpdate={(patch) => updateDeviceRepayment(device.id, patch)}
+                onRemove={() => withUndo(`${device.name} removed`, () => removeDeviceRepayment(device.id))}
+              />
             ))}
           </div>
+          {/* Round 21, item #2 — this section had cards but no way to add a new one; every device
+              repayment was seeded once and permanently stuck at the starting seed data. */}
+          <button
+            onClick={() =>
+              addDeviceRepayment({
+                id: `device-${Date.now()}`,
+                name: 'New device',
+                monthlyAmount: 0,
+                remaining: 0,
+                paymentsTotal: 12,
+                paymentsRemaining: 12,
+                owner: 'shared',
+              })
+            }
+            className="flex items-center gap-1 text-xs text-cyan-300 hover:text-cyan-200"
+          >
+            <Plus className="w-3 h-3" /> Add device repayment
+          </button>
         </div>
       </div>
 
