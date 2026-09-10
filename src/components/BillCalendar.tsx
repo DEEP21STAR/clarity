@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import { useStore } from '@/lib/store'
 import { StatCard } from './StatCard'
-import { formatCurrency, todayIso } from '@/lib/utils'
+import { formatCurrency, formatMonthYear, todayIso } from '@/lib/utils'
 import { daysBetweenIso, dueDateSeverity, isBillInstancePaid, type DueSeverity } from '@/lib/logic'
 import { ChevronLeft, ChevronRight, Check } from 'lucide-react'
 import { BillIcon } from './BillIcons'
@@ -63,7 +63,7 @@ export function BillCalendar() {
   }, [entriesByDay])
   const maxDayTotal = useMemo(() => Math.max(1, ...Array.from(totalByDay.values())), [totalByDay])
 
-  const monthLabel = new Date(cursor.year, cursor.month, 1).toLocaleDateString('en-NZ', { month: 'long', year: 'numeric' })
+  const monthLabel = formatMonthYear(cursor.year, cursor.month)
 
   const goMonth = (delta: number) => {
     setSlideDir(delta > 0 ? 'right' : 'left')

@@ -66,3 +66,39 @@ export function formatShortDate(iso: string): string {
   const [y, m, d] = iso.split('-').map(Number)
   return new Date(Date.UTC(y, m - 1, d)).toLocaleDateString('en-NZ', { day: 'numeric', month: 'short' })
 }
+
+/**
+ * "17 Sep 2026" — same word-month convention as formatShortDate, with a year. Consolidates two
+ * near-duplicate inline `toLocaleDateString('en-NZ', {...})` calls (Debts.tsx's payoff-date
+ * caption, previously) that were correct in isolation but not routed through this shared file —
+ * exactly the kind of drift that let a real month-first bug slip through elsewhere. See the
+ * `formatNumericDate` doc comment below for the full incident.
+ */
+export function formatLongDate(iso: string): string {
+  const [y, m, d] = iso.split('-').map(Number)
+  return new Date(Date.UTC(y, m - 1, d)).toLocaleDateString('en-NZ', { day: 'numeric', month: 'short', year: 'numeric' })
+}
+
+/** "September 2026" — month/year only, for the Bill Calendar's month header. */
+export function formatMonthYear(year: number, month0: number): string {
+  return new Date(Date.UTC(year, month0, 1)).toLocaleDateString('en-NZ', { month: 'long', year: 'numeric' })
+}
+
+/**
+ * "11/09/2026" — DD/MM/YYYY, explicit 2-digit day/month so the field ORDER is never left to a
+ * locale default to decide. Real bug this fixes: Deep found a date rendering as "09/11/2026"
+ * (US MM/DD/YYYY) — traced to native `<input type="date">` elements, whose on-screen digit
+ * display is controlled by the BROWSER's own OS/Accept-Language locale, not by this page's
+ * `lang` attribute or anything JS can override (confirmed live: setting `lang="en-NZ"` on the
+ * input, and on a wrapping element, changed nothing — a genuine browser-native-control
+ * limitation, not a bug in our code). Every native date input in the app is paired with a
+ * small read-out using THIS function right next to it, so the one thing Deep actually reads to
+ * confirm what's selected is always unambiguous, regardless of what the native widget itself
+ * shows. Every other date-as-TEXT surface in the app (calendar cells, due badges, payment
+ * history, the accountant export) already goes through formatShortDate/formatLongDate/this
+ * function — nothing left formats a date via a bare/inline `toLocaleDateString()` call.
+ */
+export function formatNumericDate(iso: string): string {
+  const [y, m, d] = iso.split('-').map(Number)
+  return new Date(Date.UTC(y, m - 1, d)).toLocaleDateString('en-NZ', { day: '2-digit', month: '2-digit', year: 'numeric' })
+}

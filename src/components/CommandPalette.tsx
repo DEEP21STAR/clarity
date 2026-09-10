@@ -109,6 +109,30 @@ export function CommandPalette({ tabCommands }: { tabCommands: PaletteCommand[] 
   useEffect(() => { setSelected(0) }, [query])
   useEffect(() => { if (!open) setHoveredId(null) }, [open])
 
+  // Coordinator follow-up — Deep found the preview too small to actually identify a
+  // destination at a glance, just confirm one exists. Real fix: the preview pops in small,
+  // then genuinely grows to a much larger size a beat later (hover-in), and shrinks back down
+  // before disappearing (hover-out) rather than cutting instantly — `previewCmd` is kept
+  // mounted slightly longer than `hoveredId` itself specifically so that shrink is visible,
+  // not skipped. `grown` drives the actual width transition.
+  const [previewCmd, setPreviewCmd] = useState<PaletteCommand | null>(null)
+  const [grown, setGrown] = useState(false)
+  useEffect(() => {
+    const cmd = hoveredId ? filtered.find((c) => c.id === hoveredId) : undefined
+    if (cmd?.previewId) {
+      setPreviewCmd(cmd)
+      if (prefersReducedMotion()) { setGrown(true); return }
+      setGrown(false)
+      const growTimer = window.setTimeout(() => setGrown(true), 60)
+      return () => window.clearTimeout(growTimer)
+    }
+    setGrown(false)
+    if (prefersReducedMotion()) { setPreviewCmd(null); return }
+    const clearTimer = window.setTimeout(() => setPreviewCmd(null), 220)
+    return () => window.clearTimeout(clearTimer)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [hoveredId])
+
   const runSelected = () => {
     const cmd = filtered[selected]
     if (!cmd) return
@@ -122,15 +146,21 @@ export function CommandPalette({ tabCommands }: { tabCommands: PaletteCommand[] 
     return showShortcuts ? <ShortcutsCheatsheet onClose={() => setShowShortcuts(false)} /> : null
   }
 
-  const hoveredCmd = filtered.find((c) => c.id === hoveredId)
-  const hoveredThumb = hoveredCmd?.previewId ? getCachedThumbnail(hoveredCmd.previewId) : null
+  const hoveredThumb = previewCmd?.previewId ? getCachedThumbnail(previewCmd.previewId) : null
   const reduceMotion = prefersReducedMotion()
 
   return (
     <div className="fixed inset-0 z-[90] bg-black/70 flex items-start justify-center pt-24" onClick={() => setOpen(false)}>
+      {/* shrink-0 on both children — real bug found live: this row's own width resolves via
+          shrink-to-fit (its parent centers it with no fixed width), and the palette panel uses
+          w-full (100% of that resolving row). Growing the preview from w-64 to w-[26rem]
+          without shrink-0 fed into that same circular sizing computation and both children got
+          silently compressed by the browser's default flex-shrink:1 — confirmed live via
+          getComputedStyle (the preview plateaued around 258px instead of the real 416px).
+          shrink-0 makes both panels always render at their real intended width. */}
       <div className="relative flex items-start gap-3">
         <div
-          className="w-full max-w-md rounded-2xl border border-cyan-400/30 bg-[#0b0d14] shadow-[0_0_60px_-10px_rgba(34,211,238,0.4)] overflow-hidden"
+          className="w-full max-w-md shrink-0 rounded-2xl border border-cyan-400/30 bg-[#0b0d14] shadow-[0_0_60px_-10px_rgba(34,211,238,0.4)] overflow-hidden"
           onClick={(e) => e.stopPropagation()}
         >
           <div className="flex items-center gap-2 px-4 py-3 border-b border-white/10">
@@ -174,12 +204,18 @@ export function CommandPalette({ tabCommands }: { tabCommands: PaletteCommand[] 
 
         {/* Round 21, item #3 — hover-to-preview thumbnail. Cached snapshot, not a live render;
             see thumbnailCache.ts for the full honest explanation. Only tab commands carry a
-            previewId, so plan/bill rows never show one. */}
-        {hoveredCmd?.previewId && (
+            previewId, so plan/bill rows never show one.
+            Coordinator follow-up — real grow-on-hover: pops in small (w-64), then genuinely
+            widens to w-[26rem] once `grown` flips true a beat later, and eases back down to
+            w-64 before actually unmounting on hover-out (previewCmd/grown state machine
+            above), so it reads as one continuous expand/shrink motion, not a size snap. */}
+        {previewCmd?.previewId && (
           <div
+            data-testid="cmdk-preview"
             className={cn(
-              'w-64 rounded-xl border border-cyan-400/30 bg-[#0b0d14] shadow-[0_0_50px_-8px_rgba(34,211,238,0.45)] overflow-hidden',
-              !reduceMotion && 'command-preview-pop'
+              'shrink-0 rounded-xl border border-cyan-400/30 bg-[#0b0d14] shadow-[0_0_50px_-8px_rgba(34,211,238,0.45)] overflow-hidden',
+              !reduceMotion && 'command-preview-pop transition-[width] duration-300 ease-out',
+              grown ? 'w-[26rem]' : 'w-64'
             )}
             onClick={(e) => e.stopPropagation()}
           >
@@ -192,7 +228,7 @@ export function CommandPalette({ tabCommands }: { tabCommands: PaletteCommand[] 
               </div>
             )}
             <div className="px-3 py-2 border-t border-white/10 flex items-center justify-between">
-              <span className="text-[10px] text-white/40">{hoveredCmd.label}</span>
+              <span className="text-[10px] text-white/40">{previewCmd.label}</span>
               <span className="text-[9px] text-white/25" title="Cached snapshot from the last time you opened this tab — not a live render.">cached</span>
             </div>
           </div>

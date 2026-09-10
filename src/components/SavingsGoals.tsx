@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { StatCard } from './StatCard'
 import { useStore } from '@/lib/store'
-import { formatCurrency } from '@/lib/utils'
+import { formatCurrency, formatNumericDate, formatShortDate } from '@/lib/utils'
 import type { SavingsGoal } from '@/lib/types'
 import { Plus, Trash2, PiggyBank, X, CircleDot, Rows3 } from 'lucide-react'
 import { useUndoableDelete } from '@/lib/useUndoableDelete'
@@ -112,7 +112,7 @@ function GoalCard({ goal, onUpdate, onRemove, onLogContribution }: {
           )}
         </div>
       </div>
-      {goal.targetDate && <p className="mt-2 text-xs text-white/40">Target date: {goal.targetDate}</p>}
+      {goal.targetDate && <p className="mt-2 text-xs text-white/40">Target date: {formatShortDate(goal.targetDate)}</p>}
       <div className="mt-3 flex items-center gap-2">
         <label className="text-xs text-white/50">Funded this period</label>
         <span className="text-white/40">$</span>
@@ -163,6 +163,9 @@ function GoalForm({ onCancel, onSave }: { onCancel: () => void; onSave: (v: { na
           <div>
             <label className="text-xs text-white/50">Target date (optional)</label>
             <input type="date" value={targetDate} onChange={(e) => setTargetDate(e.target.value)} className="mt-1 w-full bg-black/30 border border-white/10 rounded-lg px-3 py-2 outline-none focus:border-emerald-400/50" />
+            {/* Real DD/MM/YYYY read-out — the native input's own digits follow the browser's
+                OS/locale, not this page (confirmed live: lang="en-NZ" changes nothing there). */}
+            {targetDate && <span className="block text-[10px] text-white/30 mt-1 tabular-nums">{formatNumericDate(targetDate)}</span>}
           </div>
         </div>
         <div>

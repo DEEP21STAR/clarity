@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { StatCard } from './StatCard'
 import { useStore } from '@/lib/store'
 import { suggestedFortnightlyForSinkingFund } from '@/lib/logic'
-import { formatCurrency, todayIso } from '@/lib/utils'
+import { formatCurrency, formatNumericDate, formatShortDate, todayIso } from '@/lib/utils'
 import type { SinkingFund } from '@/lib/types'
 import { Plus, Trash2, X } from 'lucide-react'
 import { useUndoableDelete } from '@/lib/useUndoableDelete'
@@ -62,7 +62,7 @@ function FundCard({ fund, today, onUpdate, onRemove }: { fund: SinkingFund; toda
       </button>
       <div className="mt-4 flex justify-between text-sm text-white/60">
         <span>{formatCurrency(fund.currentSaved)} of {formatCurrency(fund.targetAmount)}</span>
-        <span className="text-white/40">due {fund.targetDate}</span>
+        <span className="text-white/40">due {formatShortDate(fund.targetDate)}</span>
       </div>
       <div className="mt-2 h-2 rounded-full bg-white/5 overflow-hidden">
         <div className="h-full rounded-full bg-gradient-to-r from-amber-400 to-orange-500" style={{ width: `${progress}%` }} />
@@ -112,6 +112,9 @@ function FundForm({ onCancel, onSave }: { onCancel: () => void; onSave: (v: { na
           <div>
             <label className="text-xs text-white/50">Due date</label>
             <input type="date" value={targetDate} onChange={(e) => setTargetDate(e.target.value)} className="mt-1 w-full bg-black/30 border border-white/10 rounded-lg px-3 py-2 outline-none focus:border-amber-400/50" />
+            {/* Real DD/MM/YYYY read-out — the native input's own digits follow the browser's
+                OS/locale, not this page (confirmed live: lang="en-NZ" changes nothing there). */}
+            {targetDate && <span className="block text-[10px] text-white/30 mt-1 tabular-nums">{formatNumericDate(targetDate)}</span>}
           </div>
         </div>
         <button

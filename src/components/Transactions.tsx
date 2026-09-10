@@ -4,11 +4,11 @@ import { useStore } from '@/lib/store'
 import { StatCard } from './StatCard'
 import { CountUp } from './CountUp'
 import { importTransactionsFromCsv, categoryColor, findMatchRanges } from '@/lib/logic'
-import { formatCurrency } from '@/lib/utils'
+import { formatCurrency, formatNumericDate } from '@/lib/utils'
 import { saveFile } from '@/lib/downloads'
 import { useUndoableDelete } from '@/lib/useUndoableDelete'
 import { useToast } from './Toast'
-import { Upload, Search, Receipt, Trash2, DownloadCloud } from 'lucide-react'
+import { Upload, Search, Receipt, Trash2, DownloadCloud, ArrowDownCircle, ArrowUpCircle } from 'lucide-react'
 
 /** Wraps every match range in a real <mark>, not just bolding the whole string. */
 function highlightText(text: string, query: string): ReactNode {
@@ -49,14 +49,17 @@ function EditableCategory({ value, color, onSave, highlighted }: { value: string
       />
     )
   }
+  // Real colour-coded chip — same bordered-pill convention DueBadge/severity badges already
+  // use throughout the app, not just a plain coloured dot + text. Background/border at low
+  // opacity (derived from the same deterministic categoryColor()), full-opacity dot + text.
   return (
     <button
       onClick={() => { setDraft(value); setEditing(true) }}
       title="Click to edit category"
-      className="inline-flex items-center gap-1.5 text-xs hover:opacity-80"
-      style={{ color }}
+      className="inline-flex items-center gap-1.5 text-xs px-2 py-0.5 rounded-full border hover:brightness-125 transition-[filter]"
+      style={{ color, borderColor: `${color}4d`, backgroundColor: `${color}1a` }}
     >
-      <span className="w-2 h-2 rounded-full shrink-0" style={{ background: color }} />
+      <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ background: color }} />
       {highlighted}
     </button>
   )
@@ -117,8 +120,11 @@ export function Transactions() {
     return () => window.removeEventListener('keydown', handler)
   }, [])
 
-  const totalIn = state.transactions.filter((t) => t.amount > 0).reduce((s, t) => s + t.amount, 0)
-  const totalOut = state.transactions.filter((t) => t.amount < 0).reduce((s, t) => s + t.amount, 0)
+  const inTxs = state.transactions.filter((t) => t.amount > 0)
+  const outTxs = state.transactions.filter((t) => t.amount < 0)
+  const totalIn = inTxs.reduce((s, t) => s + t.amount, 0)
+  const totalOut = outTxs.reduce((s, t) => s + t.amount, 0)
+  const uncategorisedCount = state.transactions.filter((t) => t.category === 'uncategorised').length
 
   // #3 — live search, case-insensitive, matches description OR category.
   const filtered = useMemo(() => {
@@ -177,12 +183,34 @@ export function Transactions() {
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <StatCard label="Money In" glow="success">
-          <div className="mt-4 text-3xl font-bold text-emerald-300 tabular-nums"><CountUp value={totalIn} prefix="$" /></div>
+          <div className="mt-4 flex items-center gap-3">
+            <ArrowDownCircle className="w-8 h-8 text-emerald-400/70 shrink-0" />
+            <div>
+              <div className="text-3xl font-bold text-emerald-300 tabular-nums"><CountUp value={totalIn} prefix="$" /></div>
+              <p className="text-xs text-white/40 mt-1">{inTxs.length} credit{inTxs.length === 1 ? '' : 's'}{inTxs.length > 0 && ` · avg ${formatCurrency(totalIn / inTxs.length)}`}</p>
+            </div>
+          </div>
         </StatCard>
         <StatCard label="Money Out" glow="danger" delay={0.05}>
-          <div className="mt-4 text-3xl font-bold text-rose-300 tabular-nums"><CountUp value={Math.abs(totalOut)} prefix="$" /></div>
+          <div className="mt-4 flex items-center gap-3">
+            <ArrowUpCircle className="w-8 h-8 text-rose-400/70 shrink-0" />
+            <div>
+              <div className="text-3xl font-bold text-rose-300 tabular-nums"><CountUp value={Math.abs(totalOut)} prefix="$" /></div>
+              <p className="text-xs text-white/40 mt-1">{outTxs.length} debit{outTxs.length === 1 ? '' : 's'}{outTxs.length > 0 && ` · avg ${formatCurrency(Math.abs(totalOut) / outTxs.length)}`}</p>
+            </div>
+          </div>
         </StatCard>
       </div>
+
+      {/* Real signal, not decoration: how much of the real imported ledger actually got a
+          real category vs. fell back to "uncategorised" — the auto-categorisation pass is
+          best-effort pattern matching, not perfect, so this is honest about its own coverage. */}
+      {state.transactions.length > 0 && (
+        <p className="text-xs text-white/35 -mt-2">
+          {state.transactions.length - uncategorisedCount} of {state.transactions.length} transactions auto-categorised
+          {uncategorisedCount > 0 && ` · ${uncategorisedCount} left as uncategorised — click any category below to fix one by hand`}.
+        </p>
+      )}
 
       <StatCard label="Import CSV" glow="cyan" delay={0.1}>
         <div className="mt-4">
@@ -281,7 +309,9 @@ export function Transactions() {
             <tbody>
               {filtered.slice(0, 100).map((t) => (
                 <tr key={t.id} className="border-t border-white/5 group">
-                  <td className="py-1.5 text-white/60 whitespace-nowrap">{t.date}</td>
+                  {/* Real DD/MM/YYYY — raw t.date (ISO YYYY-MM-DD) was being shown here directly, which
+                      isn't the month-first bug but also wasn't going through the shared formatter. */}
+                  <td className="py-1.5 text-white/60 whitespace-nowrap tabular-nums">{formatNumericDate(t.date)}</td>
                   <td className="py-1.5">
                     {/* #1 — colour-coded category accent: a real deterministic hash-from-string colour,
                         not a hardcoded lookup (CSV categories are free text, not a fixed enum).

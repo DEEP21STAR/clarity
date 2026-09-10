@@ -3,7 +3,7 @@ import gsap from 'gsap'
 import { StatCard } from './StatCard'
 import { CountUp } from './CountUp'
 import { daysRemainingInPeriod, periodProgressPercent, suggestedFortnightlySetAside, dueDateSeverity, daysBetweenIso, type DueSeverity } from '@/lib/logic'
-import { cn, formatCurrency, todayIso } from '@/lib/utils'
+import { cn, formatCurrency, formatShortDate, todayIso } from '@/lib/utils'
 import type { PeriodicBill } from '@/lib/types'
 import { CheckCircle2, Clock, Pencil, Trash2 } from 'lucide-react'
 import { DueBadge } from './DueBadge'
@@ -22,11 +22,6 @@ const PENDING_BILL_TEXT_CLASSES: Record<DueSeverity, string> = {
 
 const RADIUS = 54
 const CIRCUMFERENCE = 2 * Math.PI * RADIUS
-
-function shortDate(iso: string): string {
-  const [y, m, d] = iso.split('-').map(Number)
-  return new Date(Date.UTC(y, m - 1, d)).toLocaleDateString('en-NZ', { day: 'numeric', month: 'short' })
-}
 
 /** Projected-charges gauge for a usage-metered periodic bill (gas/power style), with fortnightly-smoothing suggestion. */
 export function PeriodicBillGauge({
@@ -116,8 +111,8 @@ export function PeriodicBillGauge({
         {/* Details */}
         <div className="flex-1 w-full space-y-3">
           <div className="flex justify-between text-xs text-white/40">
-            <span>{shortDate(bill.gaugePeriodStart)}</span>
-            <span>{shortDate(bill.gaugePeriodEnd)}</span>
+            <span>{formatShortDate(bill.gaugePeriodStart)}</span>
+            <span>{formatShortDate(bill.gaugePeriodEnd)}</span>
           </div>
 
           {bill.inCredit ? (
@@ -138,7 +133,7 @@ export function PeriodicBillGauge({
                     <span className="tabular-nums">{formatCurrency(bill.pendingBill.amount)}</span>
                   </div>
                   <div className="text-[11px] text-white/40 mt-0.5">
-                    for {shortDate(bill.pendingBill.periodStart)} – {shortDate(bill.pendingBill.periodEnd)}
+                    for {formatShortDate(bill.pendingBill.periodStart)} – {formatShortDate(bill.pendingBill.periodEnd)}
                   </div>
                   {/* #8 expanded — a real payment here reduces (or fully clears, with overpayment
                       booked as real credit) this bill's pending amount. */}

@@ -4,6 +4,7 @@ import { useStore } from '@/lib/store'
 import { buildFullExportJson } from '@/lib/dataExport'
 import { buildAccountantCsv } from '@/lib/logic'
 import { saveFile } from '@/lib/downloads'
+import { formatNumericDate, todayIso } from '@/lib/utils'
 import { Download, Copy, CheckCircle2, AlertTriangle, Printer } from 'lucide-react'
 
 /**
@@ -161,7 +162,7 @@ function PrintSummaryModal({ csv, mode, onClose }: { csv: string; mode: string; 
 
         <header className="print-doc-header">
           <h1>Clarity — Accountant Summary</h1>
-          <p>{mode === 'personal' ? 'Personal' : 'Business'} · {periodLabel} · generated {new Date().toLocaleDateString('en-NZ')}</p>
+          <p>{mode === 'personal' ? 'Personal' : 'Business'} · {periodLabel} · generated {formatNumericDate(todayIso())}</p>
         </header>
 
         <h2 className="print-doc-h2">Category Breakdown</h2>

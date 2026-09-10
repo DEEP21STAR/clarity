@@ -6,7 +6,7 @@ import { CountUp } from './CountUp'
 import { AccountsPanel } from './AccountsPanel'
 import { TrendArrow } from './TrendArrow'
 import { calcNetWorth, netWorthMilestones } from '@/lib/logic'
-import { formatCurrency } from '@/lib/utils'
+import { formatCurrency, formatShortDate } from '@/lib/utils'
 import { Flag } from 'lucide-react'
 
 export function NetWorth() {
@@ -84,7 +84,7 @@ export function NetWorth() {
           <div className="mt-2 flex flex-wrap gap-2">
             {milestones.map((m) => (
               <span key={m.threshold} className="inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-300 border border-amber-400/30">
-                <Flag className="w-2.5 h-2.5" /> ${(m.threshold / 1000).toFixed(0)}k reached {m.date}
+                <Flag className="w-2.5 h-2.5" /> ${(m.threshold / 1000).toFixed(0)}k reached {formatShortDate(m.date)}
               </span>
             ))}
           </div>

@@ -234,6 +234,37 @@ export function parseCsvText(text: string): { header: string[]; rows: string[][]
   return { header: header ?? [], rows }
 }
 
+/**
+ * Coordinator follow-up — real gap Deep found live with 1472 real imported transactions:
+ * "uncategorised" for every single one isn't useful. Best-effort pattern match against common
+ * AU/NZ merchant and description keywords, ordered specific-before-general (checked in array
+ * order, first match wins) — genuinely real coverage for common cases, "uncategorised" kept as
+ * the honest fallback for anything that doesn't match, not the default for everything.
+ */
+const CATEGORY_KEYWORD_RULES: { category: string; keywords: string[] }[] = [
+  { category: 'Fuel', keywords: ['AMPOL', 'BP ', 'CALTEX', 'SHELL', 'MOBIL', 'GULL', 'Z ENERGY', 'PETROL', 'FUEL', 'FREEDOM FUEL', '7-ELEVEN', '7 ELEVEN'] },
+  { category: 'Groceries', keywords: ['WOOLWORTH', 'COLES', 'ALDI', 'IGA ', 'COUNTDOWN', 'NEW WORLD', 'PAK N SAVE', 'PAK\'NSAVE', 'FOODTOWN', 'SUPERMARKET', 'FOODSTUFFS'] },
+  { category: 'Food', keywords: ['KFC', 'MCDONALD', 'SUBWAY', 'DOMINO', 'PIZZA', 'UBER EATS', 'UBER *EATS', 'MENULOG', 'DOORDASH', 'HUNGRY JACK', 'NANDO', 'BURGER', 'GRILL', 'CAFE', 'COFFEE', 'RESTAURANT', 'STARBUCKS'] },
+  { category: 'Housing', keywords: ['RENT', 'PROPERTY MANAGEMENT', 'REAL ESTATE', 'LANDLORD', 'BODY CORPORATE', 'BODY CORP'] },
+  { category: 'Internet & Mobile', keywords: ['SPARK', 'VODAFONE', 'TELSTRA', 'OPTUS', '2DEGREES', 'SKINNY', 'ONE NZ', 'TELECOM'] },
+  { category: 'Bank Fees', keywords: ['INTEREST CHARGED', 'ACCOUNT FEE', 'HONOUR FEE', 'DISHONOUR', 'OVERDRAFT FEE', 'MONTHLY FEE', 'BANK FEE', 'LATE FEE'] },
+  { category: 'Insurance', keywords: ['INSURANCE', ' AMI ', 'STATE INSURANCE', 'TOWER INSURANCE', 'SUNCORP', 'AA INSURANCE'] },
+  { category: 'Subscriptions', keywords: ['NETFLIX', 'SPOTIFY', 'DISNEY+', 'DISNEY PLUS', 'YOUTUBE PREMIUM', 'APPLE.COM/BILL', 'GOOGLE *', 'AMAZON PRIME', 'ANYTIME FITNESS', ' GYM ', 'CLAUDE.AI', 'CHATGPT', 'OPENAI'] },
+  { category: 'Transport', keywords: ['UBER *TRIP', 'UBER TRIP', 'TAXI', 'PARKING', 'TOLL', 'AT HOP', 'METLINK', 'TRANSPORTNSW'] },
+  { category: 'Shopping', keywords: ['KMART', 'TARGET', 'THE WAREHOUSE', 'BUNNINGS', 'HARVEY NORMAN', 'JB HI-FI', 'JB HIFI', 'AMAZON', 'EBAY', 'THE GOOD GUYS', 'BIG W'] },
+  { category: 'Health', keywords: ['PHARMACY', 'CHEMIST', 'MEDICAL CENTRE', 'MEDICAL CENTER', 'DOCTOR', 'DENTIST', 'UNICHEM', 'LIFE PHARMACY', 'CHEMIST WAREHOUSE'] },
+  { category: 'Income', keywords: ['SALARY', 'PAYROLL', 'WAGES'] },
+  { category: 'Entertainment', keywords: ['CINEMA', 'EVENTFINDA', 'TICKETEK', 'TICKETMASTER', 'HOYTS', 'EVENT CINEMAS'] },
+]
+
+export function guessTransactionCategory(description: string): string {
+  const upper = ` ${description.toUpperCase()} `
+  for (const rule of CATEGORY_KEYWORD_RULES) {
+    if (rule.keywords.some((kw) => upper.includes(kw.toUpperCase()))) return rule.category
+  }
+  return 'uncategorised'
+}
+
 export function importTransactionsFromCsv(text: string, mode: 'personal' | 'business'): Transaction[] {
   const { header, rows } = parseCsvText(text)
   const sample = rows.slice(0, Math.min(20, rows.length))
@@ -248,12 +279,13 @@ export function importTransactionsFromCsv(text: string, mode: 'personal' | 'busi
     } else if (guess.amountCol !== -1) {
       amount = parseCsvAmount(row[guess.amountCol] ?? '')
     }
+    const description = row[guess.descriptionCol] ?? ''
     return {
       id: `csv-${Date.now()}-${i}`,
       date: row[guess.dateCol] ?? '',
-      description: row[guess.descriptionCol] ?? '',
+      description,
       amount,
-      category: 'uncategorised',
+      category: guessTransactionCategory(description),
       mode,
     }
   })
@@ -262,6 +294,47 @@ export function importTransactionsFromCsv(text: string, mode: 'personal' | 'busi
 // ---------------------------------------------------------------------------
 // Debt amortization — avalanche order (highest APR first)
 // ---------------------------------------------------------------------------
+
+/**
+ * Coordinator follow-up, real architectural gap Deep found: GEM VISA card balances (real
+ * debt, real APR already tracked per card) lived entirely in the Installment Plan
+ * Tracker/Upcoming Payments data model, completely invisible to the Debts tab's Total
+ * Debt/avalanche/months-to-debt-free calculator — so that calculator answered "when will I
+ * be debt-free" while genuinely not knowing about Deep's actual biggest debts.
+ *
+ * Maps every credit card carrying a real balance into a Debt-shaped entry so it flows through
+ * the SAME avalanchePlan()/avalanchePayoffTimeline() math as any manually-entered debt, using
+ * `rates.purchase` as the card's real ongoing APR (the standard revolving rate — the same
+ * `purchase` rate calcNetWorth() already treats `balance` as the card's full liability
+ * figure, so this doesn't double-count against anything). Deliberately does NOT also add each
+ * card's individual installment PLANS as separate debts — a plan's `remaining` is already
+ * part of the card's overall `balance` in this data model (confirmed against
+ * calcNetWorth/applyPaymentToCard, which only ever reads/writes the card-level `balance`),
+ * so adding both would double-count the same real dollars twice.
+ */
+export function creditCardsAsDebts(creditCards: CreditCardAccount[]): Debt[] {
+  return creditCards
+    .filter((c) => c.balance > 0)
+    .map((c) => ({
+      id: `card-debt-${c.id}`,
+      name: c.name,
+      balance: c.balance,
+      apr: c.rates.purchase,
+      // Real bug found live via the actual avalanche simulation, not assumed: a card whose
+      // `minPayment` is genuinely $0 this billing cycle (e.g. GEM VISA Mimi — real data, "None
+      // due" right now) still carries a real balance that keeps accruing real interest every
+      // month. avalanchePlan()/avalanchePayoffTimeline() pay each debt's OWN minPayment every
+      // month regardless of whether it's the current avalanche target — feeding a literal $0
+      // meant this balance was NEVER paid down while some other debt was still being targeted,
+      // and once its accrued interest grew large enough to outpace the (possibly zero, if it's
+      // never the target) extra-budget contribution, the simulation genuinely diverged —
+      // confirmed live: GEM VISA Mimi's projected interest reached $3.6 QUADRILLION at the
+      // 1200-month safety cap. Same real fallback this codebase already uses for expired
+      // installment plans with no published minimum (see planPayoffWithExtra's baselinePayment)
+      // — max($25, 2% of balance) — a genuine, if approximate, real-world minimum-payment floor.
+      minPayment: c.minPayment > 0 ? c.minPayment : Math.max(25, round2(c.balance * 0.02)),
+    }))
+}
 
 export interface AvalanchePlanEntry {
   debtId: string
@@ -685,6 +758,62 @@ export function applyPaymentToCard(card: CreditCardAccount, amount: number): Cre
 
 export function applyPaymentToPlan(plan: InstallmentPlan, amount: number): InstallmentPlan {
   return { ...plan, remaining: round2(Math.max(0, plan.remaining - amount)) }
+}
+
+/**
+ * Real calendar month subtraction (not -30 days) — mirrors nextMonthlyDueDate()'s day-of-month
+ * clamping, just running backward. Used below as the ONLY reasonable cycle-start estimate
+ * available from this data model: a card only ever stores its NEXT minPaymentDueDate, not a
+ * stored statement/cycle-open date, so "one real calendar month before the next due date" is
+ * the honest approximation of "since the last due date."
+ */
+function oneMonthBefore(iso: string): string {
+  const [y, m, d] = iso.split('-').map(Number)
+  const targetMonthIndex = m - 2 // m is 1-indexed; -1 for 0-indexing, -1 again to go back a month
+  const daysInTargetMonth = new Date(Date.UTC(y, targetMonthIndex + 1, 0)).getUTCDate()
+  const day = Math.min(d, daysInTargetMonth)
+  return new Date(Date.UTC(y, targetMonthIndex, day)).toISOString().slice(0, 10)
+}
+
+export interface MinPaymentCycleStatus {
+  met: boolean
+  cycleStart: string | null
+  cycleToDatePayments: number
+  remaining: number
+}
+
+/**
+ * Coordinator follow-up, real gap Deep found: he recorded a real $325 payment against GEM VISA
+ * Deep (balance correctly dropped), but the card's "Min Payment $305.33" section didn't
+ * change at all — because nothing was tracking payments against the minimum at all. A minimum
+ * payment is a per-billing-cycle requirement (satisfied once enough has been paid against it
+ * THIS cycle), not a running balance to literally subtract from — so this is deliberately NOT
+ * `applyPaymentToCard`'s "reduce a number" pattern.
+ *
+ * Cycle boundary: since the last due date (approximated as one real calendar month before the
+ * card's current `minPaymentDueDate` — see oneMonthBefore()'s doc comment for why), or every
+ * real payment on record for this card if there's no due date to anchor a cycle to at all (a
+ * card with `minPayment <= 0` never reaches that branch — see the early return below).
+ */
+export function minPaymentCycleStatus(
+  card: Pick<CreditCardAccount, 'id' | 'minPayment' | 'minPaymentDueDate'>,
+  paymentRecords: PaymentRecord[],
+  todayIsoStr: string
+): MinPaymentCycleStatus {
+  if (card.minPayment <= 0) return { met: true, cycleStart: null, cycleToDatePayments: 0, remaining: 0 }
+  const cycleStart = card.minPaymentDueDate ? oneMonthBefore(card.minPaymentDueDate) : null
+  const cycleToDatePayments = round2(
+    paymentRecords
+      .filter((r) => r.targetType === 'creditCard' && r.targetId === card.id)
+      .filter((r) => (!cycleStart || r.date >= cycleStart) && r.date <= todayIsoStr)
+      .reduce((s, r) => s + r.amount, 0)
+  )
+  return {
+    met: cycleToDatePayments >= card.minPayment,
+    cycleStart,
+    cycleToDatePayments,
+    remaining: Math.max(0, round2(card.minPayment - cycleToDatePayments)),
+  }
 }
 
 /**

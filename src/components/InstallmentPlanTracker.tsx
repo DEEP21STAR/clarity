@@ -1,13 +1,22 @@
 import { useEffect, useRef, useState } from 'react'
 import gsap from 'gsap'
 import { StatCard } from './StatCard'
-import { getPlanSeverity, planProgressPercent, requiredMonthlyPayment, planPayoffWithExtra } from '@/lib/logic'
-import { cn, formatCurrency } from '@/lib/utils'
+import { getPlanSeverity, planProgressPercent, requiredMonthlyPayment, planPayoffWithExtra, minPaymentCycleStatus } from '@/lib/logic'
+import { cn, formatCurrency, todayIso } from '@/lib/utils'
 import type { CreditCardAccount, InstallmentPlan, DeviceRepayment } from '@/lib/types'
 import { AlertTriangle, Flame, CheckCircle2, Sliders, Trash2 } from 'lucide-react'
 import { BillIcon } from './BillIcons'
 import { DueBadge } from './DueBadge'
 import { RecordPaymentButton } from './RecordPaymentForm'
+import { RadialProgress } from './RadialProgress'
+import { useStore } from '@/lib/store'
+
+/** Same three risk-state colours already established across the app (DueBadge/PENDING_BILL severity classes) — the ring communicates status by colour, not just fill. */
+const SEVERITY_RING_COLOR: Record<'red' | 'amber' | 'normal', string> = {
+  red: '#fb7185',
+  amber: '#f59e0b',
+  normal: '#34d399',
+}
 
 /** One installment plan card — skinned in the app's neon-aurora language, inspired by (not copied from) Latitude's "My Plans" UI. */
 export function InstallmentPlanCard({ plan, delay = 0, expiredPlanRate = 0 }: { plan: InstallmentPlan; delay?: number; expiredPlanRate?: number }) {
@@ -59,17 +68,32 @@ export function InstallmentPlanCard({ plan, delay = 0, expiredPlanRate = 0 }: { 
         )}
       </div>
 
-      <div className="mt-3 flex items-baseline justify-between text-sm">
-        <span className="text-white/50">
-          {formatCurrency(plan.remaining)} <span className="text-white/30">of {formatCurrency(plan.total)}</span>
-        </span>
-        <span className="text-white/40 text-xs">
-          {plan.expired ? 'expired' : `${plan.monthsRemaining}/${plan.monthsTotal} mo left`}
-        </span>
-      </div>
-
-      <div className="mt-2 h-2 rounded-full bg-white/5 overflow-hidden">
-        <div className={cn('h-full rounded-full bg-gradient-to-r', barGradient)} style={{ width: `${progress}%` }} />
+      {/* Real circular progress ring — planProgressPercent() is already "% of plan PAID OFF"
+          (same figure the linear bar's width already uses), coloured by the same severity
+          this card already computes, growing on every real update (a payment landing), not
+          just appearing at its final value. Linear bar kept below too — this is additive eye
+          candy, not a replacement for the existing detail. */}
+      <div className="mt-3 flex items-center gap-4">
+        <RadialProgress
+          percent={progress}
+          color={SEVERITY_RING_COLOR[severity]}
+          size={64}
+          strokeWidth={6}
+          centerLabel={<span className="text-xs font-bold tabular-nums text-white">{Math.round(progress)}%</span>}
+        />
+        <div className="flex-1 min-w-0">
+          <div className="flex items-baseline justify-between text-sm">
+            <span className="text-white/50">
+              {formatCurrency(plan.remaining)} <span className="text-white/30">of {formatCurrency(plan.total)}</span>
+            </span>
+            <span className="text-white/40 text-xs shrink-0">
+              {plan.expired ? 'expired' : `${plan.monthsRemaining}/${plan.monthsTotal} mo left`}
+            </span>
+          </div>
+          <div className="mt-2 h-2 rounded-full bg-white/5 overflow-hidden">
+            <div className={cn('h-full rounded-full bg-gradient-to-r', barGradient)} style={{ width: `${progress}%` }} />
+          </div>
+        </div>
       </div>
 
       {plan.remaining > plan.total && (
@@ -118,6 +142,7 @@ const DEALT_SESSION_KEY = 'clarity-plans-dealt'
 
 /** Full card account panel — balance/available/min-payment header plus a grid of its plans. First render each session, plan cards "deal" in like being dealt a hand of cards. */
 export function CreditCardAccountPanel({ card, delay = 0 }: { card: CreditCardAccount; delay?: number }) {
+  const { state } = useStore()
   const [dealt] = useState(() => {
     try {
       const already = sessionStorage.getItem(DEALT_SESSION_KEY) === '1'
@@ -127,6 +152,15 @@ export function CreditCardAccountPanel({ card, delay = 0 }: { card: CreditCardAc
       return false
     }
   })
+
+  // Coordinator follow-up, real gap Deep found: recording a real $325 payment against this
+  // card correctly dropped its balance, but "Min Payment" showed the same static figure —
+  // nothing was tracking payments made THIS cycle against the minimum. A minimum payment is a
+  // per-cycle requirement, satisfied once enough has been paid, not a number to literally
+  // subtract from — see minPaymentCycleStatus()'s doc comment in logic.ts for the full cycle
+  // boundary logic (since the last due date, approximated as one real calendar month back).
+  const minStatus = minPaymentCycleStatus(card, state.paymentRecords, todayIso())
+  const minPercent = card.minPayment > 0 ? Math.min(100, (minStatus.cycleToDatePayments / card.minPayment) * 100) : 100
 
   return (
     <StatCard label={card.name} glow="purple" delay={delay}>
@@ -141,9 +175,29 @@ export function CreditCardAccountPanel({ card, delay = 0 }: { card: CreditCardAc
         </div>
         <div>
           <div className="text-xs text-white/40 uppercase tracking-wide">Min Payment</div>
-          <div className="text-lg font-bold tabular-nums text-amber-300">
-            {card.minPayment > 0 ? formatCurrency(card.minPayment) : 'None due'}
-          </div>
+          {card.minPayment > 0 ? (
+            <div className="flex items-center gap-2 mt-1">
+              <RadialProgress
+                percent={minPercent}
+                color={minStatus.met ? '#34d399' : '#f59e0b'}
+                size={44}
+                strokeWidth={5}
+                centerLabel={minStatus.met ? <CheckCircle2 className="w-4 h-4 text-emerald-400" /> : undefined}
+              />
+              <div>
+                {minStatus.met ? (
+                  <div className="text-sm font-bold text-emerald-300">✓ Minimum payment met</div>
+                ) : (
+                  <>
+                    <div className="text-lg font-bold tabular-nums text-amber-300">{formatCurrency(minStatus.remaining)}</div>
+                    <div className="text-[10px] text-white/35">of {formatCurrency(card.minPayment)} still owed this cycle</div>
+                  </>
+                )}
+              </div>
+            </div>
+          ) : (
+            <div className="text-lg font-bold tabular-nums text-amber-300">None due</div>
+          )}
           {card.minPaymentDueDate && (
             <div className="mt-1">
               <DueBadge dueDateIso={card.minPaymentDueDate} />
@@ -246,10 +300,21 @@ export function DeviceRepaymentCard({
           )}
         </span>
       </div>
-      <div className="mt-3 h-2 rounded-full bg-white/5 overflow-hidden">
-        <div className="h-full rounded-full bg-gradient-to-r from-cyan-400 to-purple-500" style={{ width: `${progress}%` }} />
+      <div className="mt-3 flex items-center gap-4">
+        <RadialProgress
+          percent={progress}
+          color={paidOff ? '#34d399' : '#22d3ee'}
+          size={56}
+          strokeWidth={5}
+          centerLabel={<span className="text-[11px] font-bold tabular-nums text-white">{Math.round(progress)}%</span>}
+        />
+        <div className="flex-1 min-w-0">
+          <div className="h-2 rounded-full bg-white/5 overflow-hidden">
+            <div className="h-full rounded-full bg-gradient-to-r from-cyan-400 to-purple-500" style={{ width: `${progress}%` }} />
+          </div>
+          <p className="mt-2 text-xs text-white/40">{formatCurrency(device.remaining)} remaining — plain repayment, no interest.</p>
+        </div>
       </div>
-      <p className="mt-2 text-xs text-white/40">{formatCurrency(device.remaining)} remaining — plain repayment, no interest.</p>
       <div className="mt-2 flex items-center justify-between gap-2">
         <RecordPaymentButton targetType="deviceRepayment" targetId={device.id} targetLabel={device.name} defaultAmount={device.monthlyAmount} />
         {onRemove && (

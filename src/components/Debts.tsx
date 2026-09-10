@@ -3,19 +3,18 @@ import { LineChart, Line, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer, Ca
 import { useStore } from '@/lib/store'
 import { StatCard } from './StatCard'
 import { CountUp } from './CountUp'
-import { avalanchePlan, avalanchePayoffTimeline, categoryColor, addDaysIso } from '@/lib/logic'
-import { formatCurrency, todayIso } from '@/lib/utils'
+import { avalanchePlan, avalanchePayoffTimeline, categoryColor, addDaysIso, creditCardsAsDebts, round2 } from '@/lib/logic'
+import { cn, formatCurrency, formatLongDate, todayIso } from '@/lib/utils'
 import { fireBigConfetti } from '@/lib/confetti'
-import { Plus, Trash2, CheckCircle2, PartyPopper } from 'lucide-react'
+import { Plus, Trash2, CheckCircle2, PartyPopper, Link2 } from 'lucide-react'
 import type { Debt } from '@/lib/types'
 import { useUndoableDelete } from '@/lib/useUndoableDelete'
+import { RadialProgress } from './RadialProgress'
 
 /** Round 21, item #12 — months-to-debt-free is abstract on its own; this turns it into a real calendar date with a year, so a multi-year payoff plan doesn't silently lose track of which year it lands in. */
 function monthsToCalendarDate(months: number, fromIso: string): string {
   const days = Math.round(months * (365.25 / 12))
-  const dateIso = addDaysIso(fromIso, days)
-  const [y, m, d] = dateIso.split('-').map(Number)
-  return new Date(Date.UTC(y, m - 1, d)).toLocaleDateString('en-NZ', { day: 'numeric', month: 'short', year: 'numeric' })
+  return formatLongDate(addDaysIso(fromIso, days))
 }
 
 export function Debts() {
@@ -23,10 +22,20 @@ export function Debts() {
   const withUndo = useUndoableDelete()
   const [extraBudget, setExtraBudget] = useState(100)
 
-  const plan = useMemo(() => avalanchePlan(state.debts, extraBudget), [state.debts, extraBudget])
-  const timeline = useMemo(() => avalanchePayoffTimeline(state.debts, extraBudget), [state.debts, extraBudget])
-  const totalBalance = state.debts.reduce((s, d) => s + d.balance, 0)
-  const activeDebts = state.debts.filter((d) => d.balance > 0)
+  // Coordinator follow-up, real architectural gap Deep found: this tab's Total Debt/avalanche
+  // math only ever knew about state.debts (manually-entered debts) — GEM VISA card balances,
+  // real debt with a real tracked APR, lived entirely in a separate data model and were
+  // invisible here. creditCardsAsDebts() maps every card with a real balance into the SAME
+  // Debt shape, using its real purchase APR, so it flows through the identical avalanche math
+  // as a manual entry — the automatic case is now actually automatic, not a second system.
+  const cardDebts = useMemo(() => creditCardsAsDebts(state.creditCards), [state.creditCards])
+  const cardDebtIds = useMemo(() => new Set(cardDebts.map((d) => d.id)), [cardDebts])
+  const combinedDebts = useMemo(() => [...cardDebts, ...state.debts], [cardDebts, state.debts])
+
+  const plan = useMemo(() => avalanchePlan(combinedDebts, extraBudget), [combinedDebts, extraBudget])
+  const timeline = useMemo(() => avalanchePayoffTimeline(combinedDebts, extraBudget), [combinedDebts, extraBudget])
+  const totalBalance = combinedDebts.reduce((s, d) => s + d.balance, 0)
+  const activeDebts = combinedDebts.filter((d) => d.balance > 0)
 
   // #6/#7 — real avalanche payoff timeline (total balance falling to $0) plus a
   // per-debt "snowball" series (each debt's own line dropping to zero, in the
@@ -35,6 +44,19 @@ export function Debts() {
     () => timeline.map((pt) => ({ month: pt.month, Total: pt.totalBalance, ...pt.balances })),
     [timeline]
   )
+
+  // Coordinator follow-up — a single "big picture" ring: real cumulative payments recorded
+  // against credit cards/installment plans (a genuine, real number from paymentRecords) vs.
+  // what's still owed today across everything combined. Honest scoping, disclosed in the
+  // caption below: manually-entered debts (car loan etc.) have no payment LOG in this app —
+  // only a current balance — so they can only ever appear on the "still owed" side of this
+  // particular ring, never the "paid" side, until this app grows a payment log for them too.
+  const totalPaidAllTime = useMemo(
+    () => round2(state.paymentRecords.filter((r) => r.targetType === 'creditCard' || r.targetType === 'installmentPlan').reduce((s, r) => s + r.amount, 0)),
+    [state.paymentRecords]
+  )
+  const payoffDenominator = totalPaidAllTime + totalBalance
+  const payoffPercent = payoffDenominator > 0 ? (totalPaidAllTime / payoffDenominator) * 100 : 0
   return (
     <div className="space-y-6">
       <div>
@@ -66,6 +88,41 @@ export function Debts() {
         </StatCard>
       </div>
 
+      {/* Coordinator follow-up — the "big picture" ring. See the totalPaidAllTime comment
+          above for exactly what's counted on each side; disclosed here too so it's never
+          read as more complete than it really is. */}
+      {payoffDenominator > 0 && (
+        <StatCard label="Overall Debt Payoff" glow="danger" delay={0.15} tooltip="Real cumulative card/plan payments recorded in this app vs. what's still owed today, combined across every debt. Manually-entered debts without a payment log (e.g. a car loan) only ever count toward 'still owed', never 'paid' — see the caption below.">
+          <div className="mt-4 flex flex-wrap items-center gap-6">
+            <RadialProgress
+              percent={payoffPercent}
+              color={payoffPercent >= 66 ? '#34d399' : payoffPercent >= 33 ? '#f59e0b' : '#fb7185'}
+              size={140}
+              strokeWidth={12}
+              centerLabel={
+                <>
+                  <span className="text-2xl font-black tabular-nums text-white">{Math.round(payoffPercent)}%</span>
+                  <span className="text-[10px] text-white/40 uppercase tracking-wide">paid</span>
+                </>
+              }
+            />
+            <div className="flex-1 min-w-[180px] space-y-2">
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-white/50">Paid all-time (recorded)</span>
+                <span className="font-bold tabular-nums text-emerald-300">{formatCurrency(totalPaidAllTime)}</span>
+              </div>
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-white/50">Still owed today</span>
+                <span className="font-bold tabular-nums text-rose-300">{formatCurrency(totalBalance)}</span>
+              </div>
+              <p className="text-[10px] text-white/30 pt-1 border-t border-white/10">
+                Counts real payments recorded against credit cards/installment plans. Manually-entered debts without a payment log only count toward what's still owed.
+              </p>
+            </div>
+          </div>
+        </StatCard>
+      )}
+
       {timeline.length > 1 && (
         <StatCard label="Payoff Timeline" glow="danger">
           <p className="mt-4 text-xs text-white/40">
@@ -95,25 +152,45 @@ export function Debts() {
       )}
 
       {/* tilt off: dense per-row editable inputs — kept from the app-wide mouse-tilt audit. */}
-      <StatCard label="Avalanche Order" glow="purple" tilt={false}>
+      <StatCard
+        label="Avalanche Order"
+        glow="purple"
+        tilt={false}
+        tooltip="GEM VISA card balances (with a Link icon) are synced automatically from their real balance/APR on Upcoming Payments — edit them there, not here. Everything else is a manually-entered debt."
+      >
         <div className="mt-4 space-y-3">
-          {[...state.debts].sort((a, b) => b.apr - a.apr).map((debt, i) => {
+          {[...combinedDebts].sort((a, b) => b.apr - a.apr).map((debt, i) => {
             const entry = plan.entries.find((e) => e.debtId === debt.id)
+            const isCardDebt = cardDebtIds.has(debt.id)
             return (
-              <div key={debt.id} className="flex items-center gap-3 rounded-xl border border-white/10 bg-black/30 p-3">
+              <div key={debt.id} className={cn('flex items-center gap-3 rounded-xl border p-3', isCardDebt ? 'border-cyan-400/20 bg-cyan-500/5' : 'border-white/10 bg-black/30')}>
                 <div className="w-7 h-7 rounded-full bg-gradient-to-r from-cyan-400 to-purple-500 text-black flex items-center justify-center text-xs font-bold shrink-0">
                   {i + 1}
                 </div>
-                <input value={debt.name} onChange={(e) => updateDebt(debt.id, { name: e.target.value })} className="bg-transparent outline-none flex-1 min-w-[100px]" />
-                <input type="number" step="0.01" value={debt.balance} onChange={(e) => updateDebt(debt.id, { balance: parseFloat(e.target.value) || 0 })} className="bg-transparent outline-none w-24 tabular-nums text-right" />
-                <div className="flex items-center gap-1 w-20">
-                  <input type="number" step="0.1" value={debt.apr * 100} onChange={(e) => updateDebt(debt.id, { apr: (parseFloat(e.target.value) || 0) / 100 })} className="bg-transparent outline-none w-12 tabular-nums text-right" />
+                {isCardDebt ? (
+                  <span className="flex-1 min-w-[100px] flex items-center gap-1.5 text-white/85" title="Synced automatically from this card's real balance on Upcoming Payments — not editable here.">
+                    <Link2 className="w-3 h-3 text-cyan-400 shrink-0" /> {debt.name}
+                  </span>
+                ) : (
+                  <input value={debt.name} onChange={(e) => updateDebt(debt.id, { name: e.target.value })} className="bg-transparent outline-none flex-1 min-w-[100px]" />
+                )}
+                {isCardDebt ? (
+                  <span className="w-24 tabular-nums text-right text-white/85">{formatCurrency(debt.balance)}</span>
+                ) : (
+                  <input type="number" step="0.01" value={debt.balance} onChange={(e) => updateDebt(debt.id, { balance: parseFloat(e.target.value) || 0 })} className="bg-transparent outline-none w-24 tabular-nums text-right" />
+                )}
+                <div className="flex items-center gap-1 w-20 justify-end">
+                  {isCardDebt ? (
+                    <span className="tabular-nums text-white/85">{(debt.apr * 100).toFixed(2)}</span>
+                  ) : (
+                    <input type="number" step="0.1" value={debt.apr * 100} onChange={(e) => updateDebt(debt.id, { apr: (parseFloat(e.target.value) || 0) / 100 })} className="bg-transparent outline-none w-12 tabular-nums text-right" />
+                  )}
                   <span className="text-white/40 text-xs">% APR</span>
                 </div>
                 <div className="text-xs text-white/50 w-28 text-right">
                   {entry ? `${entry.monthsToPayoff}mo · ${formatCurrency(entry.totalInterestPaid)} int.` : '—'}
                 </div>
-                {debt.balance > 0 && (
+                {!isCardDebt && debt.balance > 0 && (
                   <button
                     onClick={() => { markDebtPaidOff(debt.id); fireBigConfetti() }}
                     title="Mark as paid off"
@@ -122,19 +199,23 @@ export function Debts() {
                     <CheckCircle2 className="w-4 h-4" />
                   </button>
                 )}
-                <button onClick={() => withUndo(`${debt.name} removed`, () => removeDebt(debt.id))} className="text-white/30 hover:text-rose-400">
-                  <Trash2 className="w-4 h-4" />
-                </button>
+                {isCardDebt ? (
+                  <span className="w-4 h-4 shrink-0" /> // keeps row heights/alignment identical to editable rows, no dead-end trash icon on a synced row
+                ) : (
+                  <button onClick={() => withUndo(`${debt.name} removed`, () => removeDebt(debt.id))} className="text-white/30 hover:text-rose-400">
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                )}
               </div>
             )
           })}
-          {state.debts.length === 0 && (
+          {combinedDebts.length === 0 && (
             <div className="flex flex-col items-center justify-center py-8 text-center">
               <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-emerald-400/20 to-cyan-400/20 border border-emerald-400/30 flex items-center justify-center mb-3">
                 <PartyPopper className="w-7 h-7 text-emerald-300" />
               </div>
               <p className="text-white/70 font-medium">No debts tracked — genuinely nothing to pay off here.</p>
-              <p className="text-xs text-white/40 mt-1 max-w-xs">Add one below if that changes — GEM VISA balances are tracked separately on Upcoming Payments.</p>
+              <p className="text-xs text-white/40 mt-1 max-w-xs">Add one below if that changes. GEM VISA balances appear here automatically once a card carries one.</p>
             </div>
           )}
           <button
