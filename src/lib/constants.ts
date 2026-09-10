@@ -1,4 +1,4 @@
-import type { RecurringBill, TaxBracket, IncomeAnchor, CreditCardAccount, DeviceRepayment, PeriodicBill } from './types'
+import type { RecurringBill, TaxBracket, IncomeAnchor, CreditCardAccount, DeviceRepayment, PeriodicBill, Account } from './types'
 
 /**
  * NZ income tax brackets — 2026-27 tax year (1 Apr 2026 - 31 Mar 2027).
@@ -58,25 +58,36 @@ export const AU_GST_RATE = 0.10
  * real recurring cash outflow in the Upcoming Payments window math.
  */
 export const SEED_BILLS: RecurringBill[] = [
-  { id: 'bill-rent', name: 'Rent', amount: 1960, frequency: 'monthly', dueDay: 1, dueDayIsEstimate: true, category: 'housing', active: true },
+  { id: 'bill-rent', name: 'Rent', amount: 1960, frequency: 'monthly', dueDay: 1, dueDayIsEstimate: true, category: 'housing', active: true, owner: 'shared' },
   {
     id: 'bill-internet-mobile', name: 'Internet & Mobile', amount: 147.25, frequency: 'monthly', dueDay: 1, dueDayIsEstimate: true, category: 'utilities', active: true,
     note: 'Telstra Sep 2026 cycle: previous bill $96.66, payment received $150.00 CR, credit carried forward $53.34 CR, total new charges $200.59 → amount due $147.25. Will vary by cycle; due-day still a placeholder.',
+    owner: 'shared',
   },
-  { id: 'bill-water', name: 'Water', amount: 50, frequency: 'monthly', dueDay: 1, dueDayIsEstimate: true, category: 'utilities', active: true },
-  { id: 'bill-spotify', name: 'Spotify', amount: 17.99, frequency: 'monthly', dueDay: 2, dueDayIsEstimate: false, category: 'subscription', active: true },
-  { id: 'bill-google-one', name: 'Google One', amount: 2.99, frequency: 'monthly', dueDay: 12, dueDayIsEstimate: false, category: 'subscription', active: true },
-  { id: 'bill-car-insurance', name: 'Car Insurance', amount: 140, frequency: 'monthly', dueDay: 1, dueDayIsEstimate: true, category: 'insurance', active: true },
-  { id: 'bill-contents-home-insurance', name: 'Contents Home Insurance', amount: 60, frequency: 'monthly', dueDay: 1, dueDayIsEstimate: true, category: 'insurance', active: true },
+  { id: 'bill-water', name: 'Water', amount: 50, frequency: 'monthly', dueDay: 1, dueDayIsEstimate: true, category: 'utilities', active: true, owner: 'shared' },
+  { id: 'bill-spotify', name: 'Spotify', amount: 17.99, frequency: 'monthly', dueDay: 2, dueDayIsEstimate: false, category: 'subscription', active: true, owner: 'shared' },
+  { id: 'bill-google-one', name: 'Google One', amount: 2.99, frequency: 'monthly', dueDay: 12, dueDayIsEstimate: false, category: 'subscription', active: true, owner: 'shared' },
+  { id: 'bill-car-insurance', name: 'Car Insurance', amount: 140, frequency: 'monthly', dueDay: 1, dueDayIsEstimate: true, category: 'insurance', active: true, owner: 'shared' },
+  { id: 'bill-contents-home-insurance', name: 'Contents Home Insurance', amount: 60, frequency: 'monthly', dueDay: 1, dueDayIsEstimate: true, category: 'insurance', active: true, owner: 'shared' },
   {
     id: 'bill-gem-visa-deep', name: 'GEM VISA Deep', amount: 305.33, frequency: 'monthly', dueDay: 17, dueDayIsEstimate: false, category: 'debt', active: true,
     note: 'Real minimum payment due 17 Sep 2026. Full card + plan breakdown is in the Installment Plans section below.',
+    owner: 'deep',
   },
   {
     id: 'bill-gem-visa-mimi', name: 'GEM VISA Mimi', amount: 0, frequency: 'monthly', dueDay: 1, dueDayIsEstimate: true, category: 'debt', active: true,
     note: 'No minimum payment currently required on this card. Two plans on it are already expired and accruing 29.99% p.a. — see Installment Plans below.',
+    owner: 'mimi',
   },
 ]
+
+/**
+ * Household ownership is a judgment call for every bill except the two GEM
+ * VISA rows (unambiguous — each card is explicitly Deep's or Mimi's). Every
+ * other bill defaults to 'shared' at a 50/50 split — Deep gave no data on
+ * who actually pays what, so this is the honest, correctable default (see
+ * `sharedSplitDeepPercent` on each bill, editable per-bill in the UI).
+ */
 
 /**
  * Judgment call, not Deep's own number: a plan is flagged "Expiry Risk" (amber)
@@ -105,6 +116,7 @@ export const SEED_CREDIT_CARDS: CreditCardAccount[] = [
       { id: 'plan-deep-3', name: 'The Good Guys Hoppers CRO', total: 3167.00, remaining: 1230.21, monthsTotal: 50, monthsRemaining: 25, expired: false },
       { id: 'plan-deep-4', name: 'The Good Guys Online Store', total: 1208.00, remaining: 748.96, monthsTotal: 50, monthsRemaining: 29, expired: false },
     ],
+    owner: 'deep',
   },
   {
     id: 'card-gem-visa-mimi',
@@ -120,12 +132,18 @@ export const SEED_CREDIT_CARDS: CreditCardAccount[] = [
       // accrued onto the balance since expiry. Shown honestly, never clamped to plan total.
       { id: 'plan-mimi-2', name: 'Gem Visa interest free #2', total: 519.37, remaining: 644.01, monthsTotal: 0, monthsRemaining: 0, expired: true },
     ],
+    owner: 'mimi',
   },
 ]
 
-/** Real device repayment, given directly by Deep 2026-09-10. Plain repayment — no interest, no risk styling. */
+/**
+ * Real device repayment, given directly by Deep 2026-09-10. Plain repayment —
+ * no interest, no risk styling. Owner not specified by Deep — defaulted to
+ * 'shared' 50/50 as the honest, correctable assumption (editable if it's
+ * really just one person's phone).
+ */
 export const SEED_DEVICE_REPAYMENTS: DeviceRepayment[] = [
-  { id: 'device-galaxy-z-fold7', name: 'Galaxy Z Fold7', monthlyAmount: 44.70, remaining: 983.40, paymentsTotal: 36, paymentsRemaining: 22 },
+  { id: 'device-galaxy-z-fold7', name: 'Galaxy Z Fold7', monthlyAmount: 44.70, remaining: 983.40, paymentsTotal: 36, paymentsRemaining: 22, owner: 'shared' },
 ]
 
 /**
@@ -146,6 +164,7 @@ export const SEED_PERIODIC_BILLS: PeriodicBill[] = [
     inCredit: false,
     creditAmount: 0,
     smoothingEnabled: true,
+    owner: 'shared',
   },
   {
     id: 'periodic-electricity',
@@ -156,8 +175,39 @@ export const SEED_PERIODIC_BILLS: PeriodicBill[] = [
     inCredit: true,
     creditAmount: 82.70,
     smoothingEnabled: true,
+    owner: 'shared',
   },
 ]
+
+/**
+ * Accounts — replaces the old flat HSBC/Overdraft/Savings balance list.
+ * HSBC + Overdraft count toward Live Funds Available (the spendable buffer);
+ * Savings and the three non-liquid assets do NOT (they're not meant to be
+ * spent day-to-day) but all five count toward net worth. Car/Home/Other are
+ * manually-maintained — there is no live market API wired in, by design;
+ * Deep edits these himself and the UI says so.
+ */
+export const SEED_ACCOUNTS: Account[] = [
+  { id: 'hsbc', name: 'HSBC', type: 'liquid', value: 0, countsTowardLiveFunds: true },
+  { id: 'overdraft', name: 'Overdraft', type: 'liquid', value: 0, countsTowardLiveFunds: true },
+  { id: 'savings', name: 'Savings', type: 'liquid', value: 0, countsTowardLiveFunds: false },
+  { id: 'asset-car', name: 'Car', type: 'asset', value: 0, countsTowardLiveFunds: false, note: 'Manually maintained — no live market valuation.' },
+  { id: 'asset-home', name: 'Home', type: 'asset', value: 0, countsTowardLiveFunds: false, note: 'Manually maintained — no live market valuation.' },
+  { id: 'asset-other', name: 'Other', type: 'asset', value: 0, countsTowardLiveFunds: false, note: 'Manually maintained — no live market valuation.' },
+]
+
+/** Judgment call: the spend-pace alert flags a category once its spend-pace outruns elapsed-time-pace by more than this margin (10 percentage points). */
+export const SPEND_PACE_ALERT_BUFFER = 0.10
+
+/** Financial health score component weights — see calcFinancialHealthScore() in logic.ts for the full documented formula. */
+export const HEALTH_SCORE_WEIGHTS = {
+  savingsRate: 0.30,
+  debtToIncome: 0.25,
+  billCoverage: 0.25,
+  emergencyFund: 0.20,
+}
+
+export const CLARITY_PIN = '6304'
 
 /**
  * Income anchor, given directly by Deep 2026-09-10: Friday 2026-09-11 is a

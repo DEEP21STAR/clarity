@@ -1,9 +1,13 @@
-import type { TaxBracket, Debt, RecurringBill, BillFrequency, UpcomingWindow, Transaction, InstallmentPlan, PeriodicBill } from './types'
+import type {
+  TaxBracket, Debt, RecurringBill, BillFrequency, UpcomingWindow, Transaction, InstallmentPlan, PeriodicBill,
+  Account, CreditCardAccount, NetWorthSnapshot, SinkingFund, OneOffEntry, SpendTracker, StreakState, HouseholdOwner, HouseholdView, Mode,
+} from './types'
 import {
   NZ_TAX_BRACKETS, NZ_ACC_LEVY_RATE, NZ_ACC_LEVY_CAP,
   AU_TAX_BRACKETS, AU_MEDICARE_LEVY_RATE, AU_MEDICARE_LEVY_LOW_THRESHOLD,
   AU_LITO_MAX, AU_LITO_FULL_THRESHOLD, AU_LITO_TAPER_STAGE1_END, AU_LITO_TAPER_RATE_1, AU_LITO_TAPER_RATE_2,
   NZ_GST_RATE, AU_GST_RATE, INCOME_ANCHOR, INSTALLMENT_AMBER_RISK_THRESHOLD_PER_MONTH,
+  SPEND_PACE_ALERT_BUFFER, HEALTH_SCORE_WEIGHTS,
 } from './constants'
 
 // ---------------------------------------------------------------------------
@@ -445,8 +449,14 @@ export function windowLengthDays(window: UpcomingWindow): number {
   }
 }
 
-/** Total bills due within [startIso, endIso], prorating monthly bills by day-count as an honest estimate. */
-export function totalBillsInWindow(bills: RecurringBill[], startIso: string, endIso: string): number {
+/**
+ * Total bills due within [startIso, endIso], prorating monthly bills by
+ * day-count as an honest estimate. `view` defaults to 'combined' (full
+ * amount, original behaviour) — pass 'deep'/'mimi' to get that person's
+ * household-attributed share instead (shared bills split per-bill, see
+ * `householdShare()`).
+ */
+export function totalBillsInWindow(bills: RecurringBill[], startIso: string, endIso: string, view: HouseholdView = 'combined'): number {
   const start = parseIsoDateUTC(startIso)
   const end = parseIsoDateUTC(endIso)
   const windowDays = Math.round((end.getTime() - start.getTime()) / MS_PER_DAY) + 1
@@ -454,17 +464,18 @@ export function totalBillsInWindow(bills: RecurringBill[], startIso: string, end
   let total = 0
   for (const bill of bills) {
     if (!bill.active) continue
+    const amount = householdShare(bill.amount, bill.owner, bill.sharedSplitDeepPercent, view)
     switch (bill.frequency) {
       case 'weekly':
-        total += bill.amount * (windowDays / 7)
+        total += amount * (windowDays / 7)
         break
       case 'fortnightly':
-        total += bill.amount * (windowDays / 14)
+        total += amount * (windowDays / 14)
         break
       case 'monthly':
         // Prorate by day-count against an average 30.44-day month — honest estimate,
         // since exact due-dates are still placeholders.
-        total += bill.amount * (windowDays / 30.44)
+        total += amount * (windowDays / 30.44)
         break
     }
   }
@@ -556,12 +567,426 @@ export function suggestedFortnightlySetAside(bill: PeriodicBill, todayIso: strin
  * this is what feeds Live Funds Available, NOT the lump-sum due dates (which
  * stay visible on the gauge cards for context but are not double-counted here).
  */
-export function totalPeriodicSmoothedInWindow(bills: PeriodicBill[], startIso: string, endIso: string, todayIso: string): number {
+export function totalPeriodicSmoothedInWindow(bills: PeriodicBill[], startIso: string, endIso: string, todayIso: string, view: HouseholdView = 'combined'): number {
   const windowDays = daysBetweenIso(startIso, endIso) + 1
   let total = 0
   for (const bill of bills) {
     if (bill.smoothingEnabled === false) continue // excluded by request — informational only, not counted in funds math
-    total += suggestedFortnightlySetAside(bill, todayIso) * (windowDays / 14)
+    const smoothed = suggestedFortnightlySetAside(bill, todayIso)
+    total += householdShare(smoothed, bill.owner, bill.sharedSplitDeepPercent, view) * (windowDays / 14)
   }
   return round2(total)
+}
+
+// ---------------------------------------------------------------------------
+// PHASE 1 — Net worth
+// ---------------------------------------------------------------------------
+
+export interface NetWorthBreakdown {
+  totalAssets: number
+  totalLiabilities: number
+  netWorth: number
+}
+
+/**
+ * Net worth = sum(all account values, liquid + non-liquid assets) − sum(all
+ * liabilities: every credit card's real balance + every tracked Debt's balance).
+ * Overdraft is treated as an asset-side buffer (its `value` represents
+ * available/positive buffer, consistent with how it already feeds Live Funds
+ * Available) — it is never double-subtracted as a liability here.
+ */
+export function calcNetWorth(accounts: Account[], creditCards: CreditCardAccount[], debts: Debt[]): NetWorthBreakdown {
+  const totalAssets = round2(accounts.reduce((s, a) => s + a.value, 0))
+  const totalLiabilities = round2(
+    creditCards.reduce((s, c) => s + c.balance, 0) + debts.reduce((s, d) => s + d.balance, 0)
+  )
+  return { totalAssets, totalLiabilities, netWorth: round2(totalAssets - totalLiabilities) }
+}
+
+/** Inserts/updates today's net worth snapshot — at most one entry per calendar day, so history doesn't grow unbounded. */
+export function upsertNetWorthSnapshot(history: NetWorthSnapshot[], snapshot: NetWorthSnapshot): NetWorthSnapshot[] {
+  const existingIdx = history.findIndex((h) => h.date === snapshot.date)
+  if (existingIdx === -1) return [...history, snapshot].sort((a, b) => a.date.localeCompare(b.date))
+  const next = [...history]
+  next[existingIdx] = snapshot
+  return next
+}
+
+// ---------------------------------------------------------------------------
+// PHASE 2.1 — Forward cash-flow projection
+// ---------------------------------------------------------------------------
+
+/**
+ * Monthly bills fire on their real `dueDay`, clamped to the actual length of
+ * that month (e.g. a dueDay of 31 fires on the 28th/29th/30th in short months).
+ * Weekly/fortnightly bills have no stored weekday in this data model (none of
+ * Deep's real bills are weekly/fortnightly today) — as a documented, honest
+ * convention they're assumed to fire every Monday (weekly) or every other
+ * Monday counting from 2026-01-05, the first Monday of 2026 (fortnightly).
+ * This only matters if/when a weekly or fortnightly bill is ever added.
+ */
+const FORTNIGHTLY_BILL_EPOCH_MONDAY = '2026-01-05'
+
+function isMonday(dateIso: string): boolean {
+  return parseIsoDateUTC(dateIso).getUTCDay() === 1
+}
+
+function dailyRecurringBillCharge(bills: RecurringBill[], dateIso: string): number {
+  const [, m, d] = dateIso.split('-').map(Number)
+  const daysInMonth = new Date(Date.UTC(Number(dateIso.slice(0, 4)), m, 0)).getUTCDate()
+  let total = 0
+  for (const bill of bills) {
+    if (!bill.active) continue
+    if (bill.frequency === 'monthly') {
+      const effectiveDueDay = Math.min(bill.dueDay, daysInMonth)
+      if (d === effectiveDueDay) total += bill.amount
+    } else if (bill.frequency === 'weekly') {
+      if (isMonday(dateIso)) total += bill.amount
+    } else if (bill.frequency === 'fortnightly') {
+      if (isMonday(dateIso) && isCombinedPayday(dateIso, FORTNIGHTLY_BILL_EPOCH_MONDAY)) total += bill.amount
+    }
+  }
+  return total
+}
+
+function dailyPeriodicSmoothedCharge(bills: PeriodicBill[], dateIso: string): number {
+  let total = 0
+  for (const bill of bills) {
+    if (bill.smoothingEnabled === false) continue
+    total += suggestedFortnightlySetAside(bill, dateIso) / 14
+  }
+  return round2(total)
+}
+
+function dailyOneOffCharge(entries: OneOffEntry[], dateIso: string): number {
+  return round2(entries.filter((e) => e.date === dateIso).reduce((s, e) => s + e.amount, 0))
+}
+
+export interface ProjectedBalancePoint {
+  date: string
+  balance: number
+}
+
+/**
+ * Rolling day-by-day projected balance: starts at `startBalance` on `startDateIso`
+ * and walks forward `days` days, applying real payday income, monthly bills on
+ * their actual due-day, periodic bills' smoothed daily contribution, and any
+ * one-off entries. This is the same engines already built (payday, bills,
+ * periodic smoothing) — just walked day-by-day instead of summed over a window.
+ */
+export function projectBalanceSeries(
+  startBalance: number,
+  startDateIso: string,
+  days: number,
+  bills: RecurringBill[],
+  periodicBills: PeriodicBill[],
+  oneOffEntries: OneOffEntry[]
+): ProjectedBalancePoint[] {
+  const points: ProjectedBalancePoint[] = []
+  let balance = startBalance
+  for (let i = 0; i < days; i++) {
+    const dateIso = addDaysIso(startDateIso, i)
+    const income = incomeOnDate(dateIso)
+    const billCharge = dailyRecurringBillCharge(bills, dateIso)
+    const periodicCharge = dailyPeriodicSmoothedCharge(periodicBills, dateIso)
+    const oneOff = dailyOneOffCharge(oneOffEntries, dateIso)
+    balance = round2(balance + income - billCharge - periodicCharge + oneOff)
+    points.push({ date: dateIso, balance })
+  }
+  return points
+}
+
+// ---------------------------------------------------------------------------
+// PHASE 2.4 — Financial health score
+// ---------------------------------------------------------------------------
+
+export interface HealthScoreInputs {
+  savingsRate: number // decimal, e.g. 0.15 = 15%
+  debtToIncome: number // total debt balance ÷ annual net income, decimal
+  billCoverageRatio: number // monthly net income ÷ monthly fixed bills
+  emergencyFundMonths: number // savings balance ÷ average monthly fixed bills
+}
+
+export interface HealthScoreResult {
+  score: number // 0-100, rounded to whole number
+  breakdown: { savingsRate: number; debtToIncome: number; billCoverage: number; emergencyFund: number } // each component's 0-100 sub-score
+}
+
+/**
+ * Financial Health Score — the ONE number Deep will trust most, so the exact
+ * formula is documented here rather than buried in code:
+ *
+ *   score = 100 × [
+ *     0.30 × clamp(savingsRate / 0.20, 0, 1)                     (20% savings rate = full marks)
+ *   + 0.25 × clamp(1 − debtToIncome / 1.0, 0, 1)                 (debt = 1x annual income = zero marks; 0 debt = full marks)
+ *   + 0.25 × clamp((billCoverageRatio − 1) / 1, 0, 1)            (barely covering bills (ratio 1.0) = zero marks; 2x coverage = full marks)
+ *   + 0.20 × clamp(emergencyFundMonths / 6, 0, 1)                (6 months' expenses saved = full marks — the standard financial-advice benchmark)
+ *   ]
+ *
+ * Weights (30/25/25/20) and the four benchmark constants above (20% savings
+ * rate, 1x income debt ceiling, 2x bill coverage, 6-month emergency fund) are
+ * this build's judgment calls, not Deep's own numbers — reasonable, widely-
+ * cited financial-planning rules of thumb, adjustable in `constants.ts`
+ * (HEALTH_SCORE_WEIGHTS) and here if Deep wants different benchmarks.
+ */
+export function calcFinancialHealthScore(inputs: HealthScoreInputs): HealthScoreResult {
+  const clamp01 = (n: number) => Math.max(0, Math.min(1, n))
+  const savingsRateScore = clamp01(inputs.savingsRate / 0.20) * 100
+  const debtToIncomeScore = clamp01(1 - inputs.debtToIncome / 1.0) * 100
+  const billCoverageScore = clamp01((inputs.billCoverageRatio - 1) / 1) * 100
+  const emergencyFundScore = clamp01(inputs.emergencyFundMonths / 6) * 100
+
+  const score = Math.round(
+    savingsRateScore * HEALTH_SCORE_WEIGHTS.savingsRate +
+    debtToIncomeScore * HEALTH_SCORE_WEIGHTS.debtToIncome +
+    billCoverageScore * HEALTH_SCORE_WEIGHTS.billCoverage +
+    emergencyFundScore * HEALTH_SCORE_WEIGHTS.emergencyFund
+  )
+
+  return {
+    score: Math.max(0, Math.min(100, score)),
+    breakdown: {
+      savingsRate: round2(savingsRateScore),
+      debtToIncome: round2(debtToIncomeScore),
+      billCoverage: round2(billCoverageScore),
+      emergencyFund: round2(emergencyFundScore),
+    },
+  }
+}
+
+// ---------------------------------------------------------------------------
+// PHASE 2.7 — Emergency fund coverage
+// ---------------------------------------------------------------------------
+
+export function emergencyFundMonths(savingsBalance: number, avgMonthlyBills: number): number {
+  if (avgMonthlyBills <= 0) return 0
+  return round2(savingsBalance / avgMonthlyBills)
+}
+
+// ---------------------------------------------------------------------------
+// PHASE 2.6 — What-if extra-payment slider on an installment plan
+// ---------------------------------------------------------------------------
+
+export interface PlanPayoffResult {
+  months: number
+  totalInterest: number
+}
+
+/**
+ * How many months to clear a plan given an extra $/month on top of its
+ * required minimum, and the resulting total interest paid.
+ *
+ * Interest-free active plans (apr effectively 0): purely arithmetic —
+ * months = ceil(remaining ÷ (requiredMonthly + extra)). No interest.
+ *
+ * Expired plans (charging the card's real Expired Plan Rate): simulated
+ * month-by-month compounding. Latitude doesn't expose a per-plan minimum
+ * payment once a plan has expired (only a card-level minimum), so a baseline
+ * payment of max($25, 2% of remaining balance) is assumed here — a standard,
+ * conservative minimum-payment convention, not a number Latitude gave us;
+ * documented as an assumption for Deep to sanity-check against his real
+ * statement if he uses this slider on an expired plan.
+ */
+export function planPayoffWithExtra(plan: InstallmentPlan, extraPerMonth: number, apr: number = 0): PlanPayoffResult {
+  if (!plan.expired || apr <= 0) {
+    const payment = requiredMonthlyPayment(plan) + extraPerMonth
+    if (payment <= 0) return { months: Infinity, totalInterest: 0 }
+    return { months: Math.ceil(plan.remaining / payment), totalInterest: 0 }
+  }
+
+  // Expired plan — real compounding interest simulation.
+  const baselinePayment = Math.max(25, plan.remaining * 0.02)
+  const monthlyPayment = baselinePayment + extraPerMonth
+  const monthlyRate = apr / 12
+  let balance = plan.remaining
+  let months = 0
+  let totalInterest = 0
+  const MAX_MONTHS = 600
+  while (balance > 0.005 && months < MAX_MONTHS) {
+    const interest = round2(balance * monthlyRate)
+    totalInterest = round2(totalInterest + interest)
+    balance = round2(balance + interest)
+    const payment = Math.min(monthlyPayment, balance)
+    if (payment <= 0) break // no progress possible, avoid an infinite loop
+    balance = round2(balance - payment)
+    months++
+  }
+  return { months, totalInterest }
+}
+
+// ---------------------------------------------------------------------------
+// PHASE 2.8 — Household Deep/Mimi/Combined split
+// ---------------------------------------------------------------------------
+
+/** The $ amount of a shared-owner item attributed to a specific household view. 'combined' always gets the full amount. */
+function householdShare(amount: number, owner: HouseholdOwner, sharedSplitDeepPercent: number | undefined, view: HouseholdView): number {
+  if (view === 'combined') return amount
+  if (owner === view) return amount
+  if (owner === 'shared') {
+    const deepPct = sharedSplitDeepPercent ?? 50
+    return view === 'deep' ? round2(amount * (deepPct / 100)) : round2(amount * ((100 - deepPct) / 100))
+  }
+  return 0 // owned by the other person, not shared — contributes nothing to this view
+}
+
+/** Sum of monthly-equivalent bill amounts attributed to a household view. deep-view-total + mimi-view-total === combined-view-total exactly (shared bills split, never double-counted). */
+export function totalBillsForHousehold(bills: RecurringBill[], view: HouseholdView): number {
+  return round2(
+    bills
+      .filter((b) => b.active)
+      .reduce((s, b) => s + householdShare(monthlyEquivalent(b.amount, b.frequency), b.owner, b.sharedSplitDeepPercent, view), 0)
+  )
+}
+
+/** Sum of credit card balances attributed to a household view. */
+export function totalCardBalanceForHousehold(cards: CreditCardAccount[], view: HouseholdView): number {
+  return round2(cards.reduce((s, c) => s + householdShare(c.balance, c.owner, undefined, view), 0))
+}
+
+// ---------------------------------------------------------------------------
+// PHASE 2.9 — Generalised sinking funds (any irregular/lump-sum expense)
+// ---------------------------------------------------------------------------
+
+/**
+ * Same smoothing math as suggestedFortnightlySetAside() but generalised to
+ * ANY irregular lump-sum expense (car WOF/rego, Christmas, annual subs) —
+ * no utility-billing-period/credit semantics, just target amount, target
+ * date, and what's already saved.
+ */
+export function suggestedFortnightlyForSinkingFund(fund: SinkingFund, todayIso: string): number {
+  const net = Math.max(0, fund.targetAmount - fund.currentSaved)
+  return round2(net / fortnightsRemaining(fund.targetDate, todayIso))
+}
+
+export function totalSinkingFundsSmoothedInWindow(funds: SinkingFund[], startIso: string, endIso: string, todayIso: string): number {
+  const windowDays = daysBetweenIso(startIso, endIso) + 1
+  return round2(funds.reduce((s, f) => s + suggestedFortnightlyForSinkingFund(f, todayIso) * (windowDays / 14), 0))
+}
+
+// ---------------------------------------------------------------------------
+// PHASE 2.11 — Predictive spend-pace alert
+// ---------------------------------------------------------------------------
+
+export interface SpendPaceAlert {
+  category: 'food' | 'fuel' | 'personal'
+  pctElapsed: number
+  pctSpent: number
+}
+
+/**
+ * Flags a category when its spend-pace is outrunning the elapsed-time-pace
+ * of the current window by more than SPEND_PACE_ALERT_BUFFER (10 points) —
+ * e.g. 40% of the week elapsed but 60% of the Fuel allocation already spent.
+ */
+export function calcSpendPaceAlerts(
+  tracker: SpendTracker,
+  allocation: { food: number; fuel: number; personal: number },
+  windowStartIso: string,
+  windowEndIso: string,
+  todayIso: string
+): SpendPaceAlert[] {
+  const totalWindowDays = daysBetweenIso(windowStartIso, windowEndIso) + 1
+  const elapsedDays = Math.max(0, Math.min(totalWindowDays, daysBetweenIso(windowStartIso, todayIso) + 1))
+  const pctElapsed = totalWindowDays > 0 ? elapsedDays / totalWindowDays : 0
+
+  const alerts: SpendPaceAlert[] = []
+  for (const category of ['food', 'fuel', 'personal'] as const) {
+    const allocated = allocation[category]
+    const spent = tracker[category]
+    const pctSpent = allocated > 0 ? spent / allocated : 0
+    if (pctSpent - pctElapsed > SPEND_PACE_ALERT_BUFFER) {
+      alerts.push({ category, pctElapsed: round2(pctElapsed * 100), pctSpent: round2(pctSpent * 100) })
+    }
+  }
+  return alerts
+}
+
+// ---------------------------------------------------------------------------
+// PHASE 2.12 — Round-up savings simulator (simulation only, moves no money)
+// ---------------------------------------------------------------------------
+
+export function calcRoundUpSavings(transactions: Transaction[], roundTo: number = 5): number {
+  return round2(
+    transactions
+      .filter((t) => t.amount < 0)
+      .reduce((s, t) => {
+        const abs = Math.abs(t.amount)
+        const roundedUp = Math.ceil(abs / roundTo) * roundTo
+        return s + (roundedUp - abs)
+      }, 0)
+  )
+}
+
+// ---------------------------------------------------------------------------
+// PHASE 2.5 — Bill price-increase detection
+// ---------------------------------------------------------------------------
+
+export function isBillAmountChanged(bill: RecurringBill): boolean {
+  return bill.previousAmount !== undefined && bill.previousAmount !== bill.amount
+}
+
+/** Pure helper for the store's updateBill mutator: when the amount is genuinely changing, remembers the old value as `previousAmount` so the UI can flag it. */
+export function applyBillAmountChange(bill: RecurringBill, newAmount: number): Partial<RecurringBill> {
+  if (newAmount === bill.amount) return {}
+  return { amount: newAmount, previousAmount: bill.amount }
+}
+
+// ---------------------------------------------------------------------------
+// PHASE 2.17 — Savings streaks
+// ---------------------------------------------------------------------------
+
+const STREAK_MILESTONES = [7, 30, 100]
+
+/**
+ * Advances the streak once per real calendar day the app is opened. If no
+ * spend-pace alert fired "today" (i.e. `staidOnPace` is true), the streak
+ * continues; otherwise it resets to 0. Honest limitation: a day the app is
+ * never opened isn't checked — this is a client-only SPA with no backend to
+ * run a scheduled daily check, so the streak only advances on days Deep
+ * actually visits.
+ */
+export function updateStreak(streak: StreakState, staidOnPace: boolean, todayIso: string): { streak: StreakState; newMilestone: number | null } {
+  if (streak.lastCheckedDate === todayIso) return { streak, newMilestone: null } // already checked today
+
+  const current = staidOnPace ? streak.current + 1 : 0
+  const best = Math.max(streak.best, current)
+  const milestonesHit = staidOnPace ? streak.milestonesHit : []
+  let newMilestone: number | null = null
+  if (staidOnPace) {
+    for (const m of STREAK_MILESTONES) {
+      if (current >= m && !milestonesHit.includes(m)) {
+        milestonesHit.push(m)
+        newMilestone = m
+      }
+    }
+  }
+  return { streak: { current, best, lastCheckedDate: todayIso, milestonesHit }, newMilestone }
+}
+
+// ---------------------------------------------------------------------------
+// Data export — full JSON (feature 14) and accountant CSV (feature 15)
+// ---------------------------------------------------------------------------
+
+export function buildAccountantCsv(transactions: Transaction[], mode: Mode, periodLabel: string): string {
+  const filtered = transactions.filter((t) => t.mode === mode)
+  const byCategory = new Map<string, number>()
+  for (const t of filtered) {
+    byCategory.set(t.category, round2((byCategory.get(t.category) ?? 0) + t.amount))
+  }
+  const totalIncome = round2(filtered.filter((t) => t.amount > 0).reduce((s, t) => s + t.amount, 0))
+  const totalExpenses = round2(filtered.filter((t) => t.amount < 0).reduce((s, t) => s + t.amount, 0))
+
+  const lines: string[] = []
+  lines.push(`Clarity — Accountant Summary,${mode === 'personal' ? 'Personal' : 'Business'},${periodLabel}`)
+  lines.push('')
+  lines.push('Category,Total')
+  for (const [category, total] of byCategory.entries()) {
+    lines.push(`${category},${total.toFixed(2)}`)
+  }
+  lines.push('')
+  lines.push('Summary,')
+  lines.push(`Total Income,${totalIncome.toFixed(2)}`)
+  lines.push(`Total Expenses,${totalExpenses.toFixed(2)}`)
+  lines.push(`Net,${round2(totalIncome + totalExpenses).toFixed(2)}`)
+  return lines.join('\n')
 }

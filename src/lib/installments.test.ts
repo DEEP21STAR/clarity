@@ -106,6 +106,7 @@ describe('periodic bill gauge + fortnightly smoothing — real Gas/Electricity d
       inCredit: false,
       creditAmount: 0,
       smoothingEnabled: true,
+      owner: 'shared',
     }
     const result = suggestedFortnightlySetAside(newBill, today)
     expect(result).toBeGreaterThan(0)

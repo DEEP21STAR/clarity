@@ -2,15 +2,23 @@ import { useMemo, useState } from 'react'
 import { useStore } from '@/lib/store'
 import { StatCard } from './StatCard'
 import { CountUp } from './CountUp'
-import { calcWfhFixedRate, gstOnExclusive, gstFromInclusive, NZ_WFH_FIXED_RATE_PER_HOUR, AU_WFH_FIXED_RATE_PER_HOUR } from '@/lib/logic'
-import { formatCurrency } from '@/lib/utils'
+import { DataExportPanel } from './DataExportPanel'
+import { calcWfhFixedRate, gstOnExclusive, gstFromInclusive, NZ_WFH_FIXED_RATE_PER_HOUR, AU_WFH_FIXED_RATE_PER_HOUR, calcRoundUpSavings } from '@/lib/logic'
+import { formatCurrency, todayIso } from '@/lib/utils'
+import { Plus, Trash2 } from 'lucide-react'
 
 export function Tools() {
-  const { state } = useStore()
+  const { state, addOneOffEntry, removeOneOffEntry } = useStore()
   const [hoursPerWeek, setHoursPerWeek] = useState(15)
   const [weeksPerYear, setWeeksPerYear] = useState(48)
   const [gstDirection, setGstDirection] = useState<'ex' | 'inc'>('ex')
   const [gstAmount, setGstAmount] = useState(100)
+  const [roundTo, setRoundTo] = useState(5)
+  const [oneOffDesc, setOneOffDesc] = useState('')
+  const [oneOffAmount, setOneOffAmount] = useState(0)
+  const [oneOffDate, setOneOffDate] = useState(todayIso())
+
+  const roundUpSavings = useMemo(() => calcRoundUpSavings(state.transactions, roundTo), [state.transactions, roundTo])
 
   const rate = state.country === 'NZ' ? NZ_WFH_FIXED_RATE_PER_HOUR : AU_WFH_FIXED_RATE_PER_HOUR
   const wfhDeduction = useMemo(() => calcWfhFixedRate(hoursPerWeek, weeksPerYear, rate), [hoursPerWeek, weeksPerYear, rate])
@@ -65,6 +73,53 @@ export function Tools() {
         </div>
         <p className="text-xs text-white/40 mt-3">{state.country} GST rate: {state.country === 'NZ' ? '15%' : '10%'}.</p>
       </StatCard>
+
+      <StatCard label="Round-Up Savings Simulator" glow="amber" tilt={false}>
+        <p className="mt-4 text-xs text-amber-300/80 font-semibold uppercase tracking-wide">Simulation only — moves no real money</p>
+        <div className="mt-2 flex items-center gap-2 text-sm text-white/50">
+          Round every purchase up to the nearest
+          <select value={roundTo} onChange={(e) => setRoundTo(Number(e.target.value))} className="bg-black/40 rounded px-2 py-1 text-xs outline-none border border-white/10">
+            {[1, 2, 5, 10].map((r) => <option key={r} value={r}>${r}</option>)}
+          </select>
+        </div>
+        <div className="mt-2 text-3xl font-bold text-amber-300 tabular-nums"><CountUp value={roundUpSavings} prefix="$" /></div>
+        <p className="text-xs text-white/40 mt-1">You'd have "saved" this much across all imported transactions, if every purchase rounded up.</p>
+      </StatCard>
+
+      <StatCard label="One-Off Entries" glow="cyan" tilt={false}>
+        <p className="mt-4 text-xs text-white/40">One-off income/expenses feed the Cash-Flow Forecast chart on Upcoming Payments — a bonus, a big purchase, anything outside the regular bill/pay cycle.</p>
+        <div className="mt-3 grid grid-cols-1 md:grid-cols-4 gap-2">
+          <input value={oneOffDesc} onChange={(e) => setOneOffDesc(e.target.value)} placeholder="Description" className="bg-black/30 border border-white/10 rounded-lg px-3 py-2 text-sm outline-none focus:border-cyan-400/50 md:col-span-2" />
+          <input type="date" value={oneOffDate} onChange={(e) => setOneOffDate(e.target.value)} className="bg-black/30 border border-white/10 rounded-lg px-3 py-2 text-sm outline-none focus:border-cyan-400/50" />
+          <div className="flex items-center gap-1 bg-black/30 border border-white/10 rounded-lg px-3 py-2">
+            <span className="text-white/40">$</span>
+            <input type="number" step="0.01" value={oneOffAmount} onChange={(e) => setOneOffAmount(parseFloat(e.target.value) || 0)} className="w-full bg-transparent outline-none tabular-nums text-sm" placeholder="+income / -expense" />
+          </div>
+        </div>
+        <button
+          onClick={() => {
+            if (!oneOffDesc.trim() || oneOffAmount === 0) return
+            addOneOffEntry({ id: `oneoff-${Date.now()}`, date: oneOffDate, description: oneOffDesc.trim(), amount: oneOffAmount })
+            setOneOffDesc(''); setOneOffAmount(0)
+          }}
+          className="mt-2 flex items-center gap-1 text-xs text-cyan-300 hover:text-cyan-200"
+        >
+          <Plus className="w-3 h-3" /> Add entry
+        </button>
+        <div className="mt-3 space-y-1">
+          {state.oneOffEntries.map((e) => (
+            <div key={e.id} className="flex items-center justify-between text-sm border-t border-white/5 pt-1.5">
+              <span className="text-white/60">{e.date} — {e.description}</span>
+              <div className="flex items-center gap-2">
+                <span className={`tabular-nums ${e.amount < 0 ? 'text-rose-300' : 'text-emerald-300'}`}>{formatCurrency(e.amount)}</span>
+                <button onClick={() => removeOneOffEntry(e.id)} className="text-white/30 hover:text-rose-400"><Trash2 className="w-3.5 h-3.5" /></button>
+              </div>
+            </div>
+          ))}
+        </div>
+      </StatCard>
+
+      <DataExportPanel />
     </div>
   )
 }

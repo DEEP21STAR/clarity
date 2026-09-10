@@ -1,4 +1,5 @@
-import { useRef, useState } from 'react'
+import { useMemo, useRef, useState } from 'react'
+import { LineChart, Line, ResponsiveContainer } from 'recharts'
 import { useStore } from '@/lib/store'
 import { StatCard } from './StatCard'
 import { CountUp } from './CountUp'
@@ -13,6 +14,15 @@ export function Transactions() {
 
   const totalIn = state.transactions.filter((t) => t.amount > 0).reduce((s, t) => s + t.amount, 0)
   const totalOut = state.transactions.filter((t) => t.amount < 0).reduce((s, t) => s + t.amount, 0)
+
+  // Running-balance sparkline — a single trend line across the whole ledger,
+  // not one-sparkline-per-row (an individual transaction has no time series
+  // of its own; the running balance is the meaningful trend to show).
+  const sparklineData = useMemo(() => {
+    const sorted = [...state.transactions].sort((a, b) => a.date.localeCompare(b.date))
+    let running = 0
+    return sorted.map((t) => { running += t.amount; return { running } })
+  }, [state.transactions])
 
   const handleFile = async (file: File) => {
     const text = await file.text()
@@ -62,6 +72,16 @@ export function Transactions() {
       </StatCard>
 
       <StatCard label={`Ledger (${state.transactions.length})`} glow="purple" tilt={false}>
+        {sparklineData.length > 1 && (
+          <div className="mt-4" style={{ height: 50 }}>
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={sparklineData}>
+                <Line type="monotone" dataKey="running" stroke="#22d3ee" strokeWidth={2} dot={false} />
+              </LineChart>
+            </ResponsiveContainer>
+            <p className="text-[10px] text-white/30 -mt-1">Running balance trend across the imported ledger.</p>
+          </div>
+        )}
         <div className="mt-4 max-h-80 overflow-y-auto">
           <table className="w-full text-sm">
             <thead>

@@ -3,13 +3,21 @@ import gsap from 'gsap'
 import { useStore } from '@/lib/store'
 import { StatCard } from './StatCard'
 import { CountUp } from './CountUp'
-import { addDaysIso, totalBillsInWindow, totalIncomeInWindow, totalPeriodicSmoothedInWindow, windowLengthDays } from '@/lib/logic'
+import { addDaysIso, totalBillsInWindow, totalIncomeInWindow, totalPeriodicSmoothedInWindow, totalSinkingFundsSmoothedInWindow, windowLengthDays, isBillAmountChanged } from '@/lib/logic'
 import { cn, formatCurrency, todayIso } from '@/lib/utils'
 import type { UpcomingWindow, RecurringBill, BillFrequency, PeriodicBill } from '@/lib/types'
-import { Plus, Trash2, Info } from 'lucide-react'
+import { Plus, Trash2, Info, AlertTriangle } from 'lucide-react'
 import { CreditCardAccountPanel, DeviceRepaymentCard } from './InstallmentPlanTracker'
 import { PeriodicBillGauge } from './PeriodicBillGauge'
 import { PeriodicBillForm, type PeriodicBillFormValues } from './PeriodicBillForm'
+import { AccountsPanel } from './AccountsPanel'
+import { SavingsGoalsSection } from './SavingsGoals'
+import { SinkingFundsSection } from './SinkingFunds'
+import { SpendPaceTracker } from './SpendPaceTracker'
+import { CashFlowChart } from './CashFlowChart'
+import { HouseholdSplit } from './HouseholdSplit'
+import { BillIcon } from './BillIcons'
+import { fireConfetti } from '@/lib/confetti'
 
 const WINDOWS: { id: UpcomingWindow; label: string }[] = [
   { id: 'week', label: 'Week' },
@@ -21,31 +29,37 @@ interface Allocation { food: number; fuel: number; personal: number }
 const DEFAULT_ALLOCATION: Allocation = { food: 40, fuel: 25, personal: 35 }
 
 export function UpcomingPayments() {
-  const { state, updateBill, addBill, removeBill, updateBalance, addPeriodicBill, updatePeriodicBill, removePeriodicBill } = useStore()
+  const { state, updateBill, addBill, removeBill, addPeriodicBill, updatePeriodicBill, removePeriodicBill } = useStore()
   const [window_, setWindow] = useState<UpcomingWindow>('week')
   const [allocation, setAllocation] = useState<Allocation>(DEFAULT_ALLOCATION)
   const liveRef = useRef<HTMLDivElement>(null)
   const [periodicFormMode, setPeriodicFormMode] = useState<'none' | 'add' | string>('none') // 'string' = editing that bill's id
+  const [milestoneToast, setMilestoneToast] = useState<number | null>(null)
 
   const today = todayIso()
   const windowEnd = useMemo(() => addDaysIso(today, windowLengthDays(window_) - 1), [today, window_])
+  const view = state.householdView
 
-  const incomeInWindow = useMemo(() => totalIncomeInWindow(today, windowEnd), [today, windowEnd])
-  const flatBillsInWindow = useMemo(() => totalBillsInWindow(state.bills, today, windowEnd), [state.bills, today, windowEnd])
+  const incomeInWindow = useMemo(() => (view === 'mimi' ? 0 : totalIncomeInWindow(today, windowEnd)), [today, windowEnd, view])
+  const flatBillsInWindow = useMemo(() => totalBillsInWindow(state.bills, today, windowEnd, view), [state.bills, today, windowEnd, view])
   // Gas/Electricity are periodic bills now — Deep pays them in smoothed fortnightly
   // set-asides, so that smoothed contribution (not the lump due-date amount) is
   // what counts toward Live Funds Available here, to avoid double-counting.
   const periodicSmoothedInWindow = useMemo(
-    () => totalPeriodicSmoothedInWindow(state.periodicBills, today, windowEnd, today),
-    [state.periodicBills, today, windowEnd]
+    () => totalPeriodicSmoothedInWindow(state.periodicBills, today, windowEnd, today, view),
+    [state.periodicBills, today, windowEnd, view]
   )
+  const sinkingFundsInWindow = useMemo(
+    () => totalSinkingFundsSmoothedInWindow(state.sinkingFunds, today, windowEnd, today),
+    [state.sinkingFunds, today, windowEnd]
+  )
+  const goalsFundedInWindow = useMemo(() => state.savingsGoals.reduce((s, g) => s + g.fundedThisPeriod, 0), [state.savingsGoals])
   const billsInWindow = useMemo(
-    () => Math.round((flatBillsInWindow + periodicSmoothedInWindow) * 100) / 100,
-    [flatBillsInWindow, periodicSmoothedInWindow]
+    () => Math.round((flatBillsInWindow + periodicSmoothedInWindow + sinkingFundsInWindow + goalsFundedInWindow) * 100) / 100,
+    [flatBillsInWindow, periodicSmoothedInWindow, sinkingFundsInWindow, goalsFundedInWindow]
   )
-  const hsbc = state.balances.find((b) => b.id === 'hsbc')?.value ?? 0
-  const overdraft = state.balances.find((b) => b.id === 'overdraft')?.value ?? 0
-  const savings = state.balances.find((b) => b.id === 'savings')?.value ?? 0
+  const hsbc = state.accounts.find((a) => a.id === 'hsbc')?.value ?? 0
+  const overdraft = state.accounts.find((a) => a.id === 'overdraft')?.value ?? 0
 
   const liveFundsAvailable = useMemo(
     () => Math.round((hsbc + overdraft + incomeInWindow - billsInWindow) * 100) / 100,
@@ -57,19 +71,23 @@ export function UpcomingPayments() {
   const fuelAmount = (liveFundsAvailable * allocation.fuel) / 100
   const personalAmount = (liveFundsAvailable * allocation.personal) / 100
 
-  // GSAP entrance for the hero card, and a distinct "shockwave" burst the moment it flips negative.
+  // GSAP entrance for the hero card, a "shockwave" burst on going negative,
+  // and a real confetti celebration the moment it crosses BACK to positive.
   const wasOverspent = useRef(isOverspent)
+  const hasMounted = useRef(false)
   useEffect(() => {
     if (!liveRef.current) return
     if (isOverspent && !wasOverspent.current) {
-      gsap.fromTo(
-        liveRef.current,
-        { scale: 1 },
-        { scale: 1.04, duration: 0.18, yoyo: true, repeat: 3, ease: 'power1.inOut' }
-      )
+      gsap.fromTo(liveRef.current, { scale: 1 }, { scale: 1.04, duration: 0.18, yoyo: true, repeat: 3, ease: 'power1.inOut' })
+    }
+    if (!isOverspent && wasOverspent.current && hasMounted.current) {
+      fireConfetti()
     }
     wasOverspent.current = isOverspent
+    hasMounted.current = true
   }, [isOverspent])
+
+  const priceChangedBills = state.bills.filter(isBillAmountChanged)
 
   return (
     <div className="space-y-6">
@@ -79,6 +97,19 @@ export function UpcomingPayments() {
           What's actually left for food, fuel and personal spending until pay day.
         </p>
       </div>
+
+      {priceChangedBills.length > 0 && (
+        <div className="rounded-xl border border-amber-400/40 bg-amber-500/10 px-4 py-3 flex items-start gap-2">
+          <AlertTriangle className="w-4 h-4 text-amber-300 shrink-0 mt-0.5" />
+          <div className="text-sm text-amber-200">
+            {priceChangedBills.map((b) => (
+              <div key={b.id}>
+                <strong>{b.name}</strong> changed from {formatCurrency(b.previousAmount!)} to {formatCurrency(b.amount)}.
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Window toggle */}
       <div className="flex gap-2">
@@ -122,7 +153,7 @@ export function UpcomingPayments() {
         />
         <div className="relative z-10">
           <p className={cn('text-xs font-bold uppercase tracking-[0.25em]', isOverspent ? 'text-rose-300' : 'text-cyan-300')}>
-            Live Funds Available
+            Live Funds Available {view !== 'combined' && <span className="capitalize">— {view}'s view</span>}
           </p>
           <div
             className={cn(
@@ -140,8 +171,11 @@ export function UpcomingPayments() {
             </p>
           ) : (
             <p className="mt-3 text-white/60 text-sm md:text-base">
-              HSBC + Overdraft + income landing this {window_}, minus bills due — what's actually free to spend.
+              HSBC + Overdraft + income landing this {window_}, minus bills/funds due — what's actually free to spend.
             </p>
+          )}
+          {view === 'mimi' && (
+            <p className="mt-1 text-[11px] text-white/35">No income data is tracked for Mimi — this view shows $0 income honestly rather than guessing.</p>
           )}
 
           {/* Food / Fuel / Personal breakdown — the whole point of this feature */}
@@ -156,6 +190,12 @@ export function UpcomingPayments() {
         </div>
       </div>
 
+      {milestoneToast && (
+        <div className="rounded-xl border border-amber-400/40 bg-amber-500/10 px-4 py-3 text-amber-200 text-sm streak-badge-pop">
+          🔥 {milestoneToast}-day streak reached — staying on pace with your Food/Fuel/Personal allocation!
+        </div>
+      )}
+
       {/* Supporting stats: income / bills for the window */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <StatCard label={`Income — this ${window_}`} glow="success">
@@ -166,24 +206,28 @@ export function UpcomingPayments() {
             Real alternating pay pattern: $600 every Friday, +$500 fortnightly bonus on combined-pay Fridays (this Fri 11 Sep 2026 is combined).
           </p>
         </StatCard>
-        <StatCard label={`Bills due — this ${window_} (estimate)`} glow="amber">
+        <StatCard label={`Bills & Funds due — this ${window_} (estimate)`} glow="amber">
           <div className="mt-4 text-3xl font-bold text-amber-300 tabular-nums">
             <CountUp value={billsInWindow} prefix="$" />
           </div>
           <p className="text-xs text-white/45 mt-2">
-            Prorated from monthly bill totals, plus Gas/Electricity's smoothed fortnightly set-asides (not their lump due-dates — see Periodic Bills below). Due-days on the flat bills are placeholders (1st of month) until you correct them.
+            Flat bills (prorated) + Periodic Bills' smoothed set-asides + Sinking Funds' smoothed set-asides + Savings Goals funded this period.
           </p>
         </StatCard>
       </div>
 
-      {/* Account balances — HSBC / Overdraft / Savings, fully editable */}
-      <StatCard label="Accounts" glow="purple" tilt={false}>
-        <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-4">
-          <BalanceInput id="hsbc" label="HSBC" value={hsbc} onChange={(v) => updateBalance('hsbc', v)} />
-          <BalanceInput id="overdraft" label="Overdraft" value={overdraft} onChange={(v) => updateBalance('overdraft', v)} />
-          <BalanceInput id="savings" label="Savings" value={savings} onChange={(v) => updateBalance('savings', v)} />
-        </div>
-      </StatCard>
+      <CashFlowChart />
+
+      <SpendPaceTracker
+        allocation={{ food: foodAmount, fuel: fuelAmount, personal: personalAmount }}
+        windowStart={today}
+        windowEnd={windowEnd}
+        onMilestone={(m) => { setMilestoneToast(m); fireConfetti() }}
+      />
+
+      <AccountsPanel />
+
+      <SavingsGoalsSection />
 
       {/* Periodic bills — Gas & Electricity, projected-charge gauge + fortnightly smoothing */}
       <div>
@@ -236,11 +280,13 @@ export function UpcomingPayments() {
         </div>
       </div>
 
-      {/* Installment plan trackers — GEM VISA cards + device repayment */}
+      <SinkingFundsSection />
+
+      {/* Installment plan trackers — GEM VISA cards + device repayment, filtered by household view */}
       <div>
         <h3 className="text-lg font-semibold text-white/85 mb-3">Installment Plans</h3>
         <div className="space-y-4">
-          {state.creditCards.map((card, i) => (
+          {state.creditCards.filter((c) => view === 'combined' || c.owner === view).map((card, i) => (
             <CreditCardAccountPanel key={card.id} card={card} delay={0.05 * i} />
           ))}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -251,13 +297,15 @@ export function UpcomingPayments() {
         </div>
       </div>
 
+      <HouseholdSplit />
+
       {/* Bills manager — every field editable */}
       <BillsManager bills={state.bills} onUpdate={updateBill} onAdd={addBill} onRemove={removeBill} />
     </div>
   )
 }
 
-/** Converts the add/edit form's plain values into a real PeriodicBill — preserves id/pendingBill when editing an existing bill. */
+/** Converts the add/edit form's plain values into a real PeriodicBill — preserves id/pendingBill/owner when editing an existing bill. */
 function toPeriodicBill(values: PeriodicBillFormValues, existing?: PeriodicBill): PeriodicBill {
   return {
     id: existing?.id ?? `periodic-${Date.now()}`,
@@ -269,6 +317,8 @@ function toPeriodicBill(values: PeriodicBillFormValues, existing?: PeriodicBill)
     inCredit: values.inCredit,
     creditAmount: values.inCredit ? values.creditAmount : 0,
     smoothingEnabled: values.smoothingEnabled,
+    owner: existing?.owner ?? 'shared',
+    sharedSplitDeepPercent: existing?.sharedSplitDeepPercent,
   }
 }
 
@@ -294,24 +344,6 @@ function AllocationTile({ label, amount, pct, glowFrom, glowTo, onChange }: { la
   )
 }
 
-function BalanceInput({ label, value, onChange }: { id: string; label: string; value: number; onChange: (v: number) => void }) {
-  return (
-    <div className="rounded-xl border border-white/10 bg-black/30 p-4">
-      <label className="text-xs font-semibold uppercase tracking-wide text-white/60">{label}</label>
-      <div className="mt-2 flex items-center gap-1">
-        <span className="text-white/40">$</span>
-        <input
-          type="number"
-          step="0.01"
-          value={value}
-          onChange={(e) => onChange(parseFloat(e.target.value) || 0)}
-          className="w-full bg-transparent text-xl font-bold tabular-nums text-white outline-none border-b border-white/10 focus:border-cyan-400/60"
-        />
-      </div>
-    </div>
-  )
-}
-
 const FREQUENCIES: BillFrequency[] = ['weekly', 'fortnightly', 'monthly']
 
 function BillsManager({ bills, onUpdate, onAdd, onRemove }: {
@@ -330,6 +362,7 @@ function BillsManager({ bills, onUpdate, onAdd, onRemove }: {
               <th className="pb-2 pr-2">Amount</th>
               <th className="pb-2 pr-2">Frequency</th>
               <th className="pb-2 pr-2">Due day</th>
+              <th className="pb-2 pr-2">Owner</th>
               <th className="pb-2 pr-2">Active</th>
               <th className="pb-2" />
             </tr>
@@ -338,15 +371,21 @@ function BillsManager({ bills, onUpdate, onAdd, onRemove }: {
             {bills.map((bill) => (
               <tr key={bill.id} className="border-t border-white/5">
                 <td className="py-2 pr-2">
-                  <div className="flex items-center gap-1">
+                  <div className="flex items-center gap-1.5">
+                    <BillIcon name={bill.name} className="w-3.5 h-3.5" />
                     <input
                       value={bill.name}
                       onChange={(e) => onUpdate(bill.id, { name: e.target.value })}
-                      className="bg-transparent outline-none border-b border-transparent focus:border-cyan-400/50 w-32"
+                      className="bg-transparent outline-none border-b border-transparent focus:border-cyan-400/50 w-28"
                     />
                     {bill.note && (
                       <span title={bill.note} className="shrink-0">
                         <Info className="w-3 h-3 text-white/30" aria-label={bill.note} />
+                      </span>
+                    )}
+                    {isBillAmountChanged(bill) && (
+                      <span title={`Changed from ${bill.previousAmount} to ${bill.amount}`} className="shrink-0">
+                        <AlertTriangle className="w-3 h-3 text-amber-400" aria-label="Amount changed since last saved" />
                       </span>
                     )}
                   </div>
@@ -390,6 +429,17 @@ function BillsManager({ bills, onUpdate, onAdd, onRemove }: {
                   </div>
                 </td>
                 <td className="py-2 pr-2">
+                  <select
+                    value={bill.owner}
+                    onChange={(e) => onUpdate(bill.id, { owner: e.target.value as RecurringBill['owner'] })}
+                    className="bg-black/40 rounded px-2 py-1 text-xs outline-none border border-white/10 capitalize"
+                  >
+                    <option value="shared">Shared</option>
+                    <option value="deep">Deep</option>
+                    <option value="mimi">Mimi</option>
+                  </select>
+                </td>
+                <td className="py-2 pr-2">
                   <input
                     type="checkbox"
                     checked={bill.active}
@@ -417,6 +467,7 @@ function BillsManager({ bills, onUpdate, onAdd, onRemove }: {
               dueDayIsEstimate: true,
               category: 'other',
               active: true,
+              owner: 'shared',
             })
           }
           className="mt-3 flex items-center gap-1 text-xs text-cyan-300 hover:text-cyan-200"

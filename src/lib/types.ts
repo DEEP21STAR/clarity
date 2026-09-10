@@ -5,6 +5,8 @@ export type Mode = 'personal' | 'business'
 export type Period = 'daily' | 'weekly' | 'monthly' | 'quarterly' | 'annual'
 export type BillFrequency = 'weekly' | 'fortnightly' | 'monthly'
 export type UpcomingWindow = 'week' | 'fortnight' | 'month'
+export type HouseholdOwner = 'deep' | 'mimi' | 'shared'
+export type HouseholdView = 'deep' | 'mimi' | 'combined'
 
 export interface TaxBracket {
   upTo: number | null // null = no upper bound
@@ -24,6 +26,12 @@ export interface RecurringBill {
   active: boolean
   /** Optional freeform context shown in the UI (e.g. a billing-cycle breakdown). */
   note?: string
+  /** Who this bill belongs to, for the Household Deep/Mimi/Combined view. */
+  owner: HouseholdOwner
+  /** When owner === 'shared', the % of this bill attributed to Deep in individual household views/bill-split (rest goes to Mimi). Defaults to 50. */
+  sharedSplitDeepPercent?: number
+  /** The amount last saved before the most recent edit — used to detect and flag a price increase/change. Undefined until the first edit. */
+  previousAmount?: number
 }
 
 /** One Latitude-style "plan" (interest-free installment plan) sitting inside a credit card. */
@@ -57,6 +65,7 @@ export interface CreditCardAccount {
   minPaymentDueDate?: string
   rates: CardRates
   plans: InstallmentPlan[]
+  owner: HouseholdOwner
 }
 
 /** A plain device/goods repayment plan — no interest, no risk overlay. */
@@ -67,6 +76,7 @@ export interface DeviceRepayment {
   remaining: number
   paymentsTotal: number
   paymentsRemaining: number
+  owner: HouseholdOwner
 }
 
 /** A usage-metered periodic bill (power/gas style) with a projected-charge gauge and fortnightly smoothing. */
@@ -83,13 +93,88 @@ export interface PeriodicBill {
   creditAmount: number
   /** When false, this bill's smoothed fortnightly amount is excluded from the Upcoming Payments funds math (informational only). Defaults to true. */
   smoothingEnabled: boolean
+  owner: HouseholdOwner
+  sharedSplitDeepPercent?: number
 }
 
-export interface AccountBalance {
-  id: 'hsbc' | 'overdraft' | 'savings'
-  label: string
+/**
+ * `liquid` accounts are real bank/cash-equivalent balances (HSBC, Overdraft,
+ * Savings) — HSBC + Overdraft count toward Live Funds Available; Savings does
+ * not (it's not meant to be spent day-to-day) but all three count in net worth.
+ * `asset` accounts are manually-maintained non-liquid assets (Car, Home,
+ * Other) — NEVER auto-valued from a live market API, always user-edited, and
+ * the UI must say so honestly.
+ */
+export type AccountType = 'liquid' | 'asset'
+
+export interface Account {
+  id: string
+  name: string
+  type: AccountType
   value: number
+  /** True for accounts that count toward Live Funds Available (HSBC, Overdraft) — false for Savings and all non-liquid assets. */
+  countsTowardLiveFunds: boolean
   note?: string
+}
+
+/** One point-in-time net worth reading, snapshotted at most once per calendar day. */
+export interface NetWorthSnapshot {
+  date: string // ISO YYYY-MM-DD
+  netWorth: number
+  totalAssets: number
+  totalLiabilities: number
+}
+
+export interface SavingsGoal {
+  id: string
+  name: string
+  targetAmount: number
+  targetDate?: string
+  /** Total banked toward this goal so far (moved via "Log this period's contribution"). */
+  contributedAmount: number
+  /** $ set aside for this goal each Upcoming Payments period — deducted from Live Funds Available until logged. */
+  fundedThisPeriod: number
+}
+
+/** A one-off (non-recurring) income or expense entry, feeding the cash-flow projection. */
+export interface OneOffEntry {
+  id: string
+  date: string // ISO
+  description: string
+  amount: number // negative = expense, positive = income
+}
+
+/**
+ * Generalised sinking fund for ANY irregular/lump-sum expense (car WOF/rego,
+ * Christmas, annual subscriptions, etc) — same fortnightly-smoothing math as
+ * the Gas/Electricity periodic-bill gauges, without the utility-specific
+ * billing-period/credit semantics. Deliberately its own lightweight type so
+ * PeriodicBill (which models a real utility billing cycle) doesn't have to
+ * be stretched to fit unrelated expenses.
+ */
+export interface SinkingFund {
+  id: string
+  name: string
+  targetAmount: number
+  targetDate: string // ISO — when the lump sum is actually due
+  currentSaved: number
+}
+
+/** User-entered running spend against each Live Funds allocation category, for the spend-pace alert. Resets when the user clears it. */
+export interface SpendTracker {
+  food: number
+  fuel: number
+  personal: number
+  /** ISO date this tracker started counting from (so pace can be computed against elapsed time). */
+  periodStart: string
+}
+
+export interface StreakState {
+  current: number
+  best: number
+  lastCheckedDate: string
+  /** Milestones already celebrated this streak run, so the confetti only fires once per milestone. */
+  milestonesHit: number[]
 }
 
 export interface IncomeAnchor {

@@ -1,18 +1,24 @@
-import React, { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
-import type { RecurringBill, AccountBalance, Mode, Country, Transaction, Debt, CreditCardAccount, DeviceRepayment, PeriodicBill } from './types'
-import { SEED_BILLS, SEED_CREDIT_CARDS, SEED_DEVICE_REPAYMENTS, SEED_PERIODIC_BILLS } from './constants'
+import React, { createContext, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
+import type {
+  RecurringBill, Mode, Country, Transaction, Debt, CreditCardAccount, DeviceRepayment, PeriodicBill,
+  Account, NetWorthSnapshot, SavingsGoal, OneOffEntry, SinkingFund, SpendTracker, StreakState, HouseholdView,
+} from './types'
+import { SEED_BILLS, SEED_CREDIT_CARDS, SEED_DEVICE_REPAYMENTS, SEED_PERIODIC_BILLS, SEED_ACCOUNTS } from './constants'
+import { calcNetWorth, upsertNetWorthSnapshot, applyBillAmountChange } from './logic'
+import { todayIso } from './utils'
 
-// Bumped v3 -> v4: bill set changed (Gas/Electricity moved to periodicBills,
-// GEM VISA amounts/due-days updated to real figures) and three new data
-// shapes were added. A stale v3 blob would merge in old bill ids and miss
-// the new sections entirely, so it's not reused.
-const STORAGE_KEY = 'clarity-dashboard-state-v4'
+// Bumped v4 -> v5: replaced the flat HSBC/Overdraft/Savings `balances` list
+// with a proper Accounts concept (+ Car/Home/Other manual assets) and added
+// net worth history, savings goals, one-off entries, sinking funds, household
+// view, spend tracking, streaks, and the export timestamp. A stale v4 blob
+// has no `accounts` array at all, so it's not reused.
+const STORAGE_KEY = 'clarity-dashboard-state-v5'
 
 export interface AppState {
   mode: Mode
   country: Country
   bills: RecurringBill[]
-  balances: AccountBalance[]
+  accounts: Account[]
   transactions: Transaction[]
   debts: Debt[]
   savingsGoal: number
@@ -20,17 +26,21 @@ export interface AppState {
   creditCards: CreditCardAccount[]
   deviceRepayments: DeviceRepayment[]
   periodicBills: PeriodicBill[]
+  netWorthHistory: NetWorthSnapshot[]
+  savingsGoals: SavingsGoal[]
+  oneOffEntries: OneOffEntry[]
+  sinkingFunds: SinkingFund[]
+  householdView: HouseholdView
+  spendTracker: SpendTracker
+  streak: StreakState
+  lastExportedAt: string | null
 }
 
 const DEFAULT_STATE: AppState = {
   mode: 'personal',
   country: 'NZ',
   bills: SEED_BILLS,
-  balances: [
-    { id: 'hsbc', label: 'HSBC', value: 0 },
-    { id: 'overdraft', label: 'Overdraft', value: 0 },
-    { id: 'savings', label: 'Savings', value: 0 },
-  ],
+  accounts: SEED_ACCOUNTS,
   transactions: [],
   debts: [],
   savingsGoal: 5000,
@@ -38,6 +48,14 @@ const DEFAULT_STATE: AppState = {
   creditCards: SEED_CREDIT_CARDS,
   deviceRepayments: SEED_DEVICE_REPAYMENTS,
   periodicBills: SEED_PERIODIC_BILLS,
+  netWorthHistory: [],
+  savingsGoals: [],
+  oneOffEntries: [],
+  sinkingFunds: [],
+  householdView: 'combined',
+  spendTracker: { food: 0, fuel: 0, personal: 0, periodStart: todayIso() },
+  streak: { current: 0, best: 0, lastCheckedDate: '', milestonesHit: [] },
+  lastExportedAt: null,
 }
 
 function loadState(): AppState {
@@ -58,7 +76,7 @@ interface StoreContextValue {
   updateBill: (id: string, patch: Partial<RecurringBill>) => void
   addBill: (bill: RecurringBill) => void
   removeBill: (id: string) => void
-  updateBalance: (id: AccountBalance['id'], value: number) => void
+  updateAccount: (id: string, patch: Partial<Account>) => void
   setMode: (mode: Mode) => void
   setCountry: (country: Country) => void
   addTransactions: (txs: Transaction[]) => void
@@ -69,12 +87,28 @@ interface StoreContextValue {
   addPeriodicBill: (bill: PeriodicBill) => void
   removePeriodicBill: (id: string) => void
   updatePeriodicBill: (id: string, patch: Partial<PeriodicBill>) => void
+  addSavingsGoal: (goal: SavingsGoal) => void
+  updateSavingsGoal: (id: string, patch: Partial<SavingsGoal>) => void
+  removeSavingsGoal: (id: string) => void
+  logGoalContribution: (id: string) => void
+  addOneOffEntry: (entry: OneOffEntry) => void
+  removeOneOffEntry: (id: string) => void
+  addSinkingFund: (fund: SinkingFund) => void
+  updateSinkingFund: (id: string, patch: Partial<SinkingFund>) => void
+  removeSinkingFund: (id: string) => void
+  setHouseholdView: (view: HouseholdView) => void
+  updateSpendTracker: (patch: Partial<SpendTracker>) => void
+  resetSpendTracker: (periodStart: string) => void
+  setStreak: (streak: StreakState) => void
+  setLastExportedAt: (iso: string) => void
+  markDebtPaidOff: (id: string) => void
 }
 
 const StoreContext = createContext<StoreContextValue | null>(null)
 
 export function StoreProvider({ children }: { children: ReactNode }) {
   const [state, setState] = useState<AppState>(loadState)
+  const lastNetWorthInputs = useRef<string>('')
 
   useEffect(() => {
     try {
@@ -84,15 +118,37 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     }
   }, [state])
 
+  // Net worth snapshot — at most one entry per calendar day, recomputed whenever
+  // the underlying accounts/cards/debts actually change (not on every render).
+  useEffect(() => {
+    const fingerprint = JSON.stringify([state.accounts, state.creditCards.map((c) => c.balance), state.debts])
+    if (fingerprint === lastNetWorthInputs.current) return
+    lastNetWorthInputs.current = fingerprint
+    const breakdown = calcNetWorth(state.accounts, state.creditCards, state.debts)
+    const today = todayIso()
+    setState((s) => ({
+      ...s,
+      netWorthHistory: upsertNetWorthSnapshot(s.netWorthHistory, { date: today, ...breakdown }),
+    }))
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [state.accounts, state.creditCards, state.debts])
+
   const value = useMemo<StoreContextValue>(() => ({
     state,
     setState,
     updateBill: (id, patch) =>
-      setState((s) => ({ ...s, bills: s.bills.map((b) => (b.id === id ? { ...b, ...patch } : b)) })),
+      setState((s) => ({
+        ...s,
+        bills: s.bills.map((b) => {
+          if (b.id !== id) return b
+          const amountPatch = patch.amount !== undefined ? applyBillAmountChange(b, patch.amount) : {}
+          return { ...b, ...patch, ...amountPatch }
+        }),
+      })),
     addBill: (bill) => setState((s) => ({ ...s, bills: [...s.bills, bill] })),
     removeBill: (id) => setState((s) => ({ ...s, bills: s.bills.filter((b) => b.id !== id) })),
-    updateBalance: (id, val) =>
-      setState((s) => ({ ...s, balances: s.balances.map((b) => (b.id === id ? { ...b, value: val } : b)) })),
+    updateAccount: (id, patch) =>
+      setState((s) => ({ ...s, accounts: s.accounts.map((a) => (a.id === id ? { ...a, ...patch } : a)) })),
     setMode: (mode) => setState((s) => ({ ...s, mode })),
     setCountry: (country) => setState((s) => ({ ...s, country })),
     addTransactions: (txs) => setState((s) => ({ ...s, transactions: [...txs, ...s.transactions] })),
@@ -100,10 +156,33 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     addDebt: (debt) => setState((s) => ({ ...s, debts: [...s.debts, debt] })),
     removeDebt: (id) => setState((s) => ({ ...s, debts: s.debts.filter((d) => d.id !== id) })),
     updateDebt: (id, patch) => setState((s) => ({ ...s, debts: s.debts.map((d) => (d.id === id ? { ...d, ...patch } : d)) })),
+    markDebtPaidOff: (id) => setState((s) => ({ ...s, debts: s.debts.map((d) => (d.id === id ? { ...d, balance: 0 } : d)) })),
     addPeriodicBill: (bill) => setState((s) => ({ ...s, periodicBills: [...s.periodicBills, bill] })),
     removePeriodicBill: (id) => setState((s) => ({ ...s, periodicBills: s.periodicBills.filter((b) => b.id !== id) })),
     updatePeriodicBill: (id, patch) =>
       setState((s) => ({ ...s, periodicBills: s.periodicBills.map((b) => (b.id === id ? { ...b, ...patch } : b)) })),
+    addSavingsGoal: (goal) => setState((s) => ({ ...s, savingsGoals: [...s.savingsGoals, goal] })),
+    updateSavingsGoal: (id, patch) =>
+      setState((s) => ({ ...s, savingsGoals: s.savingsGoals.map((g) => (g.id === id ? { ...g, ...patch } : g)) })),
+    removeSavingsGoal: (id) => setState((s) => ({ ...s, savingsGoals: s.savingsGoals.filter((g) => g.id !== id) })),
+    logGoalContribution: (id) =>
+      setState((s) => ({
+        ...s,
+        savingsGoals: s.savingsGoals.map((g) =>
+          g.id === id ? { ...g, contributedAmount: g.contributedAmount + g.fundedThisPeriod } : g
+        ),
+      })),
+    addOneOffEntry: (entry) => setState((s) => ({ ...s, oneOffEntries: [entry, ...s.oneOffEntries] })),
+    removeOneOffEntry: (id) => setState((s) => ({ ...s, oneOffEntries: s.oneOffEntries.filter((e) => e.id !== id) })),
+    addSinkingFund: (fund) => setState((s) => ({ ...s, sinkingFunds: [...s.sinkingFunds, fund] })),
+    updateSinkingFund: (id, patch) =>
+      setState((s) => ({ ...s, sinkingFunds: s.sinkingFunds.map((f) => (f.id === id ? { ...f, ...patch } : f)) })),
+    removeSinkingFund: (id) => setState((s) => ({ ...s, sinkingFunds: s.sinkingFunds.filter((f) => f.id !== id) })),
+    setHouseholdView: (view) => setState((s) => ({ ...s, householdView: view })),
+    updateSpendTracker: (patch) => setState((s) => ({ ...s, spendTracker: { ...s.spendTracker, ...patch } })),
+    resetSpendTracker: (periodStart) => setState((s) => ({ ...s, spendTracker: { food: 0, fuel: 0, personal: 0, periodStart } })),
+    setStreak: (streak) => setState((s) => ({ ...s, streak })),
+    setLastExportedAt: (iso) => setState((s) => ({ ...s, lastExportedAt: iso })),
   }), [state])
 
   return <StoreContext.Provider value={value}>{children}</StoreContext.Provider>

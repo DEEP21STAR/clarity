@@ -2,13 +2,14 @@ import { useMemo } from 'react'
 import { useStore } from '@/lib/store'
 import { StatCard } from './StatCard'
 import { CountUp } from './CountUp'
-import { nzNetIncome, auNetIncome, generateInsights, monthlyEquivalent } from '@/lib/logic'
+import { MoodIcon } from './MoodIcon'
+import { nzNetIncome, auNetIncome, generateInsights, monthlyEquivalent, calcFinancialHealthScore, emergencyFundMonths } from '@/lib/logic'
 import { formatCurrency } from '@/lib/utils'
 import { AlertTriangle, CheckCircle2, Info } from 'lucide-react'
 
 export function Dashboard() {
   const { state, setMode, setCountry, setGrossAnnualIncome } = useStore()
-  const { mode, country, grossAnnualIncome, bills, debts, balances } = state
+  const { mode, country, grossAnnualIncome, bills, debts, accounts } = state
 
   const net = useMemo(
     () => (country === 'NZ' ? nzNetIncome(grossAnnualIncome) : auNetIncome(grossAnnualIncome)),
@@ -19,7 +20,17 @@ export function Dashboard() {
     () => bills.filter((b) => b.active).reduce((s, b) => s + monthlyEquivalent(b.amount, b.frequency), 0),
     [bills]
   )
-  const savingsBalance = balances.find((b) => b.id === 'savings')?.value ?? 0
+  const savingsBalance = accounts.find((a) => a.id === 'savings')?.value ?? 0
+
+  const healthScore = useMemo(() => {
+    const savingsRate = monthlyNet > 0 ? (monthlyNet - monthlyBills) / monthlyNet : 0
+    const totalDebtBalance = debts.reduce((s, d) => s + d.balance, 0) + state.creditCards.reduce((s, c) => s + c.balance, 0)
+    const annualNetIncome = net.net
+    const debtToIncome = annualNetIncome > 0 ? totalDebtBalance / annualNetIncome : 1
+    const billCoverageRatio = monthlyBills > 0 ? monthlyNet / monthlyBills : 2
+    const efMonths = emergencyFundMonths(savingsBalance, monthlyBills)
+    return calcFinancialHealthScore({ savingsRate, debtToIncome, billCoverageRatio, emergencyFundMonths: efMonths })
+  }, [monthlyNet, monthlyBills, debts, state.creditCards, net.net, savingsBalance])
 
   const insights = useMemo(
     () =>
@@ -74,6 +85,19 @@ export function Dashboard() {
           <p className="text-xs text-white/40 mt-2">{bills.filter((b) => b.active).length} active recurring bills.</p>
         </StatCard>
       </div>
+
+      <StatCard label="Financial Health Score" glow={healthScore.score >= 75 ? 'success' : healthScore.score >= 40 ? 'amber' : 'danger'} tilt={false}>
+        <div className="mt-4 flex items-center gap-6">
+          <MoodIcon score={healthScore.score} size={64} />
+          <div>
+            <div className="text-5xl font-black tabular-nums text-white"><CountUp value={healthScore.score} decimals={0} />/100</div>
+            <p className="text-xs text-white/40 mt-1">
+              Savings rate {healthScore.breakdown.savingsRate.toFixed(0)} · Debt-to-income {healthScore.breakdown.debtToIncome.toFixed(0)} · Bill coverage {healthScore.breakdown.billCoverage.toFixed(0)} · Emergency fund {healthScore.breakdown.emergencyFund.toFixed(0)}
+              <span className="block mt-1 text-white/30">Weighted 30/25/25/20 — see calcFinancialHealthScore() for the exact documented formula.</span>
+            </p>
+          </div>
+        </div>
+      </StatCard>
 
       <StatCard label="Tax Breakdown" glow="purple" tilt={false}>
         <div className="mt-4 grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">

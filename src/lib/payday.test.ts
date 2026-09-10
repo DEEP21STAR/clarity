@@ -42,7 +42,7 @@ describe('payday logic — real date math from the 2026-09-11 anchor, not a look
 
 describe('bill window proration — honest estimate labelling, monthly bills prorated by day count', () => {
   const bills: RecurringBill[] = [
-    { id: 'b1', name: 'Rent', amount: 1960, frequency: 'monthly', dueDay: 1, dueDayIsEstimate: true, category: 'housing', active: true },
+    { id: 'b1', name: 'Rent', amount: 1960, frequency: 'monthly', dueDay: 1, dueDayIsEstimate: true, category: 'housing', active: true, owner: 'shared' },
   ]
   it('a 7-day window gets roughly 7/30.44 of the monthly bill', () => {
     const total = totalBillsInWindow(bills, '2026-09-10', '2026-09-16')

@@ -4,11 +4,12 @@ import { StatCard } from './StatCard'
 import { CountUp } from './CountUp'
 import { avalanchePlan } from '@/lib/logic'
 import { formatCurrency } from '@/lib/utils'
-import { Plus, Trash2 } from 'lucide-react'
+import { fireBigConfetti } from '@/lib/confetti'
+import { Plus, Trash2, CheckCircle2 } from 'lucide-react'
 import type { Debt } from '@/lib/types'
 
 export function Debts() {
-  const { state, addDebt, removeDebt, updateDebt } = useStore()
+  const { state, addDebt, removeDebt, updateDebt, markDebtPaidOff } = useStore()
   const [extraBudget, setExtraBudget] = useState(100)
 
   const plan = useMemo(() => avalanchePlan(state.debts, extraBudget), [state.debts, extraBudget])
@@ -60,6 +61,15 @@ export function Debts() {
                 <div className="text-xs text-white/50 w-28 text-right">
                   {entry ? `${entry.monthsToPayoff}mo · ${formatCurrency(entry.totalInterestPaid)} int.` : '—'}
                 </div>
+                {debt.balance > 0 && (
+                  <button
+                    onClick={() => { markDebtPaidOff(debt.id); fireBigConfetti() }}
+                    title="Mark as paid off"
+                    className="text-white/30 hover:text-emerald-400"
+                  >
+                    <CheckCircle2 className="w-4 h-4" />
+                  </button>
+                )}
                 <button onClick={() => removeDebt(debt.id)} className="text-white/30 hover:text-rose-400">
                   <Trash2 className="w-4 h-4" />
                 </button>

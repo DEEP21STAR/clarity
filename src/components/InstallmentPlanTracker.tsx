@@ -1,17 +1,22 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import gsap from 'gsap'
 import { StatCard } from './StatCard'
-import { getPlanSeverity, planProgressPercent, requiredMonthlyPayment } from '@/lib/logic'
+import { getPlanSeverity, planProgressPercent, requiredMonthlyPayment, planPayoffWithExtra } from '@/lib/logic'
 import { cn, formatCurrency } from '@/lib/utils'
 import type { CreditCardAccount, InstallmentPlan, DeviceRepayment } from '@/lib/types'
-import { AlertTriangle, Flame, CheckCircle2 } from 'lucide-react'
+import { AlertTriangle, Flame, CheckCircle2, Sliders } from 'lucide-react'
+import { BillIcon } from './BillIcons'
 
 /** One installment plan card — skinned in the app's neon-aurora language, inspired by (not copied from) Latitude's "My Plans" UI. */
-export function InstallmentPlanCard({ plan, delay = 0 }: { plan: InstallmentPlan; delay?: number }) {
+export function InstallmentPlanCard({ plan, delay = 0, expiredPlanRate = 0 }: { plan: InstallmentPlan; delay?: number; expiredPlanRate?: number }) {
   const severity = getPlanSeverity(plan)
   const progress = planProgressPercent(plan)
   const monthly = requiredMonthlyPayment(plan)
   const ref = useRef<HTMLDivElement>(null)
+  const [extra, setExtra] = useState(0)
+  const [showWhatIf, setShowWhatIf] = useState(false)
+  const payoff = planPayoffWithExtra(plan, extra, plan.expired ? expiredPlanRate : 0)
+  const baselinePayoff = planPayoffWithExtra(plan, 0, plan.expired ? expiredPlanRate : 0)
 
   useEffect(() => {
     if (!ref.current) return
@@ -75,12 +80,51 @@ export function InstallmentPlanCard({ plan, delay = 0 }: { plan: InstallmentPlan
           Needs ~{formatCurrency(monthly)}/mo to clear on schedule.
         </p>
       )}
+
+      <button
+        onClick={() => setShowWhatIf((v) => !v)}
+        className="mt-2 flex items-center gap-1 text-[11px] text-cyan-300/80 hover:text-cyan-200"
+      >
+        <Sliders className="w-3 h-3" /> {showWhatIf ? 'Hide' : 'What if I paid extra?'}
+      </button>
+
+      {showWhatIf && (
+        <div className="mt-2 rounded-lg border border-cyan-400/20 bg-cyan-500/5 p-3">
+          <div className="flex items-center justify-between text-xs">
+            <span className="text-white/50">Extra per month</span>
+            <span className="text-cyan-300 font-semibold tabular-nums">{formatCurrency(extra)}</span>
+          </div>
+          <input
+            type="range" min={0} max={500} step={10} value={extra}
+            onChange={(e) => setExtra(Number(e.target.value))}
+            className="w-full mt-2 accent-cyan-400"
+          />
+          <p className="mt-2 text-[11px] text-white/60">
+            {Number.isFinite(payoff.months)
+              ? <>Payoff in <strong className="text-white">{payoff.months} mo</strong> (was {baselinePayoff.months} mo){plan.expired && <> · interest paid ~{formatCurrency(payoff.totalInterest)}</>}</>
+              : 'Add a payment amount to see a payoff estimate.'}
+          </p>
+          {plan.expired && <p className="mt-1 text-[10px] text-white/30">Expired-plan estimate assumes a baseline payment of max($25, 2% of balance) plus your extra — Latitude doesn't expose a real per-plan minimum once expired.</p>}
+        </div>
+      )}
     </div>
   )
 }
 
-/** Full card account panel — balance/available/min-payment header plus a grid of its plans. */
+const DEALT_SESSION_KEY = 'clarity-plans-dealt'
+
+/** Full card account panel — balance/available/min-payment header plus a grid of its plans. First render each session, plan cards "deal" in like being dealt a hand of cards. */
 export function CreditCardAccountPanel({ card, delay = 0 }: { card: CreditCardAccount; delay?: number }) {
+  const [dealt] = useState(() => {
+    try {
+      const already = sessionStorage.getItem(DEALT_SESSION_KEY) === '1'
+      if (!already) sessionStorage.setItem(DEALT_SESSION_KEY, '1')
+      return !already
+    } catch {
+      return false
+    }
+  })
+
   return (
     <StatCard label={card.name} glow="purple" tilt={false} delay={delay}>
       <div className="mt-4 grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
@@ -107,7 +151,9 @@ export function CreditCardAccountPanel({ card, delay = 0 }: { card: CreditCardAc
 
       <div className="mt-5 grid grid-cols-1 md:grid-cols-2 gap-3">
         {card.plans.map((plan, i) => (
-          <InstallmentPlanCard key={plan.id} plan={plan} delay={0.05 * i} />
+          <div key={plan.id} className={dealt ? 'card-deal-in' : undefined} style={dealt ? { animationDelay: `${0.08 * i}s` } : undefined}>
+            <InstallmentPlanCard plan={plan} delay={dealt ? 0 : 0.05 * i} expiredPlanRate={card.rates.expiredPlanRate} />
+          </div>
         ))}
       </div>
     </StatCard>
@@ -120,7 +166,10 @@ export function DeviceRepaymentCard({ device, delay = 0 }: { device: DeviceRepay
   return (
     <StatCard label={device.name} glow="cyan" tilt={false} delay={delay}>
       <div className="mt-4 flex items-baseline justify-between text-sm">
-        <span className="text-2xl font-bold tabular-nums text-cyan-200">{formatCurrency(device.monthlyAmount)}<span className="text-sm text-white/40">/mo</span></span>
+        <span className="flex items-center gap-2 text-2xl font-bold tabular-nums text-cyan-200">
+          <BillIcon name={device.name} className="w-5 h-5" />
+          {formatCurrency(device.monthlyAmount)}<span className="text-sm text-white/40">/mo</span>
+        </span>
         <span className="text-white/40 text-xs">{device.paymentsRemaining}/{device.paymentsTotal} payments left</span>
       </div>
       <div className="mt-3 h-2 rounded-full bg-white/5 overflow-hidden">
