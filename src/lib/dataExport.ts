@@ -51,25 +51,6 @@ export function buildFullExportJson(state: AppState): ClarityExport {
   }
 }
 
-/**
- * Triggers a browser download AND returns whether the attempt likely
- * happened — but note published claude.ai artifacts sandbox viewer-initiated
- * downloads (even for the owner), so this can silently do nothing. Callers
- * should always also offer the copy-to-clipboard fallback (see
- * ExportDataButton) rather than relying on this alone.
- */
-export function attemptDownload(filename: string, content: string, mimeType: string) {
-  try {
-    const blob = new Blob([content], { type: mimeType })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = filename
-    document.body.appendChild(a)
-    a.click()
-    document.body.removeChild(a)
-    URL.revokeObjectURL(url)
-  } catch {
-    // Sandboxed or otherwise blocked — the copy-to-clipboard fallback is the reliable path.
-  }
-}
+// Real file saving lives in `src/lib/downloads.ts` (the `downloads` runtime
+// capability) — a plain `<a download>` link does nothing inside the artifact
+// viewer sandbox for any viewer, owner included, so that approach was removed.

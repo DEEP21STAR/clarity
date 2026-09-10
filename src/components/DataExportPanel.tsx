@@ -1,8 +1,9 @@
 import { useState } from 'react'
 import { StatCard } from './StatCard'
 import { useStore } from '@/lib/store'
-import { buildFullExportJson, attemptDownload } from '@/lib/dataExport'
+import { buildFullExportJson } from '@/lib/dataExport'
 import { buildAccountantCsv } from '@/lib/logic'
+import { saveFile } from '@/lib/downloads'
 import { Download, Copy, CheckCircle2, AlertTriangle, Printer } from 'lucide-react'
 
 /**
@@ -10,50 +11,59 @@ import { Download, Copy, CheckCircle2, AlertTriangle, Printer } from 'lucide-rea
  * and feature 15 (accountant-ready CSV + a print-optimized summary that
  * doubles as the "PDF" path via the browser's native print/Save-as-PDF).
  *
- * IMPORTANT PLATFORM CONSTRAINT, disclosed honestly rather than silently
- * failing: a published claude.ai artifact runs inside a sandboxed viewer
- * that blocks page-initiated file downloads for EVERY viewer, including the
- * artifact's own owner. The download buttons below still attempt a real
- * browser download (works if this page is ever opened outside that sandbox,
- * e.g. a self-hosted copy) — but the reliable path inside the sandbox is the
- * "Copy to clipboard" button, then paste into a new file by hand.
+ * Real file-saving goes through the `downloads` runtime capability
+ * (declared on this artifact) via `saveFile()` in `src/lib/downloads.ts` —
+ * an earlier `<a download>` approach was confirmed dead in the artifact
+ * viewer sandbox and has been removed. If `downloads` isn't available in a
+ * given view (older contract, capability not granted, etc), this falls back
+ * to a real clipboard copy so Deep can still get the data out by hand.
  */
 export function DataExportPanel() {
   const { state, setLastExportedAt } = useStore()
-  const [copiedJson, setCopiedJson] = useState(false)
-  const [copiedCsv, setCopiedCsv] = useState(false)
+  const [jsonStatus, setJsonStatus] = useState<'idle' | 'saved' | 'copied' | 'declined'>('idle')
+  const [csvStatus, setCsvStatus] = useState<'idle' | 'saved' | 'copied' | 'declined'>('idle')
   const [showJsonPreview, setShowJsonPreview] = useState(false)
   const [showPrintSummary, setShowPrintSummary] = useState(false)
 
-  const doExportJson = () => {
+  const exportJson = async () => {
     const json = JSON.stringify(buildFullExportJson(state), null, 2)
-    attemptDownload('clarity-export.json', json, 'application/json')
+    const outcome = await saveFile('clarity-export.json', json)
     setLastExportedAt(new Date().toISOString())
-    return json
-  }
-
-  const copyJson = async () => {
-    const json = doExportJson()
-    try {
-      await navigator.clipboard.writeText(json)
-      setCopiedJson(true)
-      setTimeout(() => setCopiedJson(false), 2500)
-    } catch {
-      setShowJsonPreview(true) // clipboard blocked too — fall back to select-all-manually
+    if (outcome === 'saved') {
+      setJsonStatus('saved')
+    } else if (outcome === 'declined') {
+      setJsonStatus('declined')
+    } else {
+      try {
+        await navigator.clipboard.writeText(json)
+        setJsonStatus('copied')
+      } catch {
+        setShowJsonPreview(true) // clipboard blocked too — fall back to select-all-manually
+      }
     }
+    setTimeout(() => setJsonStatus('idle'), 3000)
   }
 
   const csv = buildAccountantCsv(state.transactions, state.mode, 'All time')
-  const copyCsv = async () => {
-    attemptDownload('clarity-accountant-summary.csv', csv, 'text/csv')
-    try {
-      await navigator.clipboard.writeText(csv)
-      setCopiedCsv(true)
-      setTimeout(() => setCopiedCsv(false), 2500)
-    } catch {
-      // ignore — CSV textarea below still lets Deep copy manually
+  const exportCsv = async () => {
+    const outcome = await saveFile('clarity-accountant-summary.csv', csv)
+    if (outcome === 'saved') {
+      setCsvStatus('saved')
+    } else if (outcome === 'declined') {
+      setCsvStatus('declined')
+    } else {
+      try {
+        await navigator.clipboard.writeText(csv)
+        setCsvStatus('copied')
+      } catch {
+        // ignore — CSV textarea below still lets Deep copy manually
+      }
     }
+    setTimeout(() => setCsvStatus('idle'), 3000)
   }
+
+  const jsonLabel = jsonStatus === 'saved' ? 'Saved!' : jsonStatus === 'copied' ? 'Copied to clipboard!' : jsonStatus === 'declined' ? 'Save cancelled' : 'Save full JSON export'
+  const csvLabel = csvStatus === 'saved' ? 'Saved!' : csvStatus === 'copied' ? 'Copied to clipboard!' : csvStatus === 'declined' ? 'Save cancelled' : 'Save accountant CSV'
 
   return (
     <>
@@ -65,15 +75,15 @@ export function DataExportPanel() {
 
         <div className="mt-3 flex items-start gap-2 rounded-lg border border-amber-400/30 bg-amber-500/10 px-3 py-2 text-xs text-amber-200">
           <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
-          Published artifacts can't reliably trigger a real file download — use "Copy to clipboard" below, then paste into a new file.
+          Save asks for your confirmation each time. If it's ever unavailable in your view, the button falls back to copying the data to your clipboard instead.
         </div>
 
         <div className="mt-4 flex flex-wrap gap-2">
-          <button onClick={copyJson} className="flex items-center gap-2 px-4 py-2 rounded-lg bg-gradient-to-r from-cyan-400 to-purple-500 text-black text-sm font-semibold hover:opacity-90">
-            {copiedJson ? <CheckCircle2 className="w-4 h-4" /> : <Copy className="w-4 h-4" />} {copiedJson ? 'Copied!' : 'Copy full JSON export'}
+          <button onClick={exportJson} className="flex items-center gap-2 px-4 py-2 rounded-lg bg-gradient-to-r from-cyan-400 to-purple-500 text-black text-sm font-semibold hover:opacity-90">
+            {jsonStatus !== 'idle' ? <CheckCircle2 className="w-4 h-4" /> : <Download className="w-4 h-4" />} {jsonLabel}
           </button>
           <button onClick={() => setShowJsonPreview((v) => !v)} className="flex items-center gap-2 px-4 py-2 rounded-lg border border-white/10 text-white/60 text-sm hover:text-white">
-            <Download className="w-4 h-4" /> {showJsonPreview ? 'Hide' : 'Preview'} JSON
+            <Copy className="w-4 h-4" /> {showJsonPreview ? 'Hide' : 'Preview'} JSON
           </button>
         </div>
 
@@ -93,8 +103,8 @@ export function DataExportPanel() {
       <StatCard label="Accountant-Ready Export" glow="purple" tilt={false}>
         <p className="mt-4 text-xs text-white/40">Categorised totals for {state.mode === 'personal' ? 'Personal' : 'Business'} transactions — respects the Personal/Business toggle.</p>
         <div className="mt-3 flex flex-wrap gap-2">
-          <button onClick={copyCsv} className="flex items-center gap-2 px-4 py-2 rounded-lg bg-gradient-to-r from-purple-400 to-pink-500 text-black text-sm font-semibold hover:opacity-90">
-            {copiedCsv ? <CheckCircle2 className="w-4 h-4" /> : <Copy className="w-4 h-4" />} {copiedCsv ? 'Copied!' : 'Copy accountant CSV'}
+          <button onClick={exportCsv} className="flex items-center gap-2 px-4 py-2 rounded-lg bg-gradient-to-r from-purple-400 to-pink-500 text-black text-sm font-semibold hover:opacity-90">
+            {csvStatus !== 'idle' ? <CheckCircle2 className="w-4 h-4" /> : <Download className="w-4 h-4" />} {csvLabel}
           </button>
           <button onClick={() => setShowPrintSummary(true)} className="flex items-center gap-2 px-4 py-2 rounded-lg border border-white/10 text-white/60 text-sm hover:text-white">
             <Printer className="w-4 h-4" /> Print summary (Save as PDF)
