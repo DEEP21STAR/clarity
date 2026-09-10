@@ -3,8 +3,8 @@ import gsap from 'gsap'
 import { useStore } from '@/lib/store'
 import { StatCard } from './StatCard'
 import { CountUp } from './CountUp'
-import { addDaysIso, totalBillsInWindow, totalIncomeInWindow, totalPeriodicSmoothedInWindow, totalSinkingFundsSmoothedInWindow, windowLengthDays, isBillAmountChanged, nextMonthlyDueDate, daysBetweenIso } from '@/lib/logic'
-import { cn, formatCurrency, todayIso } from '@/lib/utils'
+import { addDaysIso, totalBillsInWindow, totalIncomeInWindow, totalPeriodicSmoothedInWindow, totalSinkingFundsSmoothedInWindow, windowLengthDays, isBillAmountChanged, nextMonthlyDueDate } from '@/lib/logic'
+import { cn, formatCurrency, todayIso, formatShortDate } from '@/lib/utils'
 import type { UpcomingWindow, RecurringBill, BillFrequency, PeriodicBill } from '@/lib/types'
 import { Plus, Trash2, Info, AlertTriangle } from 'lucide-react'
 import { CreditCardAccountPanel, DeviceRepaymentCard } from './InstallmentPlanTracker'
@@ -20,7 +20,10 @@ import { BillIcon } from './BillIcons'
 import { SegmentedControl } from './SegmentedControl'
 import { Disclosure } from './Disclosure'
 import { DueBadge } from './DueBadge'
-import { fireConfetti } from '@/lib/confetti'
+import { useToast } from './Toast'
+import { useUndoableDelete } from '@/lib/useUndoableDelete'
+import { fireConfetti, fireStreakConfetti } from '@/lib/confetti'
+import { chimeBillPaid, chimeStreakMilestone, chimePaydayLanding } from '@/lib/sound'
 
 const WINDOWS: { id: UpcomingWindow; label: string }[] = [
   { id: 'week', label: 'Week' },
@@ -33,6 +36,7 @@ const DEFAULT_ALLOCATION: Allocation = { food: 40, fuel: 25, personal: 35 }
 
 export function UpcomingPayments() {
   const { state, updateBill, addBill, removeBill, addPeriodicBill, updatePeriodicBill, removePeriodicBill } = useStore()
+  const withUndo = useUndoableDelete()
   const [window_, setWindow] = useState<UpcomingWindow>('week')
   const [allocation, setAllocation] = useState<Allocation>(DEFAULT_ALLOCATION)
   const liveRef = useRef<HTMLDivElement>(null)
@@ -85,6 +89,7 @@ export function UpcomingPayments() {
     }
     if (!isOverspent && wasOverspent.current && hasMounted.current) {
       fireConfetti()
+      chimePaydayLanding(state.soundEnabled)
     }
     wasOverspent.current = isOverspent
     hasMounted.current = true
@@ -130,13 +135,16 @@ export function UpcomingPayments() {
             : 'radial-gradient(circle at 50% 0%, rgba(34,211,238,0.14), rgba(11,13,20,0.95))',
         }}
       >
+        {/* #47 reduced-motion audit fix: this animation was previously set via inline
+            style.animation, which CSS media queries can never override (inline always wins
+            over stylesheet rules regardless of specificity) — a real gap `prefers-reduced-motion`
+            couldn't reach. Moved to a real class so the shared reduced-motion rule applies. */}
         <div
-          className="absolute -inset-1 opacity-40 pointer-events-none"
+          className="aurora-bg absolute -inset-1 opacity-40 pointer-events-none"
           style={{
             background: isOverspent
               ? 'linear-gradient(120deg, transparent, rgba(255,45,85,0.35), transparent)'
               : 'linear-gradient(120deg, transparent, rgba(34,211,238,0.25), transparent, rgba(168,85,247,0.25), transparent)',
-            animation: 'aurora-drift 9s ease-in-out infinite',
           }}
         />
         <div className="relative z-10">
@@ -210,7 +218,7 @@ export function UpcomingPayments() {
         allocation={{ food: foodAmount, fuel: fuelAmount, personal: personalAmount }}
         windowStart={today}
         windowEnd={windowEnd}
-        onMilestone={(m) => { setMilestoneToast(m); fireConfetti() }}
+        onMilestone={(m) => { setMilestoneToast(m); fireStreakConfetti(); chimeStreakMilestone(state.soundEnabled) }}
       />
 
       <AccountsPanel />
@@ -261,7 +269,7 @@ export function UpcomingPayments() {
                 bill={bill}
                 delay={0.05 * i}
                 onEdit={() => setPeriodicFormMode(bill.id)}
-                onRemove={() => removePeriodicBill(bill.id)}
+                onRemove={() => withUndo(`${bill.name} removed`, () => removePeriodicBill(bill.id))}
               />
             )
           )}
@@ -334,12 +342,48 @@ function AllocationTile({ label, amount, pct, glowFrom, glowTo, onChange }: { la
 
 const FREQUENCIES: BillFrequency[] = ['weekly', 'fortnightly', 'monthly']
 
+/** #8/#19 — real per-instance paid toggle, backed by a real PaymentRecord (amount + date, not just a boolean), with the SVG draw-on checkmark and a toast with Undo. */
+function PaidToggle({ billId, billName, dueDateIso, amount }: { billId: string; billName: string; dueDateIso: string; amount: number }) {
+  const { state, recordPayment, deletePaymentRecord } = useStore()
+  const { showToast } = useToast()
+  const existing = state.paymentRecords.find((r) => r.targetId === billId && r.dueDateIso === dueDateIso)
+  const paid = !!existing
+
+  const toggle = () => {
+    if (existing) {
+      deletePaymentRecord(existing.id)
+      showToast(`${billName} marked unpaid`, { tone: 'info' })
+    } else {
+      const id = recordPayment({ targetType: 'recurringBill', targetId: billId, targetLabel: billName, amount, date: todayIso(), dueDateIso })
+      chimeBillPaid(state.soundEnabled)
+      showToast(`${billName} marked paid — $${amount.toFixed(2)} recorded for ${formatShortDate(dueDateIso)}`, { tone: 'success', actionLabel: 'Undo', onAction: () => deletePaymentRecord(id) })
+    }
+  }
+
+  return (
+    <button
+      type="button"
+      onClick={toggle}
+      title={paid ? `Paid for ${dueDateIso} — click to undo` : `Mark paid for ${dueDateIso}`}
+      className={`w-6 h-6 rounded-full border flex items-center justify-center transition-colors ${paid ? 'bg-emerald-500/20 border-emerald-400/50' : 'border-white/15 hover:border-cyan-400/40'}`}
+    >
+      {paid && (
+        <svg key={dueDateIso} className="checkmark-draw w-3.5 h-3.5 text-emerald-400" viewBox="0 0 24 24" fill="none">
+          <path d="M4 12l6 6L20 6" stroke="currentColor" strokeWidth={3} strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      )}
+    </button>
+  )
+}
+
 function BillsManager({ bills, onUpdate, onAdd, onRemove }: {
   bills: RecurringBill[]
   onUpdate: (id: string, patch: Partial<RecurringBill>) => void
   onAdd: (bill: RecurringBill) => void
   onRemove: (id: string) => void
 }) {
+  const withUndo = useUndoableDelete()
+  // tilt off: dense multi-column editable table — kept from the app-wide mouse-tilt audit.
   return (
     <StatCard label="Recurring Bills" glow="cyan" tilt={false}>
       <div className="mt-4 text-xs text-white/40">{bills.filter((b) => b.active).length} active bills — expand for full detail and editing.</div>
@@ -354,6 +398,7 @@ function BillsManager({ bills, onUpdate, onAdd, onRemove }: {
               <th className="pb-2 pr-2">Due day</th>
               <th className="pb-2 pr-2">Owner</th>
               <th className="pb-2 pr-2">Active</th>
+              <th className="pb-2 pr-2">Paid</th>
               <th className="pb-2" />
             </tr>
           </thead>
@@ -417,7 +462,7 @@ function BillsManager({ bills, onUpdate, onAdd, onRemove }: {
                       </span>
                     )}
                     {bill.active && bill.frequency === 'monthly' && (
-                      <DueBadge daysUntil={daysBetweenIso(todayIso(), nextMonthlyDueDate(bill.dueDay, todayIso()))} />
+                      <DueBadge dueDateIso={nextMonthlyDueDate(bill.dueDay, todayIso())} />
                     )}
                   </div>
                 </td>
@@ -440,8 +485,15 @@ function BillsManager({ bills, onUpdate, onAdd, onRemove }: {
                     className="accent-cyan-400 w-4 h-4"
                   />
                 </td>
+                <td className="py-2 pr-2">
+                  {bill.active && bill.frequency === 'monthly' ? (
+                    <PaidToggle billId={bill.id} billName={bill.name} dueDateIso={nextMonthlyDueDate(bill.dueDay, todayIso())} amount={bill.amount} />
+                  ) : (
+                    <span className="text-white/20 text-xs">—</span>
+                  )}
+                </td>
                 <td className="py-2">
-                  <button onClick={() => onRemove(bill.id)} className="text-white/30 hover:text-rose-400">
+                  <button onClick={() => withUndo(`${bill.name} removed`, () => onRemove(bill.id))} className="text-white/30 hover:text-rose-400">
                     <Trash2 className="w-4 h-4" />
                   </button>
                 </td>

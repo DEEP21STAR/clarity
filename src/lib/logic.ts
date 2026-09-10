@@ -1,6 +1,7 @@
 import type {
   TaxBracket, Debt, RecurringBill, BillFrequency, UpcomingWindow, Transaction, InstallmentPlan, PeriodicBill,
   Account, CreditCardAccount, NetWorthSnapshot, SinkingFund, OneOffEntry, SpendTracker, StreakState, HouseholdOwner, HouseholdView, Mode,
+  PaymentRecord, DeviceRepayment, SavingsGoal,
 } from './types'
 import {
   NZ_TAX_BRACKETS, NZ_ACC_LEVY_RATE, NZ_ACC_LEVY_CAP,
@@ -316,6 +317,57 @@ export function avalanchePlan(debts: Debt[], extraMonthlyBudget: number): { entr
   }
 }
 
+export interface AvalancheTimelinePoint {
+  month: number
+  totalBalance: number
+  /** Per-debt balance at this month — feeds the snowball visualization (each debt's own falling line). */
+  balances: Record<string, number>
+}
+
+/**
+ * Same exact simulation as avalanchePlan() (interest accrual, minimums,
+ * highest-APR-first extra payment) but returns a month-by-month balance
+ * SERIES instead of just the final totals — for the real payoff timeline
+ * chart and the "snowball" per-debt visualization (#6/#7). Deliberately a
+ * separate function rather than refactoring avalanchePlan() itself, so the
+ * existing tested behaviour there can't regress.
+ */
+export function avalanchePayoffTimeline(debts: Debt[], extraMonthlyBudget: number): AvalancheTimelinePoint[] {
+  const working = debts.filter((d) => d.balance > 0).map((d) => ({ ...d })).sort((a, b) => b.apr - a.apr)
+  if (working.length === 0) return []
+
+  const snapshot = (m: number): AvalancheTimelinePoint => ({
+    month: m,
+    totalBalance: round2(working.reduce((s, d) => s + Math.max(0, d.balance), 0)),
+    balances: Object.fromEntries(working.map((d) => [d.id, round2(Math.max(0, d.balance))])),
+  })
+
+  const points: AvalancheTimelinePoint[] = [snapshot(0)]
+  let month = 0
+  const extra = extraMonthlyBudget
+  const MAX_MONTHS = 1200
+
+  while (working.some((d) => d.balance > 0.005) && month < MAX_MONTHS) {
+    month++
+    let extraThisMonth = extra
+    for (const d of working) {
+      if (d.balance <= 0.005) continue
+      const interest = round2(d.balance * (d.apr / 12))
+      d.balance = round2(d.balance + interest)
+      let payment = Math.min(d.minPayment, d.balance)
+      const isTarget = working.find((x) => x.balance > 0.005) === d
+      if (isTarget && extraThisMonth > 0) {
+        const extraApplied = Math.min(extraThisMonth, d.balance - payment)
+        payment += extraApplied
+        extraThisMonth -= extraApplied
+      }
+      d.balance = round2(d.balance - payment)
+    }
+    points.push(snapshot(month))
+  }
+  return points
+}
+
 // ---------------------------------------------------------------------------
 // Rule-based insights engine
 // ---------------------------------------------------------------------------
@@ -487,6 +539,45 @@ export function round2(n: number): number {
 }
 
 // ---------------------------------------------------------------------------
+// #1, Round 20 — deterministic colour-from-category-string for Transactions
+// (CSV-imported categories are free text, not the fixed RecurringBill
+// category enum, so a fixed lookup table can't cover them — a stable hash
+// picks the same colour for the same category every render/reload without
+// needing to know the category set in advance).
+// ---------------------------------------------------------------------------
+
+const TRANSACTION_CATEGORY_PALETTE = ['#22d3ee', '#a855f7', '#ec4899', '#34d399', '#f59e0b', '#60a5fa', '#f472b6', '#4ade80']
+
+export function categoryColor(category: string): string {
+  let hash = 0
+  for (let i = 0; i < category.length; i++) {
+    hash = (hash * 31 + category.charCodeAt(i)) >>> 0
+  }
+  return TRANSACTION_CATEGORY_PALETTE[hash % TRANSACTION_CATEGORY_PALETTE.length]
+}
+
+// ---------------------------------------------------------------------------
+// #3/#48, Round 20 — live search match ranges, shared by Transactions' row
+// search and the unified ⌘K search (case-insensitive, ALL occurrences, not
+// just the first).
+// ---------------------------------------------------------------------------
+
+export function findMatchRanges(text: string, query: string): [number, number][] {
+  if (!query.trim()) return []
+  const ranges: [number, number][] = []
+  const lowerText = text.toLowerCase()
+  const lowerQuery = query.toLowerCase()
+  let start = 0
+  while (start <= lowerText.length) {
+    const idx = lowerText.indexOf(lowerQuery, start)
+    if (idx === -1) break
+    ranges.push([idx, idx + lowerQuery.length])
+    start = idx + lowerQuery.length
+  }
+  return ranges
+}
+
+// ---------------------------------------------------------------------------
 // Installment plan severity (GEM VISA "My Plans" style tracker)
 // ---------------------------------------------------------------------------
 
@@ -560,6 +651,86 @@ export function dueInLabel(daysUntil: number): string {
   if (daysUntil === 0) return 'due today'
   if (daysUntil === 1) return 'due tomorrow'
   return `due in ${daysUntil} days`
+}
+
+/**
+ * Real paid/unpaid tracking (#8, Round 20) — a recurring/periodic bill's
+ * due-date instance is "paid" when a real PaymentRecord exists against it.
+ * This is what lets the Bill Calendar upgrade its Round 19 "already passed
+ * this month = neutral" guess into a real answer: a paid instance is
+ * genuinely done regardless of date; an unpaid PAST instance is genuinely
+ * overdue, not a guess.
+ */
+export function isBillInstancePaid(records: PaymentRecord[], billId: string, dueDateIso: string): boolean {
+  return records.some((r) => r.targetId === billId && r.dueDateIso === dueDateIso)
+}
+
+// ---------------------------------------------------------------------------
+// #8 expanded, Round 20 — real payment recording that reduces the actual
+// balance/remaining amount, not just a boolean. Each apply* function is a
+// pure, symmetric delta: calling it with a NEGATIVE amount exactly reverses
+// a positive application (used by the store's deletePaymentRecord for a
+// real Undo), except where a genuinely irreversible state change already
+// happened (a periodic bill's pendingBill cleared to undefined — see the
+// comment on applyPaymentToPeriodicBill).
+// ---------------------------------------------------------------------------
+
+export function applyPaymentToCard(card: CreditCardAccount, amount: number): CreditCardAccount {
+  const newBalance = round2(Math.max(0, card.balance - amount))
+  const newAvailable = card.creditLimit !== undefined
+    ? round2(Math.min(card.creditLimit, card.availableToSpend + amount))
+    : round2(card.availableToSpend + amount)
+  return { ...card, balance: newBalance, availableToSpend: newAvailable }
+}
+
+export function applyPaymentToPlan(plan: InstallmentPlan, amount: number): InstallmentPlan {
+  return { ...plan, remaining: round2(Math.max(0, plan.remaining - amount)) }
+}
+
+/**
+ * A payment >= the pending bill's amount clears it entirely (any excess
+ * becomes real credit, using the same inCredit/creditAmount fields the
+ * gauge already understands) — a partial payment just reduces the pending
+ * amount. NOTE: once cleared (pendingBill undefined), this is a no-op on
+ * reversal — a deleted payment record can't resurrect the original pending
+ * bill's exact dates, a real, disclosed limitation, not a silent bug.
+ */
+export function applyPaymentToPeriodicBill(bill: PeriodicBill, amount: number): PeriodicBill {
+  if (!bill.pendingBill) return bill
+  const newAmount = round2(bill.pendingBill.amount - amount)
+  if (newAmount <= 0) {
+    const overpaid = round2(Math.abs(newAmount))
+    return {
+      ...bill,
+      pendingBill: undefined,
+      inCredit: overpaid > 0 ? true : bill.inCredit,
+      creditAmount: overpaid > 0 ? round2(bill.creditAmount + overpaid) : bill.creditAmount,
+    }
+  }
+  return { ...bill, pendingBill: { ...bill.pendingBill, amount: newAmount } }
+}
+
+/** paymentsRemaining is adjusted by the caller (store.tsx), not here, since reversal needs the opposite +1/-1 and this function alone can't tell direction from `amount`'s sign reliably at 0. */
+export function applyPaymentToDevice(device: DeviceRepayment, amount: number): DeviceRepayment {
+  return { ...device, remaining: round2(Math.max(0, device.remaining - amount)) }
+}
+
+export interface PaymentHistoryFilter {
+  targetId?: string
+  startDate?: string
+  endDate?: string
+}
+
+/** Shared filter logic — the SAME function/component pattern every payment-history view in the app reuses, per Deep's explicit "filters need to apply to all areas" instruction. */
+export function filterPaymentRecords(records: PaymentRecord[], filter: PaymentHistoryFilter): PaymentRecord[] {
+  return records
+    .filter((r) => {
+      if (filter.targetId && r.targetId !== filter.targetId) return false
+      if (filter.startDate && r.date < filter.startDate) return false
+      if (filter.endDate && r.date > filter.endDate) return false
+      return true
+    })
+    .sort((a, b) => b.date.localeCompare(a.date) || b.recordedAt.localeCompare(a.recordedAt))
 }
 
 /** How far through its billing period a periodic bill is, 0-100, for the gauge arc. */
@@ -638,6 +809,62 @@ export function upsertNetWorthSnapshot(history: NetWorthSnapshot[], snapshot: Ne
   const next = [...history]
   next[existingIdx] = snapshot
   return next
+}
+
+/** Judgment call, not Deep's own number: a net worth "milestone" is crossing a $10k round threshold. */
+export const NET_WORTH_MILESTONE_STEP = 10000
+
+export interface NetWorthMilestone {
+  date: string
+  netWorth: number
+  threshold: number
+}
+
+/**
+ * #11, Round 20 — real milestone-crossing points for the Net Worth trend
+ * line's flag markers. Only counts UPWARD crossings (dropping back below a
+ * threshold and climbing back through it does not re-fire the same
+ * milestone), sorted chronologically same as the history itself.
+ */
+export function netWorthMilestones(history: NetWorthSnapshot[]): NetWorthMilestone[] {
+  const sorted = [...history].sort((a, b) => a.date.localeCompare(b.date))
+  const hits: NetWorthMilestone[] = []
+  let lastThresholdCrossed = -Infinity
+  let prevNetWorth: number | null = null
+  for (const h of sorted) {
+    if (prevNetWorth !== null) {
+      const prevStep = Math.floor(prevNetWorth / NET_WORTH_MILESTONE_STEP)
+      const curStep = Math.floor(h.netWorth / NET_WORTH_MILESTONE_STEP)
+      if (curStep > prevStep && curStep > 0) {
+        const threshold = curStep * NET_WORTH_MILESTONE_STEP
+        if (threshold > lastThresholdCrossed) {
+          hits.push({ date: h.date, netWorth: h.netWorth, threshold })
+          lastThresholdCrossed = threshold
+        }
+      }
+    }
+    prevNetWorth = h.netWorth
+  }
+  return hits
+}
+
+// ---------------------------------------------------------------------------
+// #24/#45, Round 20 — real trend-arrow direction, shared by every "vs last
+// period" comparison in the app (Net Worth, health score, category spend).
+// ---------------------------------------------------------------------------
+
+export type TrendDirection = 'up' | 'down' | 'flat'
+
+export function trendDirection(current: number, previous: number): TrendDirection {
+  if (current > previous) return 'up'
+  if (current < previous) return 'down'
+  return 'flat'
+}
+
+/** Real percent change vs a previous value — returns null when previous is 0 (a % change is meaningless from a zero base, not "invented" as some huge number). */
+export function percentChange(current: number, previous: number): number | null {
+  if (previous === 0) return null
+  return round2(((current - previous) / Math.abs(previous)) * 100)
 }
 
 // ---------------------------------------------------------------------------
@@ -789,6 +1016,34 @@ export function calcFinancialHealthScore(inputs: HealthScoreInputs): HealthScore
 export function emergencyFundMonths(savingsBalance: number, avgMonthlyBills: number): number {
   if (avgMonthlyBills <= 0) return 0
   return round2(savingsBalance / avgMonthlyBills)
+}
+
+/**
+ * Wires the raw app-state fields into calcFinancialHealthScore()'s inputs —
+ * extracted so store.tsx's daily snapshot effect, Dashboard.tsx's headline
+ * score, and AmbientBackground's health-reactive particles (#22, Round 20)
+ * all compute the SAME current score the SAME way, instead of three
+ * separately-maintained copies of this wiring drifting apart over time.
+ */
+export function computeCurrentHealthScore(params: {
+  bills: RecurringBill[]
+  creditCards: CreditCardAccount[]
+  debts: Debt[]
+  accounts: Account[]
+  grossAnnualIncome: number
+  country: 'NZ' | 'AU'
+}): HealthScoreResult {
+  const { bills, creditCards, debts, accounts, grossAnnualIncome, country } = params
+  const net = country === 'NZ' ? nzNetIncome(grossAnnualIncome) : auNetIncome(grossAnnualIncome)
+  const monthlyNet = net.net / 12
+  const monthlyBills = bills.filter((b) => b.active).reduce((s, b) => s + monthlyEquivalent(b.amount, b.frequency), 0)
+  const savingsBalance = accounts.find((a) => a.id === 'savings')?.value ?? 0
+  const savingsRate = monthlyNet > 0 ? (monthlyNet - monthlyBills) / monthlyNet : 0
+  const totalDebtBalance = debts.reduce((s, d) => s + d.balance, 0) + creditCards.reduce((s, c) => s + c.balance, 0)
+  const debtToIncome = net.net > 0 ? totalDebtBalance / net.net : 1
+  const billCoverageRatio = monthlyBills > 0 ? monthlyNet / monthlyBills : 2
+  const efMonths = emergencyFundMonths(savingsBalance, monthlyBills)
+  return calcFinancialHealthScore({ savingsRate, debtToIncome, billCoverageRatio, emergencyFundMonths: efMonths })
 }
 
 // ---------------------------------------------------------------------------
@@ -943,6 +1198,127 @@ export function calcRoundUpSavings(transactions: Transaction[], roundTo: number 
         return s + (roundedUp - abs)
       }, 0)
   )
+}
+
+export interface YearInReview {
+  totalPaid: number
+  paymentCount: number
+  netWorthChange: number | null // null when there isn't yet a year-ago snapshot to compare against
+  netWorthStart: number | null
+  netWorthNow: number | null
+  bestStreak: number
+  goalsCompleted: number
+  goalsTotal: number
+}
+
+/**
+ * #44, Round 20 — real "financial year in review" recap, computed from
+ * actual state (paymentRecords, netWorthHistory, streak, savingsGoals), not
+ * invented. Deliberately a rolling last-365-days window rather than picking
+ * a specific NZ (Apr-Mar) or AU (Jul-Jun) fiscal year — Deep didn't specify
+ * which convention, and a rolling window is honest and unambiguous
+ * regardless of the NZ/AU country toggle.
+ */
+export function buildYearInReview(params: {
+  paymentRecords: PaymentRecord[]
+  netWorthHistory: NetWorthSnapshot[]
+  streak: StreakState
+  savingsGoals: SavingsGoal[]
+  todayIso: string
+}): YearInReview {
+  const { paymentRecords, netWorthHistory, streak, savingsGoals, todayIso: today } = params
+  const yearAgoIso = addDaysIso(today, -365)
+
+  const recentPayments = paymentRecords.filter((r) => r.date >= yearAgoIso)
+  const totalPaid = round2(recentPayments.reduce((s, r) => s + r.amount, 0))
+
+  const sortedHistory = [...netWorthHistory].sort((a, b) => a.date.localeCompare(b.date))
+  const netWorthNow = sortedHistory.length > 0 ? sortedHistory[sortedHistory.length - 1].netWorth : null
+  const yearAgoEntry = sortedHistory.find((h) => h.date >= yearAgoIso) ?? sortedHistory[0] ?? null
+  const netWorthStart = yearAgoEntry ? yearAgoEntry.netWorth : null
+  const netWorthChange = netWorthNow !== null && netWorthStart !== null ? round2(netWorthNow - netWorthStart) : null
+
+  const goalsCompleted = savingsGoals.filter((g) => g.targetAmount > 0 && g.contributedAmount >= g.targetAmount).length
+
+  return {
+    totalPaid,
+    paymentCount: recentPayments.length,
+    netWorthChange,
+    netWorthStart,
+    netWorthNow,
+    bestStreak: streak.best,
+    goalsCompleted,
+    goalsTotal: savingsGoals.length,
+  }
+}
+
+/** Judgment call: a category month-over-month change smaller than this is noise, not a real "trend" worth surfacing. */
+export const CATEGORY_TREND_INSIGHT_THRESHOLD_PERCENT = 5
+
+/**
+ * #45, Round 20 — real trend-arrow-backed textual insights ("Fuel spend up
+ * 12% vs last month"), computed from actual monthlySpendByCategory() data,
+ * not invented. Only fires for categories with at least 2 real months of
+ * data and a change big enough to matter (see the threshold above).
+ */
+export function generateCategoryTrendInsights(series: CategoryMonthlySeries[]): Insight[] {
+  const insights: Insight[] = []
+  for (const s of series) {
+    if (s.points.length < 2) continue
+    const latest = s.points[s.points.length - 1]
+    const previous = s.points[s.points.length - 2]
+    const pct = percentChange(latest.total, previous.total)
+    if (pct === null || Math.abs(pct) < CATEGORY_TREND_INSIGHT_THRESHOLD_PERCENT) continue
+    const dir = trendDirection(latest.total, previous.total)
+    insights.push({
+      id: `trend-${s.category}`,
+      severity: dir === 'up' ? 'warning' : 'info',
+      message: `${s.category} spend ${dir} ${Math.abs(pct).toFixed(0)}% vs last month (${formatCurrency2(previous.total)} → ${formatCurrency2(latest.total)}).`,
+    })
+  }
+  return insights
+}
+
+function formatCurrency2(n: number): string {
+  return `$${n.toFixed(2)}`
+}
+
+// ---------------------------------------------------------------------------
+// #5, Round 20 — real month-over-month spend trend PER CATEGORY, from actual
+// imported transactions. Deliberately separate from the existing Bill
+// Category Breakdown donut (which sums the fixed RecurringBill category
+// enum) — a CSV-imported Transaction.category is free text with no
+// guaranteed overlap with that enum, so blending them would fabricate a
+// match between two different taxonomies. Honest empty state when there's
+// no transaction history to trend yet.
+// ---------------------------------------------------------------------------
+
+export interface CategoryMonthlySeries {
+  category: string
+  points: { month: string; total: number }[] // month = 'YYYY-MM'
+}
+
+export function monthlySpendByCategory(transactions: Transaction[]): CategoryMonthlySeries[] {
+  const byCategory = new Map<string, Map<string, number>>()
+  for (const t of transactions) {
+    if (t.amount >= 0) continue // spend only — income doesn't belong in a "category spend trend"
+    const month = t.date.slice(0, 7)
+    if (!byCategory.has(t.category)) byCategory.set(t.category, new Map())
+    const monthMap = byCategory.get(t.category)!
+    monthMap.set(month, round2((monthMap.get(month) ?? 0) + Math.abs(t.amount)))
+  }
+  return Array.from(byCategory.entries())
+    .map(([category, monthMap]) => ({
+      category,
+      points: Array.from(monthMap.entries())
+        .map(([month, total]) => ({ month, total }))
+        .sort((a, b) => a.month.localeCompare(b.month)),
+    }))
+    .sort((a, b) => {
+      const totalA = a.points.reduce((s, p) => s + p.total, 0)
+      const totalB = b.points.reduce((s, p) => s + p.total, 0)
+      return totalB - totalA // biggest spender first
+    })
 }
 
 // ---------------------------------------------------------------------------

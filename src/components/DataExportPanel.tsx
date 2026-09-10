@@ -67,7 +67,7 @@ export function DataExportPanel() {
 
   return (
     <>
-      <StatCard label="Data Export" glow="cyan" tilt={false}>
+      <StatCard label="Data Export" glow="cyan">
         <div className="mt-4 flex items-center gap-2 text-xs text-white/40">
           <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
           Data last exported: {state.lastExportedAt ? new Date(state.lastExportedAt).toLocaleString('en-NZ') : 'never'}
@@ -100,7 +100,7 @@ export function DataExportPanel() {
         </p>
       </StatCard>
 
-      <StatCard label="Accountant-Ready Export" glow="purple" tilt={false}>
+      <StatCard label="Accountant-Ready Export" glow="purple">
         <p className="mt-4 text-xs text-white/40">Categorised totals for {state.mode === 'personal' ? 'Personal' : 'Business'} transactions — respects the Personal/Business toggle.</p>
         <div className="mt-3 flex flex-wrap gap-2">
           <button onClick={exportCsv} className="flex items-center gap-2 px-4 py-2 rounded-lg bg-gradient-to-r from-purple-400 to-pink-500 text-black text-sm font-semibold hover:opacity-90">
@@ -124,16 +124,67 @@ export function DataExportPanel() {
   )
 }
 
+/**
+ * #46 — a real print-optimized layout for the accountant PDF export,
+ * separate from the on-screen cinematic UI: parses the CSV into two proper
+ * HTML tables (category breakdown + summary) instead of dumping a monospace
+ * CSV blob, with `@page`/serif-font print rules in index.css so the printed
+ * (or Saved-as-PDF) document reads like a real accountant document.
+ */
 function PrintSummaryModal({ csv, mode, onClose }: { csv: string; mode: string; onClose: () => void }) {
-  const rows = csv.split('\n')
+  const lines = csv.split('\n')
+  const titleLine = lines[0] ?? ''
+  const [, , periodLabel] = titleLine.split(',')
+  const catStart = lines.indexOf('Category,Total') + 1
+  const catRows: [string, string][] = []
+  let i = catStart
+  while (i < lines.length && lines[i] !== '') {
+    const [cat, total] = lines[i].split(',')
+    catRows.push([cat, total])
+    i++
+  }
+  const summaryStart = lines.indexOf('Summary,') + 1
+  const summaryRows: [string, string][] = []
+  for (let j = summaryStart; j < lines.length; j++) {
+    if (!lines[j]) continue
+    const [label, val] = lines[j].split(',')
+    summaryRows.push([label, val])
+  }
+
   return (
     <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-6 print:bg-white print:p-0" id="print-summary-root">
-      <div className="bg-white text-black rounded-2xl max-w-lg w-full p-8 print:rounded-none print:max-w-none print:shadow-none">
+      <div className="print-doc bg-white text-black rounded-2xl max-w-lg w-full p-8 print:rounded-none print:max-w-none print:shadow-none">
         <div className="flex justify-between items-center mb-4 print:hidden">
           <h3 className="text-lg font-bold">Accountant Summary — {mode}</h3>
           <button onClick={onClose} className="text-sm text-gray-500 hover:text-black">Close</button>
         </div>
-        <pre className="text-sm whitespace-pre-wrap font-mono">{rows.join('\n')}</pre>
+
+        <header className="print-doc-header">
+          <h1>Clarity — Accountant Summary</h1>
+          <p>{mode === 'personal' ? 'Personal' : 'Business'} · {periodLabel} · generated {new Date().toLocaleDateString('en-NZ')}</p>
+        </header>
+
+        <h2 className="print-doc-h2">Category Breakdown</h2>
+        <table className="print-doc-table">
+          <thead><tr><th>Category</th><th className="print-doc-num">Total</th></tr></thead>
+          <tbody>
+            {catRows.map(([cat, total]) => (
+              <tr key={cat}><td className="capitalize">{cat}</td><td className="print-doc-num">${total}</td></tr>
+            ))}
+          </tbody>
+        </table>
+
+        <h2 className="print-doc-h2">Summary</h2>
+        <table className="print-doc-table">
+          <tbody>
+            {summaryRows.map(([label, val]) => (
+              <tr key={label} className={label === 'Net' ? 'print-doc-total-row' : undefined}>
+                <td>{label}</td><td className="print-doc-num">${val}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+
         <button
           onClick={() => window.print()}
           className="mt-4 px-4 py-2 rounded-lg bg-purple-600 text-white text-sm font-semibold print:hidden"

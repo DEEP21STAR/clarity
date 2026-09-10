@@ -1,12 +1,13 @@
 import { useEffect, useRef, useState } from 'react'
 import gsap from 'gsap'
 import { StatCard } from './StatCard'
-import { getPlanSeverity, planProgressPercent, requiredMonthlyPayment, planPayoffWithExtra, daysBetweenIso } from '@/lib/logic'
-import { cn, formatCurrency, todayIso } from '@/lib/utils'
+import { getPlanSeverity, planProgressPercent, requiredMonthlyPayment, planPayoffWithExtra } from '@/lib/logic'
+import { cn, formatCurrency } from '@/lib/utils'
 import type { CreditCardAccount, InstallmentPlan, DeviceRepayment } from '@/lib/types'
 import { AlertTriangle, Flame, CheckCircle2, Sliders } from 'lucide-react'
 import { BillIcon } from './BillIcons'
 import { DueBadge } from './DueBadge'
+import { RecordPaymentButton } from './RecordPaymentForm'
 
 /** One installment plan card — skinned in the app's neon-aurora language, inspired by (not copied from) Latitude's "My Plans" UI. */
 export function InstallmentPlanCard({ plan, delay = 0, expiredPlanRate = 0 }: { plan: InstallmentPlan; delay?: number; expiredPlanRate?: number }) {
@@ -128,7 +129,7 @@ export function CreditCardAccountPanel({ card, delay = 0 }: { card: CreditCardAc
   })
 
   return (
-    <StatCard label={card.name} glow="purple" tilt={false} delay={delay}>
+    <StatCard label={card.name} glow="purple" delay={delay}>
       <div className="mt-4 grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
         <div>
           <div className="text-xs text-white/40 uppercase tracking-wide">Balance</div>
@@ -145,7 +146,7 @@ export function CreditCardAccountPanel({ card, delay = 0 }: { card: CreditCardAc
           </div>
           {card.minPaymentDueDate && (
             <div className="mt-1">
-              <DueBadge daysUntil={daysBetweenIso(todayIso(), card.minPaymentDueDate)} />
+              <DueBadge dueDateIso={card.minPaymentDueDate} />
             </div>
           )}
         </div>
@@ -153,6 +154,13 @@ export function CreditCardAccountPanel({ card, delay = 0 }: { card: CreditCardAc
           <div className="text-xs text-white/40 uppercase tracking-wide">Expired Plan Rate</div>
           <div className="text-lg font-bold tabular-nums text-rose-300">{(card.rates.expiredPlanRate * 100).toFixed(2)}% p.a.</div>
         </div>
+      </div>
+
+      {/* #8 expanded — a real payment here reduces card.balance / increases availableToSpend.
+          Reduces the CARD's overall balance, not each plan individually — GEM VISA doesn't
+          publish how it allocates a payment across concurrent plans, so this app doesn't guess. */}
+      <div className="mt-3">
+        <RecordPaymentButton targetType="creditCard" targetId={card.id} targetLabel={card.name} defaultAmount={card.minPayment > 0 ? card.minPayment : undefined} />
       </div>
 
       <div className="mt-5 grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -170,7 +178,7 @@ export function CreditCardAccountPanel({ card, delay = 0 }: { card: CreditCardAc
 export function DeviceRepaymentCard({ device, delay = 0 }: { device: DeviceRepayment; delay?: number }) {
   const progress = device.paymentsTotal > 0 ? ((device.paymentsTotal - device.paymentsRemaining) / device.paymentsTotal) * 100 : 0
   return (
-    <StatCard label={device.name} glow="cyan" tilt={false} delay={delay}>
+    <StatCard label={device.name} glow="cyan" delay={delay}>
       <div className="mt-4 flex items-baseline justify-between text-sm">
         <span className="flex items-center gap-2 text-2xl font-bold tabular-nums text-cyan-200">
           <BillIcon name={device.name} className="w-5 h-5" />
@@ -182,6 +190,9 @@ export function DeviceRepaymentCard({ device, delay = 0 }: { device: DeviceRepay
         <div className="h-full rounded-full bg-gradient-to-r from-cyan-400 to-purple-500" style={{ width: `${progress}%` }} />
       </div>
       <p className="mt-2 text-xs text-white/40">{formatCurrency(device.remaining)} remaining — plain repayment, no interest.</p>
+      <div className="mt-2">
+        <RecordPaymentButton targetType="deviceRepayment" targetId={device.id} targetLabel={device.name} defaultAmount={device.monthlyAmount} />
+      </div>
     </StatCard>
   )
 }

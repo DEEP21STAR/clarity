@@ -20,6 +20,7 @@ export function HouseholdSplit() {
     { deep: 0, mimi: 0 }
   )
 
+  // tilt off: expandable per-bill % table — kept from the app-wide mouse-tilt audit.
   return (
     <StatCard label="Household Bill Split" glow="purple" tilt={false}>
       {/* Tier 1: the answer that matters, always visible */}

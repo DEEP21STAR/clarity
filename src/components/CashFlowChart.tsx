@@ -25,7 +25,7 @@ export function CashFlowChart() {
   const lowestPoint = Math.min(...series.map((p) => p.balance))
 
   return (
-    <StatCard label="Cash-Flow Forecast" glow={lowestPoint < 0 ? 'danger' : 'cyan'} tilt={false}>
+    <StatCard label="Cash-Flow Forecast" glow={lowestPoint < 0 ? 'danger' : 'cyan'}>
       <div className="mt-4 flex items-center justify-between">
         <p className="text-xs text-white/40">Projected balance from HSBC + Overdraft, walking forward real paydays and bills.</p>
         <div className="flex rounded-full border border-white/10 overflow-hidden">

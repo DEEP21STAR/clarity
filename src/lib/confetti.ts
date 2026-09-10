@@ -20,3 +20,39 @@ export function fireBigConfetti() {
   }
   frame()
 }
+
+// ---------------------------------------------------------------------------
+// #17, Round 20 — achievement-specific confetti SHAPES, not one generic
+// burst for everything. Uses canvas-confetti's real shapeFromText() (real
+// emoji-rendered particle shapes, not a fake/simulated effect) so a savings
+// milestone genuinely looks different from a streak or a health-score
+// milestone, not just a colour swap.
+// ---------------------------------------------------------------------------
+
+let coinShape: confetti.Shape | null = null
+let flameShape: confetti.Shape | null = null
+let starShape: confetti.Shape | null = null
+
+function getShape(cache: 'coin' | 'flame' | 'star'): confetti.Shape {
+  if (cache === 'coin') return (coinShape ??= confetti.shapeFromText({ text: '🪙', scalar: 3 }))
+  if (cache === 'flame') return (flameShape ??= confetti.shapeFromText({ text: '🔥', scalar: 3 }))
+  return (starShape ??= confetti.shapeFromText({ text: '⭐', scalar: 3 }))
+}
+
+/** Savings goal fully funded / logged — coin shapes. */
+export function fireSavingsConfetti() {
+  if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return
+  confetti({ particleCount: 30, spread: 70, origin: { y: 0.6 }, shapes: [getShape('coin')], scalar: 1 })
+}
+
+/** Streak milestone (7/30/100 days) — flame shapes. */
+export function fireStreakConfetti() {
+  if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return
+  confetti({ particleCount: 30, spread: 80, origin: { y: 0.5 }, shapes: [getShape('flame')], scalar: 1, startVelocity: 40 })
+}
+
+/** Financial health score crossing into "healthy" territory — star shapes. */
+export function fireHealthScoreConfetti() {
+  if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return
+  confetti({ particleCount: 40, spread: 100, origin: { y: 0.4 }, shapes: [getShape('star')], scalar: 1 })
+}

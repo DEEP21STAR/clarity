@@ -66,6 +66,7 @@ export function PeriodicBillForm({
     onSave(values)
   }
 
+  // tilt off: dense multi-field form — kept from the app-wide mouse-tilt audit.
   return (
     <StatCard label={existing ? `Edit ${existing.name}` : 'Add Periodic Bill'} glow="cyan" tilt={false}>
       <form onSubmit={handleSubmit} className="mt-4 space-y-4">

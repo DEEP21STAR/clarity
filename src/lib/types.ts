@@ -142,6 +142,8 @@ export interface OneOffEntry {
   date: string // ISO
   description: string
   amount: number // negative = expense, positive = income
+  /** 'extraUsage' = logged via the dedicated "Extra Usage Purchase" field (Claude API overage etc, Round 20) — still feeds the same Cash-Flow Forecast as a general one-off, just shown in its own list. Undefined = general one-off. */
+  category?: 'general' | 'extraUsage'
 }
 
 /**
@@ -191,6 +193,38 @@ export interface Transaction {
   amount: number // negative = expense, positive = income
   category: string
   mode: Mode
+}
+
+export type PaymentTargetType = 'recurringBill' | 'creditCard' | 'installmentPlan' | 'periodicBill' | 'deviceRepayment'
+
+/**
+ * Real payment history, not just a paid/unpaid boolean (Round 20 — expanded
+ * mid-build after Deep's real GEM VISA $325 payment made the simpler binary
+ * version insufficient: he needed to see the real due DATE, actually record
+ * an amount+date payment that reduces the real balance, and later filter a
+ * real history of what was paid when). One record per real payment made:
+ * - `recurringBill`/`periodicBill` payments carry `dueDateIso` so a specific
+ *   due-date instance can still be checked as "paid" (the old
+ *   PaidBillRecord behaviour, now a special case of this).
+ * - `creditCard`/`installmentPlan`/`deviceRepayment` payments reduce a real
+ *   running balance (see applyPaymentToCard/Plan/Device in logic.ts) and
+ *   don't tie to one dated instance — GEM VISA doesn't publish how it
+ *   allocates a card payment across concurrent plans, so a card payment
+ *   reduces the CARD's overall balance, not each plan individually
+ *   (disclosed as a real scope boundary, not silently guessed).
+ */
+export interface PaymentRecord {
+  id: string
+  targetType: PaymentTargetType
+  targetId: string
+  /** Human-readable name snapshotted at payment time, so history still reads correctly even if the bill/card is later renamed. */
+  targetLabel: string
+  amount: number
+  date: string // ISO — the real date the payment was made
+  /** Only set for recurringBill/periodicBill payments — which specific due-date instance this counts against. */
+  dueDateIso?: string
+  note?: string
+  recordedAt: string // ISO timestamp, for ordering same-day payments
 }
 
 export interface Debt {

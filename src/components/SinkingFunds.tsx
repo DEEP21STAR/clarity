@@ -5,6 +5,7 @@ import { suggestedFortnightlyForSinkingFund } from '@/lib/logic'
 import { formatCurrency, todayIso } from '@/lib/utils'
 import type { SinkingFund } from '@/lib/types'
 import { Plus, Trash2, X } from 'lucide-react'
+import { useUndoableDelete } from '@/lib/useUndoableDelete'
 
 /**
  * Generalised sinking funds — the SAME fortnightly-smoothing math as the
@@ -14,6 +15,7 @@ import { Plus, Trash2, X } from 'lucide-react'
  */
 export function SinkingFundsSection() {
   const { state, addSinkingFund, updateSinkingFund, removeSinkingFund } = useStore()
+  const withUndo = useUndoableDelete()
   const [showAdd, setShowAdd] = useState(false)
   const today = todayIso()
 
@@ -42,7 +44,7 @@ export function SinkingFundsSection() {
             fund={fund}
             today={today}
             onUpdate={(patch) => updateSinkingFund(fund.id, patch)}
-            onRemove={() => removeSinkingFund(fund.id)}
+            onRemove={() => withUndo(`${fund.name} removed`, () => removeSinkingFund(fund.id))}
           />
         ))}
       </div>
@@ -54,7 +56,7 @@ function FundCard({ fund, today, onUpdate, onRemove }: { fund: SinkingFund; toda
   const suggested = suggestedFortnightlyForSinkingFund(fund, today)
   const progress = fund.targetAmount > 0 ? Math.min(100, (fund.currentSaved / fund.targetAmount) * 100) : 0
   return (
-    <StatCard label={fund.name} glow="amber" tilt={false}>
+    <StatCard label={fund.name} glow="amber">
       <button onClick={onRemove} className="absolute top-3 right-3 z-20 text-white/30 hover:text-rose-400" aria-label={`Remove ${fund.name}`}>
         <Trash2 className="w-3.5 h-3.5" />
       </button>
@@ -90,7 +92,7 @@ function FundForm({ onCancel, onSave }: { onCancel: () => void; onSave: (v: { na
   const [targetDate, setTargetDate] = useState('')
 
   return (
-    <StatCard label="Add Irregular Expense" glow="amber" tilt={false}>
+    <StatCard label="Add Irregular Expense" glow="amber">
       <div className="mt-4 space-y-3">
         <div className="flex justify-end">
           <button onClick={onCancel} className="text-white/30 hover:text-white"><X className="w-4 h-4" /></button>

@@ -41,13 +41,28 @@ body {
 }
 .label-cut .label-tab {
   position: absolute;
-  top: -0.65em;
+  top: -0.68em;
   left: 1rem;
   padding: 0 0.5rem;
-  font-size: 0.65rem;
-  letter-spacing: 0.12em;
+  /*
+   * Round 20 pixel fix: Deep specifically flagged "GEM VISA DEEP" (a longer
+   * label) as hard to read at the original 0.65rem/0.12em-letter-spacing
+   * combo — small size + wide tracking is a legibility trap for anything
+   * beyond ~6 characters. Bumped size, tightened tracking slightly, and
+   * added a real glow (text-shadow in the section's own colour, since this
+   * span already inherits c.text from StatCard) so it reads as a genuine
+   * lit label rather than fine print. Considered a right-to-left scrolling
+   * treatment (Deep's own suggestion) instead but static+glow reads a
+   * static label correctly on first glance — scrolling text you have to
+   * wait out to read a section name felt like the wrong trade for
+   * something meant to be glanced at, not watched.
+   */
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
   background: var(--bg-panel);
+  text-shadow: 0 0 10px currentColor;
 }
 
 @keyframes aurora-drift {
@@ -55,6 +70,7 @@ body {
   50% { transform: translate3d(2%, -3%, 0) rotate(6deg); }
   100% { transform: translate3d(0,0,0) rotate(0deg); }
 }
+.aurora-bg { animation: aurora-drift 9s ease-in-out infinite; }
 
 @keyframes overspend-pulse-ring {
   0% { box-shadow: 0 0 0 0 rgba(255, 45, 85, 0.55), 0 0 30px 6px rgba(255, 45, 85, 0.25) inset; }
@@ -170,7 +186,8 @@ body {
 @media (prefers-reduced-motion: reduce) {
   .mood-sunny, .mood-cloudy, .mood-stormy, .icon-gas, .icon-electricity, .icon-signal-bar,
   .icon-card-shimmer, .icon-card-tilt, .icon-shield, .icon-eq-bar, .icon-cloud, .icon-water-droplet,
-  .icon-water-wrap::after, .icon-home, .icon-fold, .card-deal-in, .streak-badge-pop, .page-enter { animation: none; }
+  .icon-water-wrap::after, .icon-home, .icon-fold, .card-deal-in, .streak-badge-pop, .page-enter,
+  .aurora-bg { animation: none; }
 }
 
 /* ===================== Gradient headings — same treatment as the Live Funds hero number and the Clarity wordmark, applied everywhere else too ===================== */
@@ -315,6 +332,18 @@ button:not(:disabled):active {
 /* ===================== Drag-reorder ===================== */
 .drag-handle { cursor: grab; }
 .drag-handle:active { cursor: grabbing; }
+
+/* #31 — particle-trail glow on the drag handle itself while actively reordering (a real
+   trailing multi-ring pulse behind the grip icon, not just the existing card-level opacity dim). */
+@keyframes drag-handle-trail {
+  0% { text-shadow: 0 0 0 rgba(34,211,238,0); }
+  50% { text-shadow: 0 0 6px rgba(34,211,238,0.9), 0 0 14px rgba(168,85,247,0.5); }
+  100% { text-shadow: 0 0 0 rgba(34,211,238,0); }
+}
+.dragging .drag-handle { animation: drag-handle-trail 0.7s ease-in-out infinite; color: #22d3ee; }
+@media (prefers-reduced-motion: reduce) {
+  .dragging .drag-handle { animation: none; }
+}
 .drag-over { outline: 2px dashed rgba(34, 211, 238, 0.6); outline-offset: 4px; border-radius: 1rem; }
 .dragging { opacity: 0.4; }
 
@@ -352,9 +381,180 @@ button:not(:disabled):active {
 .tint-morning { filter: hue-rotate(6deg) saturate(0.96); }
 .tint-evening { filter: hue-rotate(-8deg) saturate(1.06) brightness(1.02); }
 
-/* Print — only the accountant summary modal prints, nothing else on the page. */
+/* =====================================================================
+   Round 20 — 51-item consolidated pass
+   ===================================================================== */
+
+/* ---- #18 real hover "lift" shadow (translateY lives in the StatCard GSAP
+   tween itself, alongside the existing tilt rotation, so they never fight
+   over the transform property — this just adds the shadow half). ---- */
+.card-lift { transition: box-shadow 0.3s ease-out; }
+.card-lift:hover { box-shadow: 0 18px 40px -12px rgba(0, 0, 0, 0.55), 0 0 30px -8px rgba(34, 211, 238, 0.35); }
+@media (prefers-reduced-motion: reduce) {
+  .card-lift { transition: none; }
+}
+
+/* ---- #20 chasing-light rotating gradient border on card hover ---- */
+@property --chase-angle { syntax: '<angle>'; initial-value: 0deg; inherits: false; }
+@keyframes chase-border-spin { to { --chase-angle: 360deg; } }
+.card-chase-border { position: relative; }
+.card-chase-border::before {
+  content: '';
+  position: absolute;
+  inset: -1.5px;
+  border-radius: inherit;
+  padding: 1.5px;
+  background: conic-gradient(from var(--chase-angle), transparent 0%, #22d3ee 12%, #a855f7 24%, transparent 38%);
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  mask-composite: exclude;
+  opacity: 0;
+  transition: opacity 0.25s ease-out;
+  pointer-events: none;
+  z-index: 5;
+}
+.card-chase-border:hover::before { opacity: 1; animation: chase-border-spin 2.4s linear infinite; }
+@supports not (background: conic-gradient(from 0deg, red, blue)) {
+  .card-chase-border::before { display: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .card-chase-border::before { animation: none !important; opacity: 0 !important; }
+}
+
+/* ---- #28 "focus mode" — dim every other card while one is being hovered ---- */
+.focus-mode-active .card-focusable:not(:hover) { opacity: 0.55; filter: saturate(0.75); transition: opacity 0.3s ease-out, filter 0.3s ease-out; }
+.card-focusable:hover { opacity: 1; }
+@media (prefers-reduced-motion: reduce) {
+  .focus-mode-active .card-focusable:not(:hover) { transition: none; }
+}
+
+/* ---- #16 odometer-style rolling-digit animation for LARGE number jumps
+   (distinct from CountUp's normal smooth tween, used only above a real
+   relative-change threshold — see OdometerDigit in CountUp.tsx). ---- */
+@keyframes odometer-roll { 0% { transform: translateY(-100%); } 100% { transform: translateY(0); } }
+.odometer-digit { display: inline-block; overflow: hidden; height: 1em; vertical-align: bottom; }
+.odometer-digit-inner { display: inline-block; animation: odometer-roll 0.5s cubic-bezier(0.22, 1, 0.36, 1); }
+@media (prefers-reduced-motion: reduce) {
+  .odometer-digit-inner { animation: none; }
+}
+
+/* ---- #19 SVG draw-on checkmark when a bill is marked paid ---- */
+@keyframes checkmark-draw { from { stroke-dashoffset: 24; } to { stroke-dashoffset: 0; } }
+.checkmark-draw path { stroke-dasharray: 24; stroke-dashoffset: 24; animation: checkmark-draw 0.4s ease-out forwards; }
+@media (prefers-reduced-motion: reduce) {
+  .checkmark-draw path { animation: none; stroke-dashoffset: 0; }
+}
+
+/* ---- #33 shake-feedback on invalid input ---- */
+@keyframes shake-invalid { 0%, 100% { transform: translateX(0); } 20% { transform: translateX(-6px); } 40% { transform: translateX(5px); } 60% { transform: translateX(-4px); } 80% { transform: translateX(3px); } }
+.shake-invalid { animation: shake-invalid 0.4s ease-in-out; border-color: rgba(255, 45, 85, 0.6) !important; }
+@media (prefers-reduced-motion: reduce) {
+  .shake-invalid { animation: none; }
+}
+
+/* ---- #34 skeleton loading shimmer ---- */
+@keyframes skeleton-shimmer { 0% { background-position: -150% 0; } 100% { background-position: 150% 0; } }
+.skeleton { background: linear-gradient(100deg, rgba(255,255,255,0.04) 30%, rgba(255,255,255,0.09) 50%, rgba(255,255,255,0.04) 70%); background-size: 250% 100%; animation: skeleton-shimmer 1.6s ease-in-out infinite; border-radius: 0.5rem; }
+@media (prefers-reduced-motion: reduce) {
+  .skeleton { animation: none; background: rgba(255,255,255,0.06); }
+}
+
+/* ---- #35 toast confirmations ---- */
+@keyframes toast-in { from { opacity: 0; transform: translateY(12px) scale(0.96); } to { opacity: 1; transform: translateY(0) scale(1); } }
+@keyframes toast-out { from { opacity: 1; transform: translateY(0) scale(1); } to { opacity: 0; transform: translateY(8px) scale(0.98); } }
+.toast-enter { animation: toast-in 0.3s cubic-bezier(0.22, 1, 0.36, 1); }
+.toast-exit { animation: toast-out 0.25s ease-in forwards; }
+@media (prefers-reduced-motion: reduce) {
+  .toast-enter, .toast-exit { animation: none; }
+}
+
+/* ---- #23 ghost-card preview while drag-reordering ---- */
+.drag-ghost { opacity: 0.35; transform: scale(0.97) rotate(-1deg); transition: opacity 0.2s, transform 0.2s; }
+@media (prefers-reduced-motion: reduce) {
+  .drag-ghost { transition: none; }
+}
+
+/* ---- #13 slide transition between calendar months ---- */
+@keyframes calendar-slide-left { from { opacity: 0; transform: translateX(24px); } to { opacity: 1; transform: translateX(0); } }
+@keyframes calendar-slide-right { from { opacity: 0; transform: translateX(-24px); } to { opacity: 1; transform: translateX(0); } }
+.calendar-slide-left { animation: calendar-slide-left 0.3s cubic-bezier(0.22, 1, 0.36, 1); }
+.calendar-slide-right { animation: calendar-slide-right 0.3s cubic-bezier(0.22, 1, 0.36, 1); }
+@media (prefers-reduced-motion: reduce) {
+  .calendar-slide-left, .calendar-slide-right { animation: none; }
+}
+
+/* ---- #9 animated filling shopping-cart icon (Shopping & Expenses placeholder) ---- */
+@keyframes cart-fill-bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-3px); } }
+.cart-fill-icon { animation: cart-fill-bounce 2.2s ease-in-out infinite; }
+@media (prefers-reduced-motion: reduce) {
+  .cart-fill-icon { animation: none; }
+}
+
+/* ---- #10 animated result reveal on Tools calculators ---- */
+@keyframes result-reveal { from { opacity: 0; transform: translateY(6px) scale(0.98); } to { opacity: 1; transform: translateY(0) scale(1); } }
+.result-reveal { animation: result-reveal 0.4s cubic-bezier(0.22, 1, 0.36, 1); }
+@media (prefers-reduced-motion: reduce) {
+  .result-reveal { animation: none; }
+}
+
+/* ---- #42 custom glowing cursor-trail dot (desktop only) ---- */
+.cursor-glow-dot { position: fixed; top: 0; left: 0; width: 18px; height: 18px; border-radius: 50%; background: radial-gradient(circle, rgba(34,211,238,0.55), rgba(168,85,247,0.25) 60%, transparent 80%); pointer-events: none; z-index: 200; transform: translate(-50%, -50%); transition: opacity 0.2s; mix-blend-mode: screen; }
+@media (prefers-reduced-motion: reduce), (pointer: coarse) {
+  .cursor-glow-dot { display: none; }
+}
+
+/* ---- #39 full keyboard navigation — visible focus rings in the neon theme, not the browser default ---- */
+a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible, [tabindex]:focus-visible {
+  outline: 2px solid #22d3ee;
+  outline-offset: 2px;
+  box-shadow: 0 0 0 4px rgba(34, 211, 238, 0.25);
+  border-radius: 4px;
+}
+
+/* ---- #43 slow continuous ambient colour drift (on top of the existing discrete time-of-day tint) ---- */
+@keyframes ambient-drift { 0%, 100% { filter: hue-rotate(0deg); } 50% { filter: hue-rotate(4deg); } }
+.ambient-drift { animation: ambient-drift 90s ease-in-out infinite; }
+@media (prefers-reduced-motion: reduce) {
+  .ambient-drift { animation: none; }
+}
+
+/* ---- #29 notification bell dropdown ---- */
+@keyframes bell-ring { 0%, 100% { transform: rotate(0); } 15% { transform: rotate(14deg); } 30% { transform: rotate(-10deg); } 45% { transform: rotate(6deg); } 60% { transform: rotate(-4deg); } 75% { transform: rotate(2deg); } }
+.bell-ring { animation: bell-ring 0.6s ease-in-out; }
+@media (prefers-reduced-motion: reduce) {
+  .bell-ring { animation: none; }
+}
+
+/* ---- #25 donut slice explode-to-detail ---- */
+.donut-slice-active { filter: drop-shadow(0 0 8px currentColor); }
+
+/* ---- #45/#24 trend arrows ---- */
+@keyframes trend-arrow-in { from { opacity: 0; transform: translateY(3px); } to { opacity: 1; transform: translateY(0); } }
+.trend-arrow { animation: trend-arrow-in 0.3s ease-out; }
+@media (prefers-reduced-motion: reduce) {
+  .trend-arrow { animation: none; }
+}
+
+/* ---- text-search-highlight (#3/#48) ---- */
+mark.search-hit { background: rgba(34, 211, 238, 0.35); color: #fff; border-radius: 2px; padding: 0 1px; }
+
+/* Print — only the accountant summary modal prints, nothing else on the page.
+   #46: a real print-specific document layout (serif type, @page margins, a
+   bordered table instead of a raw monospace CSV dump) — separate from the
+   on-screen cinematic UI, which never prints. */
+@page { margin: 18mm 16mm; }
 @media print {
   body * { visibility: hidden; }
   #print-summary-root, #print-summary-root * { visibility: visible; }
   #print-summary-root { position: fixed; inset: 0; background: white; }
+  .print-doc { font-family: Georgia, 'Times New Roman', serif; color: #111; }
+  .print-doc-header h1 { font-size: 18pt; margin: 0 0 2pt; }
+  .print-doc-header p { font-size: 9pt; color: #555; margin: 0 0 14pt; }
+  .print-doc-h2 { font-size: 12pt; margin: 16pt 0 6pt; border-bottom: 1px solid #ccc; padding-bottom: 2pt; }
+  .print-doc-table { width: 100%; border-collapse: collapse; font-size: 10pt; page-break-inside: avoid; }
+  .print-doc-table th, .print-doc-table td { border-bottom: 0.5pt solid #ddd; padding: 4pt 6pt; text-align: left; }
+  .print-doc-table th { font-weight: 600; color: #444; }
+  .print-doc-num { text-align: right; font-variant-numeric: tabular-nums; }
+  .print-doc-total-row td { font-weight: 700; border-top: 1pt solid #333; }
 }

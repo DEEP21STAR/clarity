@@ -7,6 +7,7 @@ import { cn, formatCurrency, todayIso } from '@/lib/utils'
 import type { PeriodicBill } from '@/lib/types'
 import { CheckCircle2, Clock, Pencil, Trash2 } from 'lucide-react'
 import { DueBadge } from './DueBadge'
+import { RecordPaymentButton } from './RecordPaymentForm'
 
 const PENDING_BILL_SEVERITY_CLASSES: Record<DueSeverity, string> = {
   ok: 'border-emerald-400/30 bg-emerald-500/10',
@@ -57,7 +58,7 @@ export function PeriodicBillGauge({
   }, [dashOffset])
 
   return (
-    <StatCard label={bill.name} glow={bill.inCredit ? 'success' : 'cyan'} tilt={false} delay={delay}>
+    <StatCard label={bill.name} glow={bill.inCredit ? 'success' : 'cyan'} delay={delay}>
       {(onEdit || onRemove) && (
         <div className="absolute top-3 right-3 z-20 flex gap-2">
           {onEdit && (
@@ -131,13 +132,18 @@ export function PeriodicBillGauge({
                 <div className={cn('rounded-lg border px-3 py-2 text-sm', PENDING_BILL_SEVERITY_CLASSES[severity])}>
                   <div className={cn('flex justify-between items-center font-semibold', PENDING_BILL_TEXT_CLASSES[severity])}>
                     <span className="flex items-center gap-2">
-                      Bill due {shortDate(bill.pendingBill.dueDate)}
-                      <DueBadge daysUntil={daysUntilDue} />
+                      Bill due
+                      <DueBadge dueDateIso={bill.pendingBill.dueDate} />
                     </span>
                     <span className="tabular-nums">{formatCurrency(bill.pendingBill.amount)}</span>
                   </div>
                   <div className="text-[11px] text-white/40 mt-0.5">
                     for {shortDate(bill.pendingBill.periodStart)} – {shortDate(bill.pendingBill.periodEnd)}
+                  </div>
+                  {/* #8 expanded — a real payment here reduces (or fully clears, with overpayment
+                      booked as real credit) this bill's pending amount. */}
+                  <div className="mt-2">
+                    <RecordPaymentButton targetType="periodicBill" targetId={bill.id} targetLabel={bill.name} defaultAmount={bill.pendingBill.amount} />
                   </div>
                 </div>
               )

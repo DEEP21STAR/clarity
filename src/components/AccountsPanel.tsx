@@ -15,7 +15,7 @@ export function AccountsPanel({ compact = false }: { compact?: boolean }) {
   const assets = state.accounts.filter((a) => a.type === 'asset')
 
   return (
-    <StatCard label="Accounts" glow="purple" tilt={false}>
+    <StatCard label="Accounts" glow="purple">
       <div className="mt-4">
         <div className="text-xs font-semibold uppercase tracking-wide text-white/40 mb-2">Liquid Accounts</div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">

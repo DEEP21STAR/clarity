@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { StoreProvider, useStore } from '@/lib/store'
 import { BootSequence } from './components/BootSequence'
 import { Dashboard } from './components/Dashboard'
@@ -14,6 +14,10 @@ import { PinGate } from './components/PinGate'
 import { AmbientBackground } from './components/AmbientBackground'
 import { CommandPalette, type PaletteCommand } from './components/CommandPalette'
 import { SegmentedControl } from './components/SegmentedControl'
+import { ToastProvider } from './components/Toast'
+import { NotificationBell } from './components/NotificationBell'
+import { CursorGlow } from './components/CursorGlow'
+import { computeCurrentHealthScore } from '@/lib/logic'
 import { cn } from '@/lib/utils'
 import {
   LayoutDashboard, CalendarClock, Receipt, PieChart, CreditCard, ShoppingCart, Wrench, TrendingUp, CalendarDays, Command,
@@ -46,6 +50,16 @@ function AppContent() {
   const [tab, setTab] = useState<TabId>('upcoming')
   const mainRef = useRef<HTMLDivElement>(null)
   const tint = useTimeOfDayTint()
+
+  // #22 — feeds the ambient particle background's calm/troubled reaction; same shared
+  // formula the Dashboard headline and daily snapshot use (computeCurrentHealthScore).
+  const healthScore = useMemo(
+    () => computeCurrentHealthScore({
+      bills: state.bills, creditCards: state.creditCards, debts: state.debts,
+      accounts: state.accounts, grossAnnualIncome: state.grossAnnualIncome, country: state.country,
+    }).score,
+    [state.bills, state.creditCards, state.debts, state.accounts, state.grossAnnualIncome, state.country]
+  )
 
   useEffect(() => {
     if (!mainRef.current) return
@@ -81,8 +95,9 @@ function AppContent() {
   }))
 
   return (
-    <div className={cn('min-h-screen relative', tint)}>
-      <AmbientBackground />
+    <div className={cn('min-h-screen relative ambient-drift', tint)}>
+      <AmbientBackground healthScore={healthScore} />
+      <CursorGlow />
       <CommandPalette tabCommands={tabCommands} />
       <div className="relative z-10 page-enter-3d">
         <header className="border-b border-white/10 sticky top-0 z-40 backdrop-blur-md bg-[#05060a]/80">
@@ -112,6 +127,7 @@ function AppContent() {
                 <span>Quick actions</span>
                 <kbd className="text-[10px] text-white/30 border border-white/10 rounded px-1 ml-0.5">⌘K</kbd>
               </button>
+              <NotificationBell />
             </div>
           </div>
           <nav className="max-w-6xl mx-auto px-4 pb-3 flex gap-1 overflow-x-auto">
@@ -158,10 +174,12 @@ function App() {
 
   return (
     <StoreProvider>
-      {!booted && <BootSequence onDone={() => setBooted(true)} />}
-      <PinGate>
-        <AppContent />
-      </PinGate>
+      <ToastProvider>
+        {!booted && <BootSequence onDone={() => setBooted(true)} />}
+        <PinGate>
+          <AppContent />
+        </PinGate>
+      </ToastProvider>
     </StoreProvider>
   )
 }

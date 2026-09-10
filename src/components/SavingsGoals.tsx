@@ -3,11 +3,14 @@ import { StatCard } from './StatCard'
 import { useStore } from '@/lib/store'
 import { formatCurrency } from '@/lib/utils'
 import type { SavingsGoal } from '@/lib/types'
-import { Plus, Trash2, PiggyBank, X } from 'lucide-react'
+import { Plus, Trash2, PiggyBank, X, CircleDot, Rows3 } from 'lucide-react'
+import { useUndoableDelete } from '@/lib/useUndoableDelete'
+import { fireSavingsConfetti } from '@/lib/confetti'
 
 /** Savings goals — target/target-date, a per-period funding amount that deducts from Live Funds Available, and a "log contribution" action that banks it. */
 export function SavingsGoalsSection() {
   const { state, addSavingsGoal, updateSavingsGoal, removeSavingsGoal, logGoalContribution } = useStore()
+  const withUndo = useUndoableDelete()
   const [showAdd, setShowAdd] = useState(false)
 
   return (
@@ -34,7 +37,7 @@ export function SavingsGoalsSection() {
       )}
 
       {state.savingsGoals.length === 0 && !showAdd && (
-        <StatCard label="No Goals Yet" glow="purple" tilt={false}>
+        <StatCard label="No Goals Yet" glow="purple">
           <p className="mt-4 text-sm text-white/40">Add a savings goal to start tracking progress toward something specific.</p>
         </StatCard>
       )}
@@ -45,8 +48,8 @@ export function SavingsGoalsSection() {
             key={goal.id}
             goal={goal}
             onUpdate={(patch) => updateSavingsGoal(goal.id, patch)}
-            onRemove={() => removeSavingsGoal(goal.id)}
-            onLogContribution={() => logGoalContribution(goal.id)}
+            onRemove={() => withUndo(`${goal.name} goal removed`, () => removeSavingsGoal(goal.id))}
+            onLogContribution={() => { logGoalContribution(goal.id); fireSavingsConfetti() }}
           />
         ))}
       </div>
@@ -61,21 +64,52 @@ function GoalCard({ goal, onUpdate, onRemove, onLogContribution }: {
   onLogContribution: () => void
 }) {
   const progress = goal.targetAmount > 0 ? Math.min(100, (goal.contributedAmount / goal.targetAmount) * 100) : 0
+  const [ringView, setRingView] = useState(false)
+  const RADIUS = 22
+  const CIRCUMFERENCE = 2 * Math.PI * RADIUS
   return (
-    <StatCard label={goal.name} glow="success" tilt={false}>
-      <button onClick={onRemove} className="absolute top-3 right-3 z-20 text-white/30 hover:text-rose-400" aria-label={`Remove ${goal.name}`}>
-        <Trash2 className="w-3.5 h-3.5" />
-      </button>
+    <StatCard label={goal.name} glow="success">
+      <div className="absolute top-3 right-3 z-20 flex items-center gap-2">
+        {/* #26 — circular progress-ring as an alternate view, not a replacement for the bar. */}
+        <button onClick={() => setRingView((v) => !v)} title={ringView ? 'Switch to bar view' : 'Switch to ring view'} className="text-white/30 hover:text-emerald-300">
+          {ringView ? <Rows3 className="w-3.5 h-3.5" /> : <CircleDot className="w-3.5 h-3.5" />}
+        </button>
+        <button onClick={onRemove} className="text-white/30 hover:text-rose-400" aria-label={`Remove ${goal.name}`}>
+          <Trash2 className="w-3.5 h-3.5" />
+        </button>
+      </div>
       <div className="mt-4 flex items-center gap-3">
-        <PiggyBank className="w-6 h-6 text-emerald-300 shrink-0" />
+        {ringView ? (
+          <div className="relative shrink-0" style={{ width: 56, height: 56 }}>
+            <svg width={56} height={56} viewBox="0 0 56 56" className="-rotate-90">
+              <circle cx={28} cy={28} r={RADIUS} fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth={5} />
+              <circle
+                cx={28} cy={28} r={RADIUS} fill="none" stroke="url(#goalRingGradient)" strokeWidth={5} strokeLinecap="round"
+                strokeDasharray={CIRCUMFERENCE} strokeDashoffset={CIRCUMFERENCE * (1 - progress / 100)}
+                style={{ transition: 'stroke-dashoffset 0.8s cubic-bezier(0.22,1,0.36,1)' }}
+              />
+              <defs>
+                <linearGradient id="goalRingGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stopColor="#34d399" />
+                  <stop offset="100%" stopColor="#22d3ee" />
+                </linearGradient>
+              </defs>
+            </svg>
+            <div className="absolute inset-0 flex items-center justify-center text-[11px] font-bold text-white">{progress.toFixed(0)}%</div>
+          </div>
+        ) : (
+          <PiggyBank className="w-6 h-6 text-emerald-300 shrink-0" />
+        )}
         <div className="flex-1">
           <div className="flex justify-between text-sm">
             <span className="text-white/60">{formatCurrency(goal.contributedAmount)} of {formatCurrency(goal.targetAmount)}</span>
             <span className="text-white/40">{progress.toFixed(0)}%</span>
           </div>
-          <div className="mt-2 h-2 rounded-full bg-white/5 overflow-hidden">
-            <div className="h-full rounded-full bg-gradient-to-r from-emerald-400 to-cyan-400" style={{ width: `${progress}%` }} />
-          </div>
+          {!ringView && (
+            <div className="mt-2 h-2 rounded-full bg-white/5 overflow-hidden">
+              <div className="h-full rounded-full bg-gradient-to-r from-emerald-400 to-cyan-400" style={{ width: `${progress}%`, transition: 'width 0.8s cubic-bezier(0.22,1,0.36,1)' }} />
+            </div>
+          )}
         </div>
       </div>
       {goal.targetDate && <p className="mt-2 text-xs text-white/40">Target date: {goal.targetDate}</p>}
@@ -107,6 +141,7 @@ function GoalForm({ onCancel, onSave }: { onCancel: () => void; onSave: (v: { na
   const [targetDate, setTargetDate] = useState('')
   const [fundedThisPeriod, setFundedThisPeriod] = useState(0)
 
+  // tilt off: 4-field form — rotating under the cursor mid-type is a real regression.
   return (
     <StatCard label="Add Savings Goal" glow="success" tilt={false}>
       <div className="mt-4 space-y-3">

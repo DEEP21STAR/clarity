@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useStore } from '@/lib/store'
 import { Search } from 'lucide-react'
+import { formatCurrency } from '@/lib/utils'
 
 export interface PaletteCommand {
   id: string
@@ -9,7 +10,7 @@ export interface PaletteCommand {
   run: () => void
 }
 
-/** Cmd/Ctrl+K quick-action search — jump to any tab, add a one-off expense, or open a specific GEM VISA plan. Keyboard-driven throughout. */
+/** Cmd/Ctrl+K quick-action search — jump to any tab, open a specific GEM VISA plan, or find a specific bill (real live-preview hint: actual amount + frequency, filtered as you type). Keyboard-driven throughout. */
 export function CommandPalette({ tabCommands }: { tabCommands: PaletteCommand[] }) {
   const { state } = useStore()
   const [open, setOpen] = useState(false)
@@ -33,7 +34,20 @@ export function CommandPalette({ tabCommands }: { tabCommands: PaletteCommand[] 
     [state.creditCards]
   )
 
-  const allCommands = [...tabCommands, ...planCommands]
+  // #30/#48 — unified search reaches bills too, not just tabs/plans, with a real
+  // live-preview hint (actual amount + frequency, not a static label).
+  const billCommands: PaletteCommand[] = useMemo(
+    () =>
+      state.bills.map((bill) => ({
+        id: `bill-${bill.id}`,
+        label: `Bill: ${bill.name}`,
+        hint: `${formatCurrency(bill.amount)} ${bill.frequency}`,
+        run: () => document.querySelector<HTMLButtonElement>('[data-tab="upcoming"]')?.click(),
+      })),
+    [state.bills]
+  )
+
+  const allCommands = [...tabCommands, ...planCommands, ...billCommands]
   const filtered = query.trim() ? allCommands.filter((c) => c.label.toLowerCase().includes(query.toLowerCase())) : allCommands
 
   useEffect(() => {
@@ -83,7 +97,7 @@ export function CommandPalette({ tabCommands }: { tabCommands: PaletteCommand[] 
               if (e.key === 'ArrowUp') setSelected((s) => Math.max(0, s - 1))
               if (e.key === 'Enter') runSelected()
             }}
-            placeholder="Jump to a tab, plan, or action..."
+            placeholder="Jump to a tab, plan, bill, or action..."
             className="flex-1 bg-transparent outline-none text-sm text-white placeholder:text-white/30"
           />
           <kbd className="text-[10px] text-white/30 border border-white/10 rounded px-1.5 py-0.5">Esc</kbd>

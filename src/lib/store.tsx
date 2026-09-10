@@ -2,11 +2,12 @@ import React, { createContext, useContext, useEffect, useMemo, useRef, useState,
 import type {
   RecurringBill, Mode, Country, Transaction, Debt, CreditCardAccount, DeviceRepayment, PeriodicBill,
   Account, NetWorthSnapshot, SavingsGoal, OneOffEntry, SinkingFund, SpendTracker, StreakState, HouseholdView,
+  PaymentRecord,
 } from './types'
 import { SEED_BILLS, SEED_CREDIT_CARDS, SEED_DEVICE_REPAYMENTS, SEED_PERIODIC_BILLS, SEED_ACCOUNTS } from './constants'
 import {
-  calcNetWorth, upsertNetWorthSnapshot, applyBillAmountChange, calcFinancialHealthScore,
-  emergencyFundMonths, monthlyEquivalent, nzNetIncome, auNetIncome,
+  calcNetWorth, upsertNetWorthSnapshot, applyBillAmountChange, computeCurrentHealthScore,
+  applyPaymentToCard, applyPaymentToPlan, applyPaymentToPeriodicBill, applyPaymentToDevice,
 } from './logic'
 import { todayIso } from './utils'
 
@@ -41,6 +42,10 @@ export interface AppState {
   healthScoreHistory: { date: string; score: number }[]
   /** Order of the draggable Dashboard card blocks — persisted so a reorder sticks across sessions. */
   dashboardCardOrder: string[]
+  /** Real payment history — amount + date per payment, reduces the real balance it targets (#8, Round 20). See PaymentRecord in types.ts. */
+  paymentRecords: PaymentRecord[]
+  /** #38 — real sound design toggle, OFF by default per the explicit ask. */
+  soundEnabled: boolean
 }
 
 const DEFAULT_STATE: AppState = {
@@ -65,6 +70,8 @@ const DEFAULT_STATE: AppState = {
   lastExportedAt: null,
   healthScoreHistory: [],
   dashboardCardOrder: ['stats', 'health', 'tax', 'insights'],
+  paymentRecords: [],
+  soundEnabled: false,
 }
 
 function loadState(): AppState {
@@ -89,6 +96,10 @@ interface StoreContextValue {
   setMode: (mode: Mode) => void
   setCountry: (country: Country) => void
   addTransactions: (txs: Transaction[]) => void
+  /** Round 20 finding: CSV import correctly never invents a category (real bank exports don't
+      have one) — but with no way to EDIT it afterward, every imported row stayed "uncategorised"
+      forever, starving the new category-colour/trend features of real input. Closes that gap. */
+  updateTransaction: (id: string, patch: Partial<Transaction>) => void
   setGrossAnnualIncome: (v: number) => void
   addDebt: (debt: Debt) => void
   removeDebt: (id: string) => void
@@ -112,6 +123,13 @@ interface StoreContextValue {
   setLastExportedAt: (iso: string) => void
   markDebtPaidOff: (id: string) => void
   setDashboardCardOrder: (order: string[]) => void
+  setSoundEnabled: (enabled: boolean) => void
+  /** #8 expanded — records a real amount+date payment AND reduces the real balance/remaining it targets. Returns the new record's id. */
+  recordPayment: (input: Omit<PaymentRecord, 'id' | 'recordedAt'>) => string
+  /** Reverses a payment's balance effect and removes it — the real Undo for #8's toast action. */
+  deletePaymentRecord: (id: string) => void
+  /** #49 — restores a full previous state snapshot, used by the toast "Undo" action on destructive edits. */
+  restoreState: (snapshot: AppState) => void
 }
 
 const StoreContext = createContext<StoreContextValue | null>(null)
@@ -152,16 +170,14 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     if (fingerprint === lastHealthInputs.current) return
     lastHealthInputs.current = fingerprint
 
-    const net = state.country === 'NZ' ? nzNetIncome(state.grossAnnualIncome) : auNetIncome(state.grossAnnualIncome)
-    const monthlyNet = net.net / 12
-    const monthlyBills = state.bills.filter((b) => b.active).reduce((s, b) => s + monthlyEquivalent(b.amount, b.frequency), 0)
-    const savingsBalance = state.accounts.find((a) => a.id === 'savings')?.value ?? 0
-    const savingsRate = monthlyNet > 0 ? (monthlyNet - monthlyBills) / monthlyNet : 0
-    const totalDebtBalance = state.debts.reduce((s, d) => s + d.balance, 0) + state.creditCards.reduce((s, c) => s + c.balance, 0)
-    const debtToIncome = net.net > 0 ? totalDebtBalance / net.net : 1
-    const billCoverageRatio = monthlyBills > 0 ? monthlyNet / monthlyBills : 2
-    const efMonths = emergencyFundMonths(savingsBalance, monthlyBills)
-    const { score } = calcFinancialHealthScore({ savingsRate, debtToIncome, billCoverageRatio, emergencyFundMonths: efMonths })
+    const { score } = computeCurrentHealthScore({
+      bills: state.bills,
+      creditCards: state.creditCards,
+      debts: state.debts,
+      accounts: state.accounts,
+      grossAnnualIncome: state.grossAnnualIncome,
+      country: state.country,
+    })
 
     const today = todayIso()
     setState((s) => {
@@ -193,6 +209,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     setMode: (mode) => setState((s) => ({ ...s, mode })),
     setCountry: (country) => setState((s) => ({ ...s, country })),
     addTransactions: (txs) => setState((s) => ({ ...s, transactions: [...txs, ...s.transactions] })),
+    updateTransaction: (id, patch) => setState((s) => ({ ...s, transactions: s.transactions.map((t) => (t.id === id ? { ...t, ...patch } : t)) })),
     setGrossAnnualIncome: (v) => setState((s) => ({ ...s, grossAnnualIncome: v })),
     addDebt: (debt) => setState((s) => ({ ...s, debts: [...s.debts, debt] })),
     removeDebt: (id) => setState((s) => ({ ...s, debts: s.debts.filter((d) => d.id !== id) })),
@@ -225,6 +242,53 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     setStreak: (streak) => setState((s) => ({ ...s, streak })),
     setLastExportedAt: (iso) => setState((s) => ({ ...s, lastExportedAt: iso })),
     setDashboardCardOrder: (order) => setState((s) => ({ ...s, dashboardCardOrder: order })),
+    recordPayment: (input) => {
+      const id = `pay-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`
+      const record: PaymentRecord = { ...input, id, recordedAt: new Date().toISOString() }
+      setState((s) => {
+        let creditCards = s.creditCards
+        let periodicBills = s.periodicBills
+        let deviceRepayments = s.deviceRepayments
+        if (record.targetType === 'creditCard') {
+          creditCards = s.creditCards.map((c) => (c.id === record.targetId ? applyPaymentToCard(c, record.amount) : c))
+        } else if (record.targetType === 'installmentPlan') {
+          creditCards = s.creditCards.map((c) => ({ ...c, plans: c.plans.map((p) => (p.id === record.targetId ? applyPaymentToPlan(p, record.amount) : p)) }))
+        } else if (record.targetType === 'periodicBill') {
+          periodicBills = s.periodicBills.map((b) => (b.id === record.targetId ? applyPaymentToPeriodicBill(b, record.amount) : b))
+        } else if (record.targetType === 'deviceRepayment') {
+          deviceRepayments = s.deviceRepayments.map((d) =>
+            d.id === record.targetId ? { ...applyPaymentToDevice(d, record.amount), paymentsRemaining: Math.max(0, d.paymentsRemaining - 1) } : d
+          )
+        }
+        // recurringBill payments don't reduce any balance (a flat recurring amount, not a running
+        // balance) — the payment record itself, with its dueDateIso, is the only effect needed.
+        return { ...s, creditCards, periodicBills, deviceRepayments, paymentRecords: [...s.paymentRecords, record] }
+      })
+      return id
+    },
+    deletePaymentRecord: (id) =>
+      setState((s) => {
+        const record = s.paymentRecords.find((r) => r.id === id)
+        if (!record) return s
+        let creditCards = s.creditCards
+        let periodicBills = s.periodicBills
+        let deviceRepayments = s.deviceRepayments
+        const reverseAmount = -record.amount
+        if (record.targetType === 'creditCard') {
+          creditCards = s.creditCards.map((c) => (c.id === record.targetId ? applyPaymentToCard(c, reverseAmount) : c))
+        } else if (record.targetType === 'installmentPlan') {
+          creditCards = s.creditCards.map((c) => ({ ...c, plans: c.plans.map((p) => (p.id === record.targetId ? applyPaymentToPlan(p, reverseAmount) : p)) }))
+        } else if (record.targetType === 'periodicBill') {
+          periodicBills = s.periodicBills.map((b) => (b.id === record.targetId ? applyPaymentToPeriodicBill(b, reverseAmount) : b))
+        } else if (record.targetType === 'deviceRepayment') {
+          deviceRepayments = s.deviceRepayments.map((d) =>
+            d.id === record.targetId ? { ...applyPaymentToDevice(d, reverseAmount), paymentsRemaining: d.paymentsRemaining + 1 } : d
+          )
+        }
+        return { ...s, creditCards, periodicBills, deviceRepayments, paymentRecords: s.paymentRecords.filter((r) => r.id !== id) }
+      }),
+    restoreState: (snapshot) => setState(snapshot),
+    setSoundEnabled: (enabled) => setState((s) => ({ ...s, soundEnabled: enabled })),
   }), [state])
 
   return <StoreContext.Provider value={value}>{children}</StoreContext.Provider>

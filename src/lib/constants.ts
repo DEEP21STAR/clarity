@@ -79,6 +79,12 @@ export const SEED_BILLS: RecurringBill[] = [
     note: 'No minimum payment currently required on this card. Two plans on it are already expired and accruing 29.99% p.a. — see Installment Plans below.',
     owner: 'mimi',
   },
+  { id: 'bill-anytime-fitness', name: 'Anytime Fitness', amount: 46, frequency: 'fortnightly', dueDay: 1, dueDayIsEstimate: true, category: 'subscription', active: true, owner: 'shared' },
+  {
+    id: 'bill-claude-pro', name: 'Claude Pro Plan', amount: 27.73, frequency: 'monthly', dueDay: 24, dueDayIsEstimate: false, category: 'subscription', active: true,
+    note: 'Billed as $20.00 USD/month. Converted at 1 USD = 1.3866 AUD (real rate checked 2026-09-10, NOT live-updating) — $20 USD ≈ $27.73 AUD shown here. Re-check the rate periodically; this is a point-in-time conversion, not a live feed.',
+    owner: 'deep',
+  },
 ]
 
 /**
