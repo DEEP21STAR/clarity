@@ -18,7 +18,7 @@ export function Debts() {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-2xl font-bold tracking-tight text-white">Debts</h2>
+        <h2 className="gradient-heading text-2xl font-bold tracking-tight">Debts</h2>
         <p className="text-sm text-white/50 mt-1">Avalanche payoff order — highest APR cleared first.</p>
       </div>
 

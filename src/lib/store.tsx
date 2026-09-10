@@ -4,7 +4,10 @@ import type {
   Account, NetWorthSnapshot, SavingsGoal, OneOffEntry, SinkingFund, SpendTracker, StreakState, HouseholdView,
 } from './types'
 import { SEED_BILLS, SEED_CREDIT_CARDS, SEED_DEVICE_REPAYMENTS, SEED_PERIODIC_BILLS, SEED_ACCOUNTS } from './constants'
-import { calcNetWorth, upsertNetWorthSnapshot, applyBillAmountChange } from './logic'
+import {
+  calcNetWorth, upsertNetWorthSnapshot, applyBillAmountChange, calcFinancialHealthScore,
+  emergencyFundMonths, monthlyEquivalent, nzNetIncome, auNetIncome,
+} from './logic'
 import { todayIso } from './utils'
 
 // Bumped v4 -> v5: replaced the flat HSBC/Overdraft/Savings `balances` list
@@ -34,6 +37,10 @@ export interface AppState {
   spendTracker: SpendTracker
   streak: StreakState
   lastExportedAt: string | null
+  /** One health-score reading per real calendar day — feeds the "score up/down X points" ticker line. */
+  healthScoreHistory: { date: string; score: number }[]
+  /** Order of the draggable Dashboard card blocks — persisted so a reorder sticks across sessions. */
+  dashboardCardOrder: string[]
 }
 
 const DEFAULT_STATE: AppState = {
@@ -56,6 +63,8 @@ const DEFAULT_STATE: AppState = {
   spendTracker: { food: 0, fuel: 0, personal: 0, periodStart: todayIso() },
   streak: { current: 0, best: 0, lastCheckedDate: '', milestonesHit: [] },
   lastExportedAt: null,
+  healthScoreHistory: [],
+  dashboardCardOrder: ['stats', 'health', 'tax', 'insights'],
 }
 
 function loadState(): AppState {
@@ -102,6 +111,7 @@ interface StoreContextValue {
   setStreak: (streak: StreakState) => void
   setLastExportedAt: (iso: string) => void
   markDebtPaidOff: (id: string) => void
+  setDashboardCardOrder: (order: string[]) => void
 }
 
 const StoreContext = createContext<StoreContextValue | null>(null)
@@ -132,6 +142,37 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     }))
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state.accounts, state.creditCards, state.debts])
+
+  // Health-score snapshot — same one-per-day pattern as net worth, so the
+  // insights ticker can say something real like "score up 4 points" instead
+  // of inventing a trend.
+  const lastHealthInputs = useRef<string>('')
+  useEffect(() => {
+    const fingerprint = JSON.stringify([state.accounts, state.creditCards, state.debts, state.bills, state.grossAnnualIncome, state.country])
+    if (fingerprint === lastHealthInputs.current) return
+    lastHealthInputs.current = fingerprint
+
+    const net = state.country === 'NZ' ? nzNetIncome(state.grossAnnualIncome) : auNetIncome(state.grossAnnualIncome)
+    const monthlyNet = net.net / 12
+    const monthlyBills = state.bills.filter((b) => b.active).reduce((s, b) => s + monthlyEquivalent(b.amount, b.frequency), 0)
+    const savingsBalance = state.accounts.find((a) => a.id === 'savings')?.value ?? 0
+    const savingsRate = monthlyNet > 0 ? (monthlyNet - monthlyBills) / monthlyNet : 0
+    const totalDebtBalance = state.debts.reduce((s, d) => s + d.balance, 0) + state.creditCards.reduce((s, c) => s + c.balance, 0)
+    const debtToIncome = net.net > 0 ? totalDebtBalance / net.net : 1
+    const billCoverageRatio = monthlyBills > 0 ? monthlyNet / monthlyBills : 2
+    const efMonths = emergencyFundMonths(savingsBalance, monthlyBills)
+    const { score } = calcFinancialHealthScore({ savingsRate, debtToIncome, billCoverageRatio, emergencyFundMonths: efMonths })
+
+    const today = todayIso()
+    setState((s) => {
+      const existingIdx = s.healthScoreHistory.findIndex((h) => h.date === today)
+      const next = [...s.healthScoreHistory]
+      if (existingIdx === -1) next.push({ date: today, score })
+      else next[existingIdx] = { date: today, score }
+      return { ...s, healthScoreHistory: next.sort((a, b) => a.date.localeCompare(b.date)) }
+    })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [state.accounts, state.creditCards, state.debts, state.bills, state.grossAnnualIncome, state.country])
 
   const value = useMemo<StoreContextValue>(() => ({
     state,
@@ -183,6 +224,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     resetSpendTracker: (periodStart) => setState((s) => ({ ...s, spendTracker: { food: 0, fuel: 0, personal: 0, periodStart } })),
     setStreak: (streak) => setState((s) => ({ ...s, streak })),
     setLastExportedAt: (iso) => setState((s) => ({ ...s, lastExportedAt: iso })),
+    setDashboardCardOrder: (order) => setState((s) => ({ ...s, dashboardCardOrder: order })),
   }), [state])
 
   return <StoreContext.Provider value={value}>{children}</StoreContext.Provider>

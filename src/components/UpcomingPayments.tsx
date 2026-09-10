@@ -17,6 +17,8 @@ import { SpendPaceTracker } from './SpendPaceTracker'
 import { CashFlowChart } from './CashFlowChart'
 import { HouseholdSplit } from './HouseholdSplit'
 import { BillIcon } from './BillIcons'
+import { SegmentedControl } from './SegmentedControl'
+import { Disclosure } from './Disclosure'
 import { fireConfetti } from '@/lib/confetti'
 
 const WINDOWS: { id: UpcomingWindow; label: string }[] = [
@@ -92,7 +94,7 @@ export function UpcomingPayments() {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-2xl font-bold tracking-tight text-white">Upcoming Payments</h2>
+        <h2 className="gradient-heading text-2xl font-bold tracking-tight">Upcoming Payments</h2>
         <p className="text-sm text-white/50 mt-1">
           What's actually left for food, fuel and personal spending until pay day.
         </p>
@@ -112,22 +114,7 @@ export function UpcomingPayments() {
       )}
 
       {/* Window toggle */}
-      <div className="flex gap-2">
-        {WINDOWS.map((w) => (
-          <button
-            key={w.id}
-            onClick={() => setWindow(w.id)}
-            className={cn(
-              'px-4 py-2 rounded-full text-sm font-medium border transition-all',
-              window_ === w.id
-                ? 'bg-gradient-to-r from-cyan-400 to-purple-500 text-black border-transparent shadow-[0_0_25px_-5px_rgba(34,211,238,0.6)]'
-                : 'border-white/10 text-white/60 hover:text-white hover:border-white/30'
-            )}
-          >
-            {w.label}
-          </button>
-        ))}
-      </div>
+      <SegmentedControl value={window_} onChange={setWindow} options={WINDOWS.map((w) => ({ value: w.id, label: w.label }))} />
 
       {/* HERO: LIVE FUNDS AVAILABLE — the centerpiece of the entire section */}
       <div
@@ -354,7 +341,9 @@ function BillsManager({ bills, onUpdate, onAdd, onRemove }: {
 }) {
   return (
     <StatCard label="Recurring Bills" glow="cyan" tilt={false}>
-      <div className="mt-4 overflow-x-auto">
+      <div className="mt-4 text-xs text-white/40">{bills.filter((b) => b.active).length} active bills — expand for full detail and editing.</div>
+      <Disclosure title={`Show all ${bills.length} bills`}>
+      <div className="overflow-x-auto">
         <table className="w-full text-sm">
           <thead>
             <tr className="text-left text-white/40 text-xs uppercase tracking-wide">
@@ -475,6 +464,7 @@ function BillsManager({ bills, onUpdate, onAdd, onRemove }: {
           <Plus className="w-3 h-3" /> Add bill
         </button>
       </div>
+      </Disclosure>
     </StatCard>
   )
 }

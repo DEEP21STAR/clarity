@@ -990,3 +990,104 @@ export function buildAccountantCsv(transactions: Transaction[], mode: Mode, peri
   lines.push(`Net,${round2(totalIncome + totalExpenses).toFixed(2)}`)
   return lines.join('\n')
 }
+
+// ---------------------------------------------------------------------------
+// Live insights ticker — real, rotating messages pulled from the actual data
+// model, not placeholder copy.
+// ---------------------------------------------------------------------------
+
+function nextMonthlyDueDate(dueDay: number, todayIsoStr: string): string {
+  const today = parseIsoDateUTC(todayIsoStr)
+  const y = today.getUTCFullYear()
+  const m = today.getUTCMonth()
+  const daysInThisMonth = new Date(Date.UTC(y, m + 1, 0)).getUTCDate()
+  const thisMonthDue = new Date(Date.UTC(y, m, Math.min(dueDay, daysInThisMonth)))
+  if (thisMonthDue.getTime() >= today.getTime()) return thisMonthDue.toISOString().slice(0, 10)
+  const daysInNextMonth = new Date(Date.UTC(y, m + 2, 0)).getUTCDate()
+  return new Date(Date.UTC(y, m + 1, Math.min(dueDay, daysInNextMonth))).toISOString().slice(0, 10)
+}
+
+function daysUntilLabel(days: number): string {
+  if (days <= 0) return 'today'
+  if (days === 1) return 'tomorrow'
+  return `in ${days} days`
+}
+
+export interface InsightsTickerInputs {
+  bills: RecurringBill[]
+  periodicBills: PeriodicBill[]
+  sinkingFunds: SinkingFund[]
+  healthScoreHistory: { date: string; score: number }[]
+  streak: StreakState
+  todayIso: string
+}
+
+export function buildInsightsTicker(inputs: InsightsTickerInputs): string[] {
+  const { bills, periodicBills, sinkingFunds, healthScoreHistory, streak, todayIso: today } = inputs
+  const messages: string[] = []
+
+  // Nearest 3 upcoming due items across bills / periodic pending bills / sinking funds.
+  const upcoming: { name: string; date: string }[] = []
+  for (const b of bills) {
+    if (!b.active || b.frequency !== 'monthly') continue
+    upcoming.push({ name: b.name, date: nextMonthlyDueDate(b.dueDay, today) })
+  }
+  for (const pb of periodicBills) {
+    if (pb.pendingBill) upcoming.push({ name: pb.name, date: pb.pendingBill.dueDate })
+  }
+  for (const f of sinkingFunds) {
+    upcoming.push({ name: f.name, date: f.targetDate })
+  }
+  upcoming.sort((a, b) => a.date.localeCompare(b.date))
+  for (const u of upcoming.slice(0, 3)) {
+    const days = daysBetweenIso(today, u.date)
+    if (days >= 0) messages.push(`${u.name} due ${daysUntilLabel(days)}`)
+  }
+
+  // Real health-score trend, only if there's genuinely a prior day to compare against.
+  if (healthScoreHistory.length >= 2) {
+    const sorted = [...healthScoreHistory].sort((a, b) => a.date.localeCompare(b.date))
+    const latest = sorted[sorted.length - 1]
+    const previous = sorted[sorted.length - 2]
+    const delta = latest.score - previous.score
+    if (delta > 0) messages.push(`Health score up ${delta} point${delta === 1 ? '' : 's'} since yesterday`)
+    else if (delta < 0) messages.push(`Health score down ${Math.abs(delta)} point${Math.abs(delta) === 1 ? '' : 's'} since yesterday`)
+    else messages.push(`Health score steady at ${latest.score}/100`)
+  }
+
+  // Streak.
+  if (streak.current > 0) {
+    messages.push(`${streak.current}-day streak — staying on pace`)
+  }
+
+  // Real price-increase flags.
+  for (const b of bills) {
+    if (isBillAmountChanged(b)) {
+      messages.push(`${b.name} changed from $${b.previousAmount!.toFixed(2)} to $${b.amount.toFixed(2)}`)
+    }
+  }
+
+  return messages.length > 0 ? messages : ['All bills on track — nothing urgent right now']
+}
+
+// ---------------------------------------------------------------------------
+// Plain-language Dashboard headline — the literal answer in words, computed
+// from real data, before any chart or number.
+// ---------------------------------------------------------------------------
+
+const HEALTH_BREAKDOWN_LABEL: Record<string, string> = {
+  savingsRate: 'your savings rate',
+  debtToIncome: 'debt relative to income',
+  billCoverage: 'bill coverage',
+  emergencyFund: 'your emergency fund',
+}
+
+export function buildDashboardHeadline(leftover: number, score: number, breakdown: HealthScoreResult['breakdown']): string {
+  const weakest = Object.entries(breakdown).sort((a, b) => a[1] - b[1])[0]
+  const weakestLabel = HEALTH_BREAKDOWN_LABEL[weakest[0]] ?? 'your finances'
+
+  if (leftover < 0) {
+    return `You're behind — fixed bills exceed net income by $${Math.abs(round2(leftover)).toFixed(2)} this month. ${weakestLabel[0].toUpperCase()}${weakestLabel.slice(1)} needs the most attention.`
+  }
+  return `You're $${round2(leftover).toFixed(2)} ahead after fixed bills this month (health score ${score}/100) — ${weakestLabel} is your biggest opportunity.`
+}

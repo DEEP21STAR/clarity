@@ -6,6 +6,7 @@ import { CountUp } from './CountUp'
 import { convertPeriodAmount, monthlyEquivalent, nzNetIncome, auNetIncome } from '@/lib/logic'
 import type { Period } from '@/lib/types'
 import { cn, formatCurrency } from '@/lib/utils'
+import { SegmentedControl } from './SegmentedControl'
 
 const PERIODS: Period[] = ['daily', 'weekly', 'monthly', 'quarterly', 'annual']
 
@@ -50,23 +51,10 @@ export function Budgets() {
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
-          <h2 className="text-2xl font-bold tracking-tight text-white">Budgets</h2>
+          <h2 className="gradient-heading text-2xl font-bold tracking-tight">Budgets</h2>
           <p className="text-sm text-white/50 mt-1">Income vs fixed bills across every period view.</p>
         </div>
-        <div className="flex rounded-full border border-white/10 overflow-hidden">
-          {PERIODS.map((p) => (
-            <button
-              key={p}
-              onClick={() => setPeriod(p)}
-              className={cn(
-                'px-3 py-1.5 text-xs font-medium capitalize transition-all',
-                period === p ? 'bg-gradient-to-r from-cyan-400 to-purple-500 text-black' : 'text-white/50 hover:text-white'
-              )}
-            >
-              {p}
-            </button>
-          ))}
-        </div>
+        <SegmentedControl value={period} onChange={setPeriod} options={PERIODS.map((p) => ({ value: p, label: p }))} />
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">

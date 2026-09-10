@@ -127,8 +127,26 @@ body {
 @keyframes icon-cloud-breathe { 0%,100% { opacity: 0.6; transform: scale(0.97); } 50% { opacity: 1; transform: scale(1.03); } }
 .icon-cloud { animation: icon-cloud-breathe 3.4s ease-in-out infinite; }
 
-@keyframes icon-droplet-ripple { 0% { transform: scale(0.9); opacity: 1; } 100% { transform: scale(1.6); opacity: 0; } }
-.icon-water-ripple { animation: icon-droplet-ripple 1.8s ease-out infinite; }
+/* Real bug fixed here: the droplet ICON used to carry this fade-to-zero
+   animation directly, so for a large chunk of every 1.8s cycle (and the
+   instant before it looped) the icon was at or near opacity:0 — a glance,
+   or a screenshot, had a real chance of finding "nothing there". The droplet
+   itself now stays fully visible with a small bob; the ripple-out motion
+   moves to a decorative ring (::after on the wrapper) that's allowed to
+   fade because it's not the icon Deep is trying to see. */
+.icon-water-wrap { position: relative; display: inline-flex; }
+@keyframes icon-droplet-bob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-1px); } }
+.icon-water-droplet { animation: icon-droplet-bob 2.2s ease-in-out infinite; }
+@keyframes icon-droplet-ripple { 0% { transform: scale(0.7); opacity: 0.7; } 100% { transform: scale(1.8); opacity: 0; } }
+.icon-water-wrap::after {
+  content: '';
+  position: absolute;
+  inset: -3px;
+  border: 1px solid rgba(34, 211, 238, 0.65);
+  border-radius: 9999px;
+  animation: icon-droplet-ripple 1.8s ease-out infinite;
+  pointer-events: none;
+}
 
 @keyframes icon-home-glow { 0%,100% { filter: drop-shadow(0 0 2px rgba(168,85,247,0.35)); } 50% { filter: drop-shadow(0 0 6px rgba(168,85,247,0.55)); } }
 .icon-home { animation: icon-home-glow 5s ease-in-out infinite; }
@@ -147,14 +165,174 @@ body {
 @keyframes streak-badge-pop { 0% { transform: scale(0.5); opacity: 0; } 60% { transform: scale(1.15); opacity: 1; } 100% { transform: scale(1); opacity: 1; } }
 .streak-badge-pop { animation: streak-badge-pop 0.5s cubic-bezier(0.34,1.56,0.64,1) both; }
 
-/* ===================== Page transitions between tabs ===================== */
-@keyframes page-enter { 0% { opacity: 0; transform: translateY(10px); filter: blur(6px); } 100% { opacity: 1; transform: translateY(0); filter: blur(0); } }
-.page-enter { animation: page-enter 0.35s ease-out both; }
+/* Page transitions between tabs — real 3D version defined further down (page-enter-tilt), which replaces this. */
 
 @media (prefers-reduced-motion: reduce) {
   .mood-sunny, .mood-cloudy, .mood-stormy, .icon-gas, .icon-electricity, .icon-signal-bar,
-  .icon-card-shimmer, .icon-card-tilt, .icon-shield, .icon-eq-bar, .icon-cloud, .icon-water-ripple,
-  .icon-home, .icon-fold, .card-deal-in, .streak-badge-pop, .page-enter { animation: none; }
+  .icon-card-shimmer, .icon-card-tilt, .icon-shield, .icon-eq-bar, .icon-cloud, .icon-water-droplet,
+  .icon-water-wrap::after, .icon-home, .icon-fold, .card-deal-in, .streak-badge-pop, .page-enter { animation: none; }
+}
+
+/* ===================== Gradient headings — same treatment as the Live Funds hero number and the Clarity wordmark, applied everywhere else too ===================== */
+.gradient-heading {
+  background-image: linear-gradient(90deg, #67e8f9, #a855f7);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* ===================== Global press/hover feedback — every real <button> in the app, not just one isolated spot ===================== */
+button:not(:disabled) {
+  transition: transform 0.15s cubic-bezier(0.34, 1.56, 0.64, 1), filter 0.15s ease-out, box-shadow 0.15s ease-out;
+}
+button:not(:disabled):hover {
+  filter: brightness(1.12);
+}
+button:not(:disabled):active {
+  transform: scale(0.93);
+  transition-duration: 0.08s;
+}
+@media (prefers-reduced-motion: reduce) {
+  button:not(:disabled) { transition: none; }
+  button:not(:disabled):active { transform: none; }
+}
+
+/* ===================== Nav tabs — animated underline + glow on active, hover-glow on inactive ===================== */
+.nav-tab {
+  position: relative;
+}
+.nav-tab::after {
+  content: '';
+  position: absolute;
+  left: 0.5rem;
+  right: 0.5rem;
+  bottom: -0.35rem;
+  height: 2px;
+  border-radius: 2px;
+  background: linear-gradient(90deg, #22d3ee, #a855f7);
+  transform: scaleX(0);
+  transition: transform 0.25s ease-out;
+  transform-origin: center;
+}
+.nav-tab-active::after {
+  transform: scaleX(1);
+}
+@keyframes nav-tab-glow-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(34, 211, 238, 0); }
+  50% { box-shadow: 0 0 16px 1px rgba(34, 211, 238, 0.35); }
+}
+.nav-tab-active {
+  animation: nav-tab-glow-pulse 2.6s ease-in-out infinite;
+}
+.nav-tab:not(.nav-tab-active):hover {
+  box-shadow: 0 0 12px -2px rgba(34, 211, 238, 0.4);
+}
+@media (prefers-reduced-motion: reduce) {
+  .nav-tab-active { animation: none; }
+}
+
+/* Top-nav icons — subtle glow on hover, gentle persistent pulse when active (lighter touch than the bill-category icons). */
+.nav-icon {
+  transition: filter 0.2s ease-out, transform 0.2s ease-out;
+}
+.nav-tab:hover .nav-icon {
+  filter: drop-shadow(0 0 4px rgba(34, 211, 238, 0.7));
+  transform: scale(1.08);
+}
+@keyframes nav-icon-active-glow {
+  0%, 100% { filter: drop-shadow(0 0 2px rgba(34, 211, 238, 0.5)); }
+  50% { filter: drop-shadow(0 0 6px rgba(168, 85, 247, 0.7)); }
+}
+.nav-tab-active .nav-icon {
+  animation: nav-icon-active-glow 2.6s ease-in-out infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .nav-tab-active .nav-icon { animation: none; }
+}
+
+/* ===================== Real 3D perspective on tab switching — not just opacity/blur ===================== */
+.page-enter-3d {
+  perspective: 1400px;
+}
+@keyframes page-enter-tilt {
+  0% { opacity: 0; transform: rotateX(-6deg) translateY(18px) scale(0.98); filter: blur(6px); }
+  100% { opacity: 1; transform: rotateX(0deg) translateY(0) scale(1); filter: blur(0); }
+}
+.page-enter { animation: page-enter-tilt 0.45s cubic-bezier(0.22, 1, 0.36, 1) both; transform-style: preserve-3d; }
+@media (prefers-reduced-motion: reduce) {
+  .page-enter { animation: none; }
+}
+
+/* ===================== Evolved glassmorphism — depth-aware glass panels ===================== */
+:root { --scroll-y: 0; }
+.glass-panel {
+  background: linear-gradient(155deg, rgba(255,255,255,0.07), rgba(255,255,255,0.02) 45%, rgba(11,13,20,0.78) 100%);
+  backdrop-filter: blur(18px) saturate(1.35);
+  -webkit-backdrop-filter: blur(18px) saturate(1.35);
+}
+.glass-sheen {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  overflow: hidden;
+  pointer-events: none;
+}
+.glass-sheen::before {
+  content: '';
+  position: absolute;
+  inset: -30% -10%;
+  background: linear-gradient(120deg, transparent 35%, rgba(255,255,255,0.07) 50%, transparent 65%);
+  transform: translateY(calc(var(--scroll-y, 0) * 0.025px));
+}
+@media (prefers-reduced-motion: reduce) {
+  .glass-sheen::before { transform: none; }
+}
+
+/* ===================== Kinetic / ambient pulse — any live figure breathes on a real value change ===================== */
+@keyframes value-pulse { 0% { transform: scale(1); } 35% { transform: scale(1.12); } 100% { transform: scale(1); } }
+.value-pulse { animation: value-pulse 0.45s cubic-bezier(0.34, 1.56, 0.64, 1); display: inline-block; }
+@media (prefers-reduced-motion: reduce) {
+  .value-pulse { animation: none; }
+}
+
+/* ===================== Live insights ticker ===================== */
+@keyframes ticker-scroll { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
+.ticker-track { display: flex; width: max-content; animation: ticker-scroll 32s linear infinite; }
+.ticker-wrap:hover .ticker-track { animation-play-state: paused; }
+@media (prefers-reduced-motion: reduce) {
+  .ticker-track { animation: none; }
+}
+
+/* ===================== Progressive-disclosure drawer ===================== */
+.disclosure-body {
+  overflow: hidden;
+  transition: max-height 0.35s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.25s ease-out;
+}
+@media (prefers-reduced-motion: reduce) {
+  .disclosure-body { transition: none; }
+}
+
+/* ===================== Drag-reorder ===================== */
+.drag-handle { cursor: grab; }
+.drag-handle:active { cursor: grabbing; }
+.drag-over { outline: 2px dashed rgba(34, 211, 238, 0.6); outline-offset: 4px; border-radius: 1rem; }
+.dragging { opacity: 0.4; }
+
+/* ===================== Segmented control — sliding highlight pill (household/window/period/mode toggles) ===================== */
+.segmented-track {
+  position: relative;
+}
+.segmented-thumb {
+  position: absolute;
+  top: 2px;
+  bottom: 2px;
+  border-radius: 9999px;
+  background: linear-gradient(90deg, #22d3ee, #a855f7);
+  transition: left 0.28s cubic-bezier(0.22, 1, 0.36, 1), width 0.28s cubic-bezier(0.22, 1, 0.36, 1);
+  box-shadow: 0 0 16px -2px rgba(34, 211, 238, 0.6);
+}
+@media (prefers-reduced-motion: reduce) {
+  .segmented-thumb { transition: none; }
 }
 
 /* Time-of-day ambient tint — subtle, applied to the whole app wrapper. */

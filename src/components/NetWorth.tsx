@@ -19,7 +19,7 @@ export function NetWorth() {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-2xl font-bold tracking-tight text-white">Net Worth</h2>
+        <h2 className="gradient-heading text-2xl font-bold tracking-tight">Net Worth</h2>
         <p className="text-sm text-white/50 mt-1">Assets minus liabilities, tracked over time — snapshotted once per day this dashboard is open.</p>
       </div>
 

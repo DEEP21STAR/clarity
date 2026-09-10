@@ -58,16 +58,17 @@ export function StatCard({ label, glow = 'cyan', tilt = true, className, childre
     <div
       ref={ref}
       className={cn(
-        'label-cut relative rounded-2xl border bg-[#0b0d14]/80 backdrop-blur-sm p-5',
+        'label-cut glass-panel relative rounded-2xl border p-5',
         c.border,
         c.shadow,
         className
       )}
       style={{ transformStyle: 'preserve-3d' }}
     >
+      <div className="glass-sheen" />
       <div className={cn('absolute inset-x-0 top-0 h-[2px] bg-gradient-to-r opacity-70', c.grad)} />
       <span className={cn('label-tab font-semibold relative z-10', c.text)}>{label}</span>
-      {children}
+      <div className="relative z-10">{children}</div>
     </div>
   )
 }

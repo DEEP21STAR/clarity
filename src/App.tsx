@@ -13,6 +13,7 @@ import { Tools } from './components/Tools'
 import { PinGate } from './components/PinGate'
 import { AmbientBackground } from './components/AmbientBackground'
 import { CommandPalette, type PaletteCommand } from './components/CommandPalette'
+import { SegmentedControl } from './components/SegmentedControl'
 import { cn } from '@/lib/utils'
 import {
   LayoutDashboard, CalendarClock, Receipt, PieChart, CreditCard, ShoppingCart, Wrench, TrendingUp, CalendarDays,
@@ -53,6 +54,21 @@ function AppContent() {
     requestAnimationFrame(() => mainRef.current?.classList.add('page-enter'))
   }, [tab])
 
+  // Single scroll listener drives every glass panel's subtle depth-shift sheen
+  // via one shared CSS variable, rather than a listener per card.
+  useEffect(() => {
+    let raf = 0
+    const onScroll = () => {
+      if (raf) return
+      raf = requestAnimationFrame(() => {
+        document.documentElement.style.setProperty('--scroll-y', String(window.scrollY))
+        raf = 0
+      })
+    }
+    window.addEventListener('scroll', onScroll, { passive: true })
+    return () => window.removeEventListener('scroll', onScroll)
+  }, [])
+
   const goTo = (id: TabId) => {
     if (tab === id) return
     setTab(id)
@@ -68,47 +84,45 @@ function AppContent() {
     <div className={cn('min-h-screen relative', tint)}>
       <AmbientBackground />
       <CommandPalette tabCommands={tabCommands} />
-      <div className="relative z-10">
+      <div className="relative z-10 page-enter-3d">
         <header className="border-b border-white/10 sticky top-0 z-40 backdrop-blur-md bg-[#05060a]/80">
           <div className="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
             <div className="flex items-center gap-2">
               <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-cyan-400 to-purple-500" />
-              <span className="font-bold text-lg tracking-tight text-white">Clarity</span>
+              <span className="gradient-heading font-bold text-lg tracking-tight">Clarity</span>
             </div>
             <div className="flex items-center gap-3">
-              <div className="flex rounded-full border border-white/10 overflow-hidden">
-                {(['deep', 'mimi', 'combined'] as const).map((v) => (
-                  <button
-                    key={v}
-                    onClick={() => setHouseholdView(v)}
-                    className={cn(
-                      'px-2.5 py-1 text-[10px] font-medium capitalize',
-                      state.householdView === v ? 'bg-gradient-to-r from-cyan-400 to-purple-500 text-black' : 'text-white/50 hover:text-white'
-                    )}
-                  >
-                    {v}
-                  </button>
-                ))}
-              </div>
+              <SegmentedControl
+                size="sm"
+                value={state.householdView}
+                onChange={setHouseholdView}
+                options={[
+                  { value: 'deep', label: 'Deep' },
+                  { value: 'mimi', label: 'Mimi' },
+                  { value: 'combined', label: 'Combined' },
+                ]}
+              />
               <span className="text-xs text-white/30 hidden md:inline">⌘K for quick actions</span>
             </div>
           </div>
           <nav className="max-w-6xl mx-auto px-4 pb-3 flex gap-1 overflow-x-auto">
             {TABS.map((t) => {
               const Icon = t.icon
+              const isActive = tab === t.id
               return (
                 <button
                   key={t.id}
                   data-tab={t.id}
                   onClick={() => goTo(t.id)}
                   className={cn(
-                    'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-all',
-                    tab === t.id
-                      ? 'bg-gradient-to-r from-cyan-400/20 to-purple-500/20 text-white border border-cyan-400/30'
+                    'nav-tab flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-all',
+                    isActive
+                      ? 'nav-tab-active bg-gradient-to-r from-cyan-400/20 to-purple-500/20 border border-cyan-400/30'
                       : 'text-white/50 hover:text-white hover:bg-white/5'
                   )}
                 >
-                  <Icon className="w-3.5 h-3.5" /> {t.label}
+                  <Icon className="nav-icon w-3.5 h-3.5" />
+                  <span className={isActive ? 'gradient-heading' : undefined}>{t.label}</span>
                 </button>
               )
             })}

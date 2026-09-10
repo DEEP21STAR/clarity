@@ -96,7 +96,7 @@ function NumButton({ label, onClick }: { label: string; onClick: () => void }) {
   return (
     <button
       onClick={onClick}
-      className="w-16 h-16 rounded-2xl border border-white/10 text-xl font-semibold text-white hover:bg-white/5 hover:border-cyan-400/40 active:scale-95 transition-all"
+      className="w-16 h-16 rounded-2xl border border-white/10 text-xl font-semibold text-white hover:bg-white/5 hover:border-cyan-400/40"
       style={{ fontSize: 20 }} // >=16px avoids iOS Safari auto-zoom-on-focus
     >
       {label}

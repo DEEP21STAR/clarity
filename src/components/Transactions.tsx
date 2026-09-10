@@ -34,7 +34,7 @@ export function Transactions() {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-2xl font-bold tracking-tight text-white">Transactions</h2>
+        <h2 className="gradient-heading text-2xl font-bold tracking-tight">Transactions</h2>
         <p className="text-sm text-white/50 mt-1">CSV bank-statement import with automatic column detection.</p>
       </div>
 

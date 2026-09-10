@@ -1,15 +1,19 @@
-import { useMemo } from 'react'
+import { useMemo, useState, type ReactNode } from 'react'
 import { useStore } from '@/lib/store'
 import { StatCard } from './StatCard'
 import { CountUp } from './CountUp'
 import { MoodIcon } from './MoodIcon'
-import { nzNetIncome, auNetIncome, generateInsights, monthlyEquivalent, calcFinancialHealthScore, emergencyFundMonths } from '@/lib/logic'
-import { formatCurrency } from '@/lib/utils'
-import { AlertTriangle, CheckCircle2, Info } from 'lucide-react'
+import { SegmentedControl } from './SegmentedControl'
+import { InsightsTicker } from './InsightsTicker'
+import { nzNetIncome, auNetIncome, generateInsights, monthlyEquivalent, calcFinancialHealthScore, emergencyFundMonths, buildDashboardHeadline } from '@/lib/logic'
+import { cn, formatCurrency } from '@/lib/utils'
+import { AlertTriangle, CheckCircle2, Info, GripVertical } from 'lucide-react'
 
 export function Dashboard() {
-  const { state, setMode, setCountry, setGrossAnnualIncome } = useStore()
+  const { state, setMode, setCountry, setGrossAnnualIncome, setDashboardCardOrder } = useStore()
   const { mode, country, grossAnnualIncome, bills, debts, accounts } = state
+  const [draggingId, setDraggingId] = useState<string | null>(null)
+  const [dragOverId, setDragOverId] = useState<string | null>(null)
 
   const net = useMemo(
     () => (country === 'NZ' ? nzNetIncome(grossAnnualIncome) : auNetIncome(grossAnnualIncome)),
@@ -21,6 +25,7 @@ export function Dashboard() {
     [bills]
   )
   const savingsBalance = accounts.find((a) => a.id === 'savings')?.value ?? 0
+  const leftover = monthlyNet - monthlyBills
 
   const healthScore = useMemo(() => {
     const savingsRate = monthlyNet > 0 ? (monthlyNet - monthlyBills) / monthlyNet : 0
@@ -31,6 +36,8 @@ export function Dashboard() {
     const efMonths = emergencyFundMonths(savingsBalance, monthlyBills)
     return calcFinancialHealthScore({ savingsRate, debtToIncome, billCoverageRatio, emergencyFundMonths: efMonths })
   }, [monthlyNet, monthlyBills, debts, state.creditCards, net.net, savingsBalance])
+
+  const headline = useMemo(() => buildDashboardHeadline(leftover, healthScore.score, healthScore.breakdown), [leftover, healthScore])
 
   const insights = useMemo(
     () =>
@@ -44,19 +51,21 @@ export function Dashboard() {
     [monthlyNet, monthlyBills, bills, debts, savingsBalance]
   )
 
-  return (
-    <div className="space-y-6">
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <div>
-          <h2 className="text-2xl font-bold tracking-tight text-white">Dashboard</h2>
-          <p className="text-sm text-white/50 mt-1">Net income, fixed costs, and rule-based insights at a glance.</p>
-        </div>
-        <div className="flex gap-2">
-          <ToggleGroup value={mode} options={[{ v: 'personal', l: 'Personal' }, { v: 'business', l: 'Business' }]} onChange={(v) => setMode(v as any)} />
-          <ToggleGroup value={country} options={[{ v: 'NZ', l: 'NZ' }, { v: 'AU', l: 'AU' }]} onChange={(v) => setCountry(v as any)} />
-        </div>
-      </div>
+  const handleDrop = (targetId: string) => {
+    if (!draggingId || draggingId === targetId) { setDraggingId(null); setDragOverId(null); return }
+    const order = [...state.dashboardCardOrder]
+    const from = order.indexOf(draggingId)
+    const to = order.indexOf(targetId)
+    if (from === -1 || to === -1) return
+    order.splice(from, 1)
+    order.splice(to, 0, draggingId)
+    setDashboardCardOrder(order)
+    setDraggingId(null)
+    setDragOverId(null)
+  }
 
+  const blocks: Record<string, ReactNode> = {
+    stats: (
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <StatCard label="Gross Annual Income" glow="cyan">
           <div className="mt-4 flex items-center gap-2">
@@ -85,7 +94,8 @@ export function Dashboard() {
           <p className="text-xs text-white/40 mt-2">{bills.filter((b) => b.active).length} active recurring bills.</p>
         </StatCard>
       </div>
-
+    ),
+    health: (
       <StatCard label="Financial Health Score" glow={healthScore.score >= 75 ? 'success' : healthScore.score >= 40 ? 'amber' : 'danger'} tilt={false}>
         <div className="mt-4 flex items-center gap-6">
           <MoodIcon score={healthScore.score} size={64} />
@@ -98,7 +108,8 @@ export function Dashboard() {
           </div>
         </div>
       </StatCard>
-
+    ),
+    tax: (
       <StatCard label="Tax Breakdown" glow="purple" tilt={false}>
         <div className="mt-4 grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
           <Metric label="Gross" value={net.gross} />
@@ -114,7 +125,8 @@ export function Dashboard() {
           <Metric label="Net" value={net.net} tone="success" />
         </div>
       </StatCard>
-
+    ),
+    insights: (
       <StatCard label="Insights" glow="pink" tilt={false}>
         <div className="mt-4 space-y-2">
           {insights.map((insight) => (
@@ -132,6 +144,45 @@ export function Dashboard() {
           )}
         </div>
       </StatCard>
+    ),
+  }
+
+  return (
+    <div className="space-y-6">
+      <div className="flex flex-wrap items-center justify-between gap-4">
+        <div>
+          <h2 className="gradient-heading text-2xl font-bold tracking-tight">Dashboard</h2>
+          <p className="text-sm text-white/50 mt-1">Net income, fixed costs, and rule-based insights at a glance.</p>
+        </div>
+        <div className="flex gap-2">
+          <SegmentedControl value={mode} onChange={setMode} options={[{ value: 'personal', label: 'Personal' }, { value: 'business', label: 'Business' }]} />
+          <SegmentedControl value={country} onChange={setCountry} options={[{ value: 'NZ', label: 'NZ' }, { value: 'AU', label: 'AU' }]} />
+        </div>
+      </div>
+
+      {/* Plain-language headline — the literal answer in words, before any number */}
+      <p className="text-lg md:text-xl font-medium text-white/90 leading-snug">{headline}</p>
+
+      <InsightsTicker />
+
+      {/* Draggable card blocks — order persisted in state.dashboardCardOrder */}
+      {state.dashboardCardOrder.map((id) => (
+        <div
+          key={id}
+          draggable
+          onDragStart={() => setDraggingId(id)}
+          onDragOver={(e) => { e.preventDefault(); setDragOverId(id) }}
+          onDragLeave={() => setDragOverId((v) => (v === id ? null : v))}
+          onDrop={() => handleDrop(id)}
+          onDragEnd={() => { setDraggingId(null); setDragOverId(null) }}
+          className={cn(draggingId === id && 'dragging', dragOverId === id && draggingId !== id && 'drag-over')}
+        >
+          <div className="drag-handle flex items-center gap-1 mb-1.5 text-[10px] text-white/25 uppercase tracking-wide">
+            <GripVertical className="w-3 h-3" /> drag to reorder
+          </div>
+          {blocks[id]}
+        </div>
+      ))}
     </div>
   )
 }
@@ -143,24 +194,6 @@ function Metric({ label, value, tone }: { label: string; value: number; tone?: '
       <div className={`text-lg font-bold tabular-nums ${tone === 'danger' ? 'text-rose-300' : tone === 'success' ? 'text-emerald-300' : 'text-white'}`}>
         {formatCurrency(value)}
       </div>
-    </div>
-  )
-}
-
-function ToggleGroup({ value, options, onChange }: { value: string; options: { v: string; l: string }[]; onChange: (v: string) => void }) {
-  return (
-    <div className="flex rounded-full border border-white/10 overflow-hidden">
-      {options.map((o) => (
-        <button
-          key={o.v}
-          onClick={() => onChange(o.v)}
-          className={`px-3 py-1.5 text-xs font-medium transition-all ${
-            value === o.v ? 'bg-gradient-to-r from-cyan-400 to-purple-500 text-black' : 'text-white/50 hover:text-white'
-          }`}
-        >
-          {o.l}
-        </button>
-      ))}
     </div>
   )
 }

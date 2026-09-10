@@ -16,7 +16,11 @@ export function BillIcon({ name, className = 'w-4 h-4' }: { name: string; classN
   if (n.includes('hsbc')) return <ShieldCheck className={`${className} icon-shield text-cyan-300`} />
   if (n.includes('spotify')) return <EqBars className={className} />
   if (n.includes('google')) return <Cloud className={`${className} icon-cloud text-blue-300`} />
-  if (n.includes('water')) return <Droplet className={`${className} icon-water-ripple text-cyan-300`} />
+  if (n.includes('water')) return (
+    <span className="icon-water-wrap">
+      <Droplet className={`${className} icon-water-droplet text-cyan-300`} />
+    </span>
+  )
   if (n.includes('rent')) return <Home className={`${className} icon-home text-purple-300`} />
   if (n.includes('insurance')) return <ShieldCheck className={`${className} icon-shield text-emerald-300`} />
   if (n.includes('fold') || n.includes('galaxy') || n.includes('phone')) return <Smartphone className={`${className} icon-fold text-cyan-200`} />

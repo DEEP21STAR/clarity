@@ -3,6 +3,7 @@ import { useStore } from '@/lib/store'
 import { StatCard } from './StatCard'
 import { CountUp } from './CountUp'
 import { DataExportPanel } from './DataExportPanel'
+import { SegmentedControl } from './SegmentedControl'
 import { calcWfhFixedRate, gstOnExclusive, gstFromInclusive, NZ_WFH_FIXED_RATE_PER_HOUR, AU_WFH_FIXED_RATE_PER_HOUR, calcRoundUpSavings } from '@/lib/logic'
 import { formatCurrency, todayIso } from '@/lib/utils'
 import { Plus, Trash2 } from 'lucide-react'
@@ -31,7 +32,7 @@ export function Tools() {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-2xl font-bold tracking-tight text-white">Tools</h2>
+        <h2 className="gradient-heading text-2xl font-bold tracking-tight">Tools</h2>
         <p className="text-sm text-white/50 mt-1">Home-office deduction and GST calculators.</p>
       </div>
 
@@ -54,13 +55,12 @@ export function Tools() {
       </StatCard>
 
       <StatCard label="GST Calculator" glow="purple" tilt={false}>
-        <div className="mt-4 flex gap-2">
-          <button onClick={() => setGstDirection('ex')} className={`px-3 py-1.5 rounded-full text-xs font-medium ${gstDirection === 'ex' ? 'bg-gradient-to-r from-cyan-400 to-purple-500 text-black' : 'border border-white/10 text-white/50'}`}>
-            Ex-GST → Inc-GST
-          </button>
-          <button onClick={() => setGstDirection('inc')} className={`px-3 py-1.5 rounded-full text-xs font-medium ${gstDirection === 'inc' ? 'bg-gradient-to-r from-cyan-400 to-purple-500 text-black' : 'border border-white/10 text-white/50'}`}>
-            Inc-GST → Ex-GST
-          </button>
+        <div className="mt-4">
+          <SegmentedControl
+            value={gstDirection}
+            onChange={setGstDirection}
+            options={[{ value: 'ex', label: 'Ex-GST → Inc-GST' }, { value: 'inc', label: 'Inc-GST → Ex-GST' }]}
+          />
         </div>
         <div className="mt-4 flex items-center gap-2">
           <span className="text-white/40">$</span>
