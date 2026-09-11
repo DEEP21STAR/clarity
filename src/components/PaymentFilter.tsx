@@ -1,6 +1,6 @@
 import type { PaymentHistoryFilter } from '@/lib/logic'
 import { Filter, X } from 'lucide-react'
-import { formatNumericDate } from '@/lib/utils'
+import { DateField } from './DateField'
 
 export interface PaymentFilterTarget {
   id: string
@@ -32,23 +32,21 @@ export function PaymentFilterBar({ targets, filter, onChange }: {
         {targets.map((t) => <option key={t.id} value={t.id}>{t.label}</option>)}
       </select>
       <span className="text-white/30">from</span>
-      <input
-        type="date"
+      <DateField
         value={filter.startDate ?? ''}
-        onChange={(e) => onChange({ ...filter, startDate: e.target.value || undefined })}
-        className="bg-black/30 border border-white/10 rounded-lg px-2 py-1 outline-none focus:border-cyan-400/50"
+        onChange={(v) => onChange({ ...filter, startDate: v || undefined })}
+        inputClassName="bg-black/30 border border-white/10 rounded-lg px-2 py-1 outline-none focus:border-cyan-400/50"
+        overlayClassName="px-2"
+        placeholder="any"
       />
-      {/* Real DD/MM/YYYY read-out — the native input's own digits follow the browser's own
-          OS/locale, not this page (confirmed live: lang="en-NZ" changes nothing there). */}
-      {filter.startDate && <span className="text-white/25 tabular-nums">({formatNumericDate(filter.startDate)})</span>}
       <span className="text-white/30">to</span>
-      <input
-        type="date"
+      <DateField
         value={filter.endDate ?? ''}
-        onChange={(e) => onChange({ ...filter, endDate: e.target.value || undefined })}
-        className="bg-black/30 border border-white/10 rounded-lg px-2 py-1 outline-none focus:border-cyan-400/50"
+        onChange={(v) => onChange({ ...filter, endDate: v || undefined })}
+        inputClassName="bg-black/30 border border-white/10 rounded-lg px-2 py-1 outline-none focus:border-cyan-400/50"
+        overlayClassName="px-2"
+        placeholder="any"
       />
-      {filter.endDate && <span className="text-white/25 tabular-nums">({formatNumericDate(filter.endDate)})</span>}
       {hasActiveFilter && (
         <button onClick={() => onChange({})} className="flex items-center gap-1 text-white/40 hover:text-white">
           <X className="w-3 h-3" /> Clear

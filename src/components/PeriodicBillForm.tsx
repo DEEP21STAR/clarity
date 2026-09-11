@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { StatCard } from './StatCard'
 import type { PeriodicBill } from '@/lib/types'
 import { X } from 'lucide-react'
-import { formatNumericDate } from '@/lib/utils'
+import { DateField } from './DateField'
 
 export interface PeriodicBillFormValues {
   name: string
@@ -93,25 +93,23 @@ export function PeriodicBillForm({
         <div className="grid grid-cols-2 gap-4">
           <div>
             <label className="text-xs text-white/50">Current period start</label>
-            <input
-              type="date"
+            <DateField
               value={values.gaugePeriodStart}
-              onChange={(e) => set('gaugePeriodStart', e.target.value)}
-              className="mt-1 w-full bg-black/30 border border-white/10 rounded-lg px-3 py-2 outline-none focus:border-cyan-400/50"
+              onChange={(v) => set('gaugePeriodStart', v)}
+              wrapperClassName="mt-1"
+              inputClassName="w-full bg-black/30 border border-white/10 rounded-lg px-3 py-2 outline-none focus:border-cyan-400/50"
+              overlayClassName="px-3"
             />
-            {/* Real DD/MM/YYYY read-out — the native input's own digits follow the browser's
-                OS/locale, not this page (confirmed: lang="en-NZ" on the input changes nothing). */}
-            {values.gaugePeriodStart && <span className="block text-[10px] text-white/30 mt-1 tabular-nums">{formatNumericDate(values.gaugePeriodStart)}</span>}
           </div>
           <div>
             <label className="text-xs text-white/50">Current period end</label>
-            <input
-              type="date"
+            <DateField
               value={values.gaugePeriodEnd}
-              onChange={(e) => set('gaugePeriodEnd', e.target.value)}
-              className="mt-1 w-full bg-black/30 border border-white/10 rounded-lg px-3 py-2 outline-none focus:border-cyan-400/50"
+              onChange={(v) => set('gaugePeriodEnd', v)}
+              wrapperClassName="mt-1"
+              inputClassName="w-full bg-black/30 border border-white/10 rounded-lg px-3 py-2 outline-none focus:border-cyan-400/50"
+              overlayClassName="px-3"
             />
-            {values.gaugePeriodEnd && <span className="block text-[10px] text-white/30 mt-1 tabular-nums">{formatNumericDate(values.gaugePeriodEnd)}</span>}
           </div>
         </div>
 

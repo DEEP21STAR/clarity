@@ -6,9 +6,10 @@ import { DataExportPanel } from './DataExportPanel'
 import { PaymentHistoryPanel } from './PaymentHistoryPanel'
 import { SegmentedControl } from './SegmentedControl'
 import { calcWfhFixedRate, gstOnExclusive, gstFromInclusive, NZ_WFH_FIXED_RATE_PER_HOUR, AU_WFH_FIXED_RATE_PER_HOUR, calcRoundUpSavings, runDataHealthCheck } from '@/lib/logic'
-import { formatCurrency, formatShortDate, formatNumericDate, todayIso } from '@/lib/utils'
+import { formatCurrency, formatShortDate, todayIso } from '@/lib/utils'
 import { Plus, Trash2, Volume2, VolumeX, AlertTriangle, Info, ShieldCheck } from 'lucide-react'
 import { useUndoableDelete } from '@/lib/useUndoableDelete'
+import { DateField } from './DateField'
 
 export function Tools() {
   const { state, addOneOffEntry, removeOneOffEntry, setSoundEnabled } = useStore()
@@ -121,12 +122,12 @@ export function Tools() {
         <p className="mt-4 text-xs text-white/40">One-off income/expenses feed the Cash-Flow Forecast chart on Upcoming Payments — a bonus, a big purchase, anything outside the regular bill/pay cycle.</p>
         <div className="mt-3 grid grid-cols-1 md:grid-cols-4 gap-2">
           <input value={oneOffDesc} onChange={(e) => setOneOffDesc(e.target.value)} placeholder="Description" className="bg-black/30 border border-white/10 rounded-lg px-3 py-2 text-sm outline-none focus:border-cyan-400/50 md:col-span-2" />
-          <div>
-            <input type="date" value={oneOffDate} onChange={(e) => setOneOffDate(e.target.value)} className="w-full bg-black/30 border border-white/10 rounded-lg px-3 py-2 text-sm outline-none focus:border-cyan-400/50" />
-            {/* Real DD/MM/YYYY read-out — the native input's own digits follow the browser's
-                OS/locale, not this page (confirmed live: lang="en-NZ" changes nothing there). */}
-            {oneOffDate && <span className="block text-[10px] text-white/30 mt-1 tabular-nums">{formatNumericDate(oneOffDate)}</span>}
-          </div>
+          <DateField
+            value={oneOffDate}
+            onChange={setOneOffDate}
+            inputClassName="w-full bg-black/30 border border-white/10 rounded-lg px-3 py-2 text-sm outline-none focus:border-cyan-400/50"
+            overlayClassName="px-3 text-sm"
+          />
           <div className="flex items-center gap-1 bg-black/30 border border-white/10 rounded-lg px-3 py-2">
             <span className="text-white/40">$</span>
             <input type="number" step="0.01" value={oneOffAmount} onChange={(e) => setOneOffAmount(parseFloat(e.target.value) || 0)} className="w-full bg-transparent outline-none tabular-nums text-sm" placeholder="+income / -expense" />
@@ -159,10 +160,12 @@ export function Tools() {
         <p className="mt-4 text-xs text-white/40">Log any one-off extra-usage purchase as it happens — API overage, an extra credit top-up, anything outside your fixed subscriptions.</p>
         <div className="mt-3 grid grid-cols-1 md:grid-cols-4 gap-2">
           <input value={extraUsageDesc} onChange={(e) => setExtraUsageDesc(e.target.value)} placeholder="e.g. Claude API overage" className="bg-black/30 border border-white/10 rounded-lg px-3 py-2 text-sm outline-none focus:border-amber-400/50 md:col-span-2" />
-          <div>
-            <input type="date" value={extraUsageDate} onChange={(e) => setExtraUsageDate(e.target.value)} className="w-full bg-black/30 border border-white/10 rounded-lg px-3 py-2 text-sm outline-none focus:border-amber-400/50" />
-            {extraUsageDate && <span className="block text-[10px] text-white/30 mt-1 tabular-nums">{formatNumericDate(extraUsageDate)}</span>}
-          </div>
+          <DateField
+            value={extraUsageDate}
+            onChange={setExtraUsageDate}
+            inputClassName="w-full bg-black/30 border border-white/10 rounded-lg px-3 py-2 text-sm outline-none focus:border-amber-400/50"
+            overlayClassName="px-3 text-sm"
+          />
           <div className="flex items-center gap-1 bg-black/30 border border-white/10 rounded-lg px-3 py-2">
             <span className="text-white/40">$</span>
             <input type="number" step="0.01" value={extraUsageAmount} onChange={(e) => setExtraUsageAmount(parseFloat(e.target.value) || 0)} className="w-full bg-transparent outline-none tabular-nums text-sm" placeholder="amount" />

@@ -1,11 +1,12 @@
 import { useState } from 'react'
 import { StatCard } from './StatCard'
 import { useStore } from '@/lib/store'
-import { formatCurrency, formatNumericDate, formatShortDate } from '@/lib/utils'
+import { formatCurrency, formatShortDate } from '@/lib/utils'
 import type { SavingsGoal } from '@/lib/types'
 import { Plus, Trash2, PiggyBank, X, CircleDot, Rows3 } from 'lucide-react'
 import { useUndoableDelete } from '@/lib/useUndoableDelete'
 import { fireSavingsConfetti } from '@/lib/confetti'
+import { DateField } from './DateField'
 
 /** Savings goals — target/target-date, a per-period funding amount that deducts from Live Funds Available, and a "log contribution" action that banks it. */
 export function SavingsGoalsSection() {
@@ -162,10 +163,14 @@ function GoalForm({ onCancel, onSave }: { onCancel: () => void; onSave: (v: { na
           </div>
           <div>
             <label className="text-xs text-white/50">Target date (optional)</label>
-            <input type="date" value={targetDate} onChange={(e) => setTargetDate(e.target.value)} className="mt-1 w-full bg-black/30 border border-white/10 rounded-lg px-3 py-2 outline-none focus:border-emerald-400/50" />
-            {/* Real DD/MM/YYYY read-out — the native input's own digits follow the browser's
-                OS/locale, not this page (confirmed live: lang="en-NZ" changes nothing there). */}
-            {targetDate && <span className="block text-[10px] text-white/30 mt-1 tabular-nums">{formatNumericDate(targetDate)}</span>}
+            <DateField
+              value={targetDate}
+              onChange={setTargetDate}
+              wrapperClassName="mt-1"
+              inputClassName="w-full bg-black/30 border border-white/10 rounded-lg px-3 py-2 outline-none focus:border-emerald-400/50"
+              overlayClassName="px-3"
+              placeholder="optional"
+            />
           </div>
         </div>
         <div>

@@ -2,10 +2,11 @@ import { useState } from 'react'
 import { StatCard } from './StatCard'
 import { useStore } from '@/lib/store'
 import { suggestedFortnightlyForSinkingFund } from '@/lib/logic'
-import { formatCurrency, formatNumericDate, formatShortDate, todayIso } from '@/lib/utils'
+import { formatCurrency, formatShortDate, todayIso } from '@/lib/utils'
 import type { SinkingFund } from '@/lib/types'
 import { Plus, Trash2, X } from 'lucide-react'
 import { useUndoableDelete } from '@/lib/useUndoableDelete'
+import { DateField } from './DateField'
 
 /**
  * Generalised sinking funds — the SAME fortnightly-smoothing math as the
@@ -111,10 +112,13 @@ function FundForm({ onCancel, onSave }: { onCancel: () => void; onSave: (v: { na
           </div>
           <div>
             <label className="text-xs text-white/50">Due date</label>
-            <input type="date" value={targetDate} onChange={(e) => setTargetDate(e.target.value)} className="mt-1 w-full bg-black/30 border border-white/10 rounded-lg px-3 py-2 outline-none focus:border-amber-400/50" />
-            {/* Real DD/MM/YYYY read-out — the native input's own digits follow the browser's
-                OS/locale, not this page (confirmed live: lang="en-NZ" changes nothing there). */}
-            {targetDate && <span className="block text-[10px] text-white/30 mt-1 tabular-nums">{formatNumericDate(targetDate)}</span>}
+            <DateField
+              value={targetDate}
+              onChange={setTargetDate}
+              wrapperClassName="mt-1"
+              inputClassName="w-full bg-black/30 border border-white/10 rounded-lg px-3 py-2 outline-none focus:border-amber-400/50"
+              overlayClassName="px-3"
+            />
           </div>
         </div>
         <button
