@@ -1654,6 +1654,20 @@ export function nextMonthlyDueDate(dueDay: number, todayIsoStr: string): string 
   return new Date(Date.UTC(y, m + 1, Math.min(dueDay, daysInNextMonth))).toISOString().slice(0, 10)
 }
 
+/** The ONE place `RecurringBill.paymentMethod`'s optionality is resolved — deliberately
+ * defaults to 'manual' (the safer assumption) rather than ever silently treating an unconfirmed
+ * bill as auto-paid. Used everywhere the distinction is shown, so it can't drift. */
+export function resolvePaymentMethod(bill: RecurringBill): 'direct-debit' | 'manual' {
+  return bill.paymentMethod ?? 'manual'
+}
+
+/** Active monthly bills due exactly today — the single shared source of truth for the
+ * Upcoming Payments nav badge (count + names in its tooltip) AND the highlight-on-click
+ * behaviour in UpcomingPayments.tsx, so the two can never disagree about which bills these are. */
+export function dueTodayBills(bills: RecurringBill[], todayIsoStr: string): RecurringBill[] {
+  return bills.filter((b) => b.active && b.frequency === 'monthly' && nextMonthlyDueDate(b.dueDay, todayIsoStr) === todayIsoStr)
+}
+
 function daysUntilLabel(days: number): string {
   if (days <= 0) return 'today'
   if (days === 1) return 'tomorrow'

@@ -23,6 +23,13 @@ export interface RecurringBill {
   /** Whether the due day is a real confirmed date or a placeholder estimate. */
   dueDayIsEstimate: boolean
   category: 'housing' | 'utilities' | 'insurance' | 'subscription' | 'debt' | 'other'
+  /** Whether this is taken automatically (direct debit — no action needed unless funds are
+   * short) or Deep has to actively pay it himself by the due date. Optional and defaults to
+   * 'manual' wherever it's read (via `resolvePaymentMethod` in logic.ts) — deliberately the
+   * safer default, so nothing is ever silently shown as auto-paid without being confirmed as
+   * such. Only seeded with real values Deep actually confirmed (see SEED_BILLS); left unset on
+   * every bill he wasn't asked about, rather than guessed. */
+  paymentMethod?: 'direct-debit' | 'manual'
   active: boolean
   /** Optional freeform context shown in the UI (e.g. a billing-cycle breakdown). */
   note?: string
@@ -134,6 +141,10 @@ export interface SavingsGoal {
   contributedAmount: number
   /** $ set aside for this goal each Upcoming Payments period — deducted from Live Funds Available until logged. */
   fundedThisPeriod: number
+  /** Optional category for a distinct icon/treatment — currently just 'holiday' (added so Holiday
+   * Savings can wire into this existing feature instead of a parallel allocation mechanism, per
+   * the Upcoming Payments redesign brief). Undefined = general goal, plain PiggyBank icon. */
+  category?: 'holiday'
 }
 
 /** A one-off (non-recurring) income or expense entry, feeding the cash-flow projection. */

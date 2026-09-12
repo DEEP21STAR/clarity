@@ -74,13 +74,33 @@ const DEFAULT_STATE: AppState = {
   soundEnabled: false,
 }
 
+/**
+ * Real gap this closes: `loadState`'s top-level `{...DEFAULT_STATE, ...parsed}` merge replaces
+ * the ENTIRE `bills` array wholesale with whatever's persisted — it doesn't merge per-bill
+ * fields. Deep's actual browser has months of real bill edits already in localStorage, from
+ * before `paymentMethod` existed, so every one of his real Spotify/Google One/Car Insurance/
+ * Contents Home Insurance rows would silently show as 'manual' forever (the safe default, but
+ * wrong for these 4 specific real bills he confirmed are direct debit) — confirmed live during
+ * testing, not hypothetical. Fills in `paymentMethod` from SEED_BILLS by matching bill `id`,
+ * but ONLY when the persisted bill doesn't already have one set — never overwrites a value
+ * Deep already confirmed/toggled himself. One-time, additive, safe to run on every load.
+ */
+function backfillPaymentMethod(bills: RecurringBill[]): RecurringBill[] {
+  return bills.map((bill) => {
+    if (bill.paymentMethod) return bill
+    const seed = SEED_BILLS.find((s) => s.id === bill.id)
+    return seed?.paymentMethod ? { ...bill, paymentMethod: seed.paymentMethod } : bill
+  })
+}
+
 function loadState(): AppState {
   try {
     const raw = localStorage.getItem(STORAGE_KEY)
     if (!raw) return DEFAULT_STATE
     const parsed = JSON.parse(raw)
     // Merge with defaults so new fields introduced later don't crash old saved state.
-    return { ...DEFAULT_STATE, ...parsed }
+    const merged: AppState = { ...DEFAULT_STATE, ...parsed }
+    return { ...merged, bills: backfillPaymentMethod(merged.bills) }
   } catch {
     return DEFAULT_STATE
   }

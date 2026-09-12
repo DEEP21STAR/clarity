@@ -3,10 +3,10 @@ import gsap from 'gsap'
 import { useStore } from '@/lib/store'
 import { StatCard } from './StatCard'
 import { CountUp } from './CountUp'
-import { addDaysIso, totalBillsInWindow, totalIncomeInWindow, totalPeriodicSmoothedInWindow, totalSinkingFundsSmoothedInWindow, windowLengthDays, isBillAmountChanged, nextMonthlyDueDate } from '@/lib/logic'
+import { addDaysIso, totalBillsInWindow, totalIncomeInWindow, totalPeriodicSmoothedInWindow, totalSinkingFundsSmoothedInWindow, windowLengthDays, isBillAmountChanged, nextMonthlyDueDate, resolvePaymentMethod, dueTodayBills } from '@/lib/logic'
 import { cn, formatCurrency, todayIso, formatShortDate } from '@/lib/utils'
 import type { UpcomingWindow, RecurringBill, BillFrequency, PeriodicBill } from '@/lib/types'
-import { Plus, Trash2, Info, AlertTriangle } from 'lucide-react'
+import { Plus, Trash2, Info, AlertTriangle, ChevronDown, Wallet, PiggyBank, RefreshCw, HandCoins } from 'lucide-react'
 import { CreditCardAccountPanel, DeviceRepaymentCard } from './InstallmentPlanTracker'
 import { PeriodicBillGauge } from './PeriodicBillGauge'
 import { PeriodicBillForm, type PeriodicBillFormValues } from './PeriodicBillForm'
@@ -18,7 +18,6 @@ import { CashFlowChart } from './CashFlowChart'
 import { HouseholdSplit } from './HouseholdSplit'
 import { BillIcon } from './BillIcons'
 import { SegmentedControl } from './SegmentedControl'
-import { Disclosure } from './Disclosure'
 import { DueBadge } from './DueBadge'
 import { useToast } from './Toast'
 import { useUndoableDelete } from '@/lib/useUndoableDelete'
@@ -34,12 +33,23 @@ const WINDOWS: { id: UpcomingWindow; label: string }[] = [
 interface Allocation { food: number; fuel: number; personal: number }
 const DEFAULT_ALLOCATION: Allocation = { food: 40, fuel: 25, personal: 35 }
 
+/** Sub-allocation WITHIN Personal's total — percentages of Personal's own amount, not new
+ * top-level slices of Live Funds Available. Holiday savings deliberately does NOT get a 5th
+ * slot here — it's wired into Savings Goals below instead (see the note in PersonalAllocationTile). */
+interface PersonalSplit { takeaways: number; entertainment: number; clothing: number; personalItems: number }
+const DEFAULT_PERSONAL_SPLIT: PersonalSplit = { takeaways: 30, entertainment: 25, clothing: 20, personalItems: 25 }
+
 export function UpcomingPayments() {
   const { state, updateBill, addBill, removeBill, addPeriodicBill, updatePeriodicBill, removePeriodicBill, addDeviceRepayment, updateDeviceRepayment, removeDeviceRepayment } = useStore()
   const withUndo = useUndoableDelete()
   const [window_, setWindow] = useState<UpcomingWindow>('week')
   const [allocation, setAllocation] = useState<Allocation>(DEFAULT_ALLOCATION)
+  const [personalOpen, setPersonalOpen] = useState(false)
+  const [personalSplit, setPersonalSplit] = useState<PersonalSplit>(DEFAULT_PERSONAL_SPLIT)
+  const [billsView, setBillsView] = useState<'snapshot' | 'detailed'>('snapshot')
+  const [highlightedBillIds, setHighlightedBillIds] = useState<Set<string>>(new Set())
   const liveRef = useRef<HTMLDivElement>(null)
+  const highlightTimerRef = useRef<number | null>(null)
   const [periodicFormMode, setPeriodicFormMode] = useState<'none' | 'add' | string>('none') // 'string' = editing that bill's id
   const [milestoneToast, setMilestoneToast] = useState<number | null>(null)
 
@@ -96,6 +106,36 @@ export function UpcomingPayments() {
   }, [isOverspent])
 
   const priceChangedBills = state.bills.filter(isBillAmountChanged)
+
+  // Real UX fix: the Upcoming Payments nav badge previously did nothing perceptible when
+  // clicked while already on this tab (App.tsx's goTo() is a no-op for the current tab).
+  // Clicking it now dispatches this event regardless of which tab you're on — this listens
+  // for it, switches to Snapshot (the view that actually shows individual bills at a glance),
+  // scrolls the first due-today card into view, and flashes ALL of today's due bills briefly
+  // so they're unmistakable even if more than one is due.
+  useEffect(() => {
+    function onHighlightDueBills() {
+      const dueToday = dueTodayBills(state.bills, todayIso())
+      if (dueToday.length === 0) return
+      setBillsView('snapshot')
+      setHighlightedBillIds(new Set(dueToday.map((b) => b.id)))
+      requestAnimationFrame(() => {
+        // NOT `behavior: 'smooth'` — confirmed live during testing that it can silently no-op
+        // (scroll position never moves, no error) in at least one real browser environment.
+        // The whole point of this fix is that the click visibly DOES something; the glow pulse
+        // below still gives it a soft landing without betting the actual scroll on smooth-scroll
+        // support being reliable everywhere.
+        document.getElementById(`bill-snapshot-${dueToday[0].id}`)?.scrollIntoView({ block: 'center' })
+      })
+      if (highlightTimerRef.current) window.clearTimeout(highlightTimerRef.current)
+      highlightTimerRef.current = window.setTimeout(() => setHighlightedBillIds(new Set()), 1800)
+    }
+    window.addEventListener('clarity:highlight-due-bills', onHighlightDueBills)
+    return () => {
+      window.removeEventListener('clarity:highlight-due-bills', onHighlightDueBills)
+      if (highlightTimerRef.current) window.clearTimeout(highlightTimerRef.current)
+    }
+  }, [state.bills])
 
   return (
     <div className="space-y-6">
@@ -178,7 +218,15 @@ export function UpcomingPayments() {
           <div className="mt-8 grid grid-cols-1 md:grid-cols-3 gap-4 text-left">
             <AllocationTile label="Food Shopping" amount={foodAmount} pct={allocation.food} glowFrom="from-emerald-400" glowTo="to-cyan-400" onChange={(v) => setAllocation((a) => ({ ...a, food: v }))} />
             <AllocationTile label="Fuel" amount={fuelAmount} pct={allocation.fuel} glowFrom="from-amber-400" glowTo="to-orange-500" onChange={(v) => setAllocation((a) => ({ ...a, fuel: v }))} />
-            <AllocationTile label="Personal" amount={personalAmount} pct={allocation.personal} glowFrom="from-purple-400" glowTo="to-pink-500" onChange={(v) => setAllocation((a) => ({ ...a, personal: v }))} />
+            <PersonalAllocationTile
+              amount={personalAmount}
+              pct={allocation.personal}
+              onChange={(v) => setAllocation((a) => ({ ...a, personal: v }))}
+              open={personalOpen}
+              onToggleOpen={() => setPersonalOpen((o) => !o)}
+              split={personalSplit}
+              onSplitChange={setPersonalSplit}
+            />
           </div>
           <p className="mt-4 text-[11px] text-white/35 flex items-center justify-center gap-1">
             <Info className="w-3 h-3" /> Split is an editable estimate (sliders below) — adjust to match how you actually spend.
@@ -319,8 +367,19 @@ export function UpcomingPayments() {
 
       <HouseholdSplit />
 
-      {/* Bills manager — every field editable */}
-      <BillsManager bills={state.bills} onUpdate={updateBill} onAdd={addBill} onRemove={removeBill} />
+      {/* Bills manager — Snapshot (default, fast-scan cards) or Detailed (every field editable) */}
+      <BillsManager
+        bills={state.bills}
+        onUpdate={updateBill}
+        onAdd={addBill}
+        onRemove={removeBill}
+        view={billsView}
+        onViewChange={setBillsView}
+        liveFundsAvailable={liveFundsAvailable}
+        isOverspent={isOverspent}
+        window_={window_}
+        highlightedBillIds={highlightedBillIds}
+      />
     </div>
   )
 }
@@ -364,6 +423,93 @@ function AllocationTile({ label, amount, pct, glowFrom, glowTo, onChange }: { la
   )
 }
 
+const PERSONAL_SUB_ITEMS: { key: keyof PersonalSplit; label: string }[] = [
+  { key: 'takeaways', label: 'Takeaways' },
+  { key: 'entertainment', label: 'Entertainment' },
+  { key: 'clothing', label: 'Clothing' },
+  { key: 'personalItems', label: 'Personal Items' },
+]
+
+/**
+ * Personal tile, extended with a click-to-expand breakdown across Takeaways/
+ * Entertainment/Clothing/Personal Items — each a % OF Personal's own amount
+ * (not a new top-level slice of Live Funds Available), per the locked-in
+ * design decision. Still 3 top-level tiles total; this just makes the third
+ * one disclose further detail rather than adding a 4th/5th tile.
+ *
+ * Holiday Savings deliberately has NO slot here — a note below the sliders
+ * points at Savings Goals instead, so it's still easy to find (heuristic #6,
+ * recognition over recall) without duplicating allocation logic.
+ */
+function PersonalAllocationTile({
+  amount,
+  pct,
+  onChange,
+  open,
+  onToggleOpen,
+  split,
+  onSplitChange,
+}: {
+  amount: number
+  pct: number
+  onChange: (v: number) => void
+  open: boolean
+  onToggleOpen: () => void
+  split: PersonalSplit
+  onSplitChange: (s: PersonalSplit) => void
+}) {
+  return (
+    <div className="rounded-xl border border-white/10 bg-black/30 p-4">
+      <button type="button" onClick={onToggleOpen} className="w-full flex items-center justify-between text-left" aria-expanded={open}>
+        <span className="text-xs font-semibold uppercase tracking-wide text-white/60 flex items-center gap-1.5">
+          Personal
+          <ChevronDown className={cn('w-3 h-3 transition-transform text-white/35', open && 'rotate-180')} />
+        </span>
+        <span className="text-[10px] text-white/35">{pct}%</span>
+      </button>
+      <div className="mt-2 text-2xl font-bold tabular-nums text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-500">
+        {formatCurrency(amount)}
+      </div>
+      <input
+        type="range"
+        min={0}
+        max={100}
+        value={pct}
+        onChange={(e) => onChange(Number(e.target.value))}
+        className="w-full mt-3 accent-cyan-400"
+      />
+
+      <div className="disclosure-body" style={{ maxHeight: open ? 400 : 0, opacity: open ? 1 : 0 }}>
+        <div className="mt-4 pt-3 border-t border-white/10 space-y-3">
+          {PERSONAL_SUB_ITEMS.map((item) => {
+            const subAmount = (amount * split[item.key]) / 100
+            return (
+              <div key={item.key}>
+                <div className="flex items-center justify-between text-[11px] text-white/50">
+                  <span>{item.label}</span>
+                  <span className="tabular-nums text-white/70">{formatCurrency(subAmount)} · {split[item.key]}%</span>
+                </div>
+                <input
+                  type="range"
+                  min={0}
+                  max={100}
+                  value={split[item.key]}
+                  onChange={(e) => onSplitChange({ ...split, [item.key]: Number(e.target.value) })}
+                  className="w-full mt-1 accent-pink-400"
+                />
+              </div>
+            )
+          })}
+          <p className="pt-1 text-[10px] text-white/35 flex items-start gap-1">
+            <PiggyBank className="w-3 h-3 shrink-0 mt-0.5" />
+            Saving for a holiday? That's tracked as a Savings Goal, not a Personal slice — add it in Savings Goals below.
+          </p>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 const FREQUENCIES: BillFrequency[] = ['weekly', 'fortnightly', 'monthly']
 
 /** #8/#19 — real per-instance paid toggle, backed by a real PaymentRecord (amount + date, not just a boolean), with the SVG draw-on checkmark and a toast with Undo. */
@@ -400,25 +546,65 @@ function PaidToggle({ billId, billName, dueDateIso, amount }: { billId: string; 
   )
 }
 
-function BillsManager({ bills, onUpdate, onAdd, onRemove }: {
+function BillsManager({ bills, onUpdate, onAdd, onRemove, view, onViewChange, liveFundsAvailable, isOverspent, window_, highlightedBillIds }: {
   bills: RecurringBill[]
   onUpdate: (id: string, patch: Partial<RecurringBill>) => void
   onAdd: (bill: RecurringBill) => void
   onRemove: (id: string) => void
+  view: 'snapshot' | 'detailed'
+  onViewChange: (v: 'snapshot' | 'detailed') => void
+  liveFundsAvailable: number
+  isOverspent: boolean
+  window_: UpcomingWindow
+  highlightedBillIds: Set<string>
 }) {
   const withUndo = useUndoableDelete()
+  const activeBills = bills.filter((b) => b.active)
   // tilt off: dense multi-column editable table — kept from the app-wide mouse-tilt audit.
   return (
     <StatCard label="Recurring Bills" glow="cyan" tilt={false}>
-      <div className="mt-4 text-xs text-white/40">{bills.filter((b) => b.active).length} active bills — expand for full detail and editing.</div>
-      <Disclosure title={`Show all ${bills.length} bills`}>
-      <div className="overflow-x-auto">
+      <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
+        <div className="text-xs text-white/40">{activeBills.length} active bills</div>
+        {/* Same Live Funds Available figure as the hero card above — reused, not
+            recomputed, so it can never drift from it. A second, quieter surface
+            of the number right where the bills themselves are being reviewed. */}
+        <div className="flex items-center gap-1.5 text-xs">
+          <Wallet className={cn('w-3.5 h-3.5', isOverspent ? 'text-rose-300' : 'text-cyan-300')} />
+          <span className="text-white/40">Live funds this {window_}:</span>
+          <span className={cn('font-semibold tabular-nums', isOverspent ? 'text-rose-300' : 'text-cyan-300')}>
+            {formatCurrency(liveFundsAvailable)}
+          </span>
+        </div>
+      </div>
+
+      <div className="mt-3">
+        <SegmentedControl
+          size="sm"
+          value={view}
+          onChange={onViewChange}
+          options={[
+            { value: 'snapshot', label: 'Snapshot' },
+            { value: 'detailed', label: 'Detailed' },
+          ]}
+        />
+      </div>
+
+      {view === 'snapshot' ? (
+        <div className="mt-4 grid grid-cols-2 sm:grid-cols-3 gap-3">
+          {activeBills.length === 0 && <p className="text-sm text-white/35 col-span-full">No active bills.</p>}
+          {activeBills.map((bill, i) => (
+            <BillSnapshotCard key={bill.id} bill={bill} delay={i * 0.04} highlighted={highlightedBillIds.has(bill.id)} />
+          ))}
+        </div>
+      ) : (
+      <div className="mt-4 overflow-x-auto">
         <table className="w-full text-sm">
           <thead>
             <tr className="text-left text-white/40 text-xs uppercase tracking-wide">
               <th className="pb-2 pr-2">Name</th>
               <th className="pb-2 pr-2">Amount</th>
               <th className="pb-2 pr-2">Frequency</th>
+              <th className="pb-2 pr-2">Payment</th>
               <th className="pb-2 pr-2">Due day</th>
               <th className="pb-2 pr-2">Owner</th>
               <th className="pb-2 pr-2">Active</th>
@@ -469,6 +655,15 @@ function BillsManager({ bills, onUpdate, onAdd, onRemove }: {
                   >
                     {FREQUENCIES.map((f) => <option key={f} value={f}>{f}</option>)}
                   </select>
+                </td>
+                <td className="py-2 pr-2">
+                  <button
+                    type="button"
+                    title="Click to switch between direct debit and manual"
+                    onClick={() => onUpdate(bill.id, { paymentMethod: resolvePaymentMethod(bill) === 'direct-debit' ? 'manual' : 'direct-debit' })}
+                  >
+                    <PaymentMethodBadge method={resolvePaymentMethod(bill)} />
+                  </button>
                 </td>
                 <td className="py-2 pr-2">
                   <div className="flex items-center gap-2 flex-wrap">
@@ -544,7 +739,65 @@ function BillsManager({ bills, onUpdate, onAdd, onRemove }: {
           <Plus className="w-3 h-3" /> Add bill
         </button>
       </div>
-      </Disclosure>
+      )}
     </StatCard>
+  )
+}
+
+/**
+ * Direct-debit vs manual-pay — a real distinction Deep lives with, not an arbitrary category
+ * (ease-of-use standard, heuristic #2). Direct debit reads as reassuring/passive (taken
+ * automatically, nothing to do); manual reads as actionable (he has to go pay it). One shared
+ * component so Snapshot and Detailed can never drift into showing this two different ways.
+ */
+function PaymentMethodBadge({ method }: { method: 'direct-debit' | 'manual' }) {
+  if (method === 'direct-debit') {
+    return (
+      <span
+        title="Direct debit — taken automatically. No action needed unless funds are short."
+        className="inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded-full border font-medium whitespace-nowrap bg-cyan-500/10 text-cyan-300 border-cyan-400/30"
+      >
+        <RefreshCw className="w-2.5 h-2.5" /> Auto-pay
+      </span>
+    )
+  }
+  return (
+    <span
+      title="You pay this yourself, by the due date — it won't be taken automatically."
+      className="inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded-full border font-medium whitespace-nowrap bg-violet-500/10 text-violet-300 border-violet-400/30"
+    >
+      <HandCoins className="w-2.5 h-2.5" /> You pay this
+    </span>
+  )
+}
+
+/** Snapshot card: icon, name, amount, a due-soon badge (monthly bills only — same
+ * existing due-date-known scope as the detailed table's PaidToggle/DueBadge; weekly/
+ * fortnightly bills have no confirmed single due-date to badge against), and the
+ * direct-debit/manual distinction. `id` is a stable DOM anchor so the Upcoming Payments
+ * nav badge can scrollIntoView + flash a specific due-today card even when already on
+ * this tab (see App.tsx's `clarity:highlight-due-bills` dispatch). */
+function BillSnapshotCard({ bill, delay, highlighted }: { bill: RecurringBill; delay: number; highlighted: boolean }) {
+  return (
+    <div
+      id={`bill-snapshot-${bill.id}`}
+      className={cn(
+        'bill-snapshot-in rounded-xl border border-white/10 bg-black/30 p-3 flex flex-col gap-2',
+        highlighted && 'bill-highlight-pulse'
+      )}
+      style={{ animationDelay: `${delay}s` }}
+    >
+      <div className="flex items-center gap-2">
+        <BillIcon name={bill.name} className="w-4 h-4 shrink-0" />
+        <span className="text-sm text-white/85 truncate">{bill.name}</span>
+      </div>
+      <span className="text-lg font-bold tabular-nums text-white/90">{formatCurrency(bill.amount)}</span>
+      {bill.frequency === 'monthly' ? (
+        <DueBadge dueDateIso={nextMonthlyDueDate(bill.dueDay, todayIso())} />
+      ) : (
+        <span className="text-[10px] text-white/35 capitalize">{bill.frequency}</span>
+      )}
+      <PaymentMethodBadge method={resolvePaymentMethod(bill)} />
+    </div>
   )
 }

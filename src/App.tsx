@@ -18,7 +18,7 @@ import { SegmentedControl } from './components/SegmentedControl'
 import { ToastProvider, useToast } from './components/Toast'
 import { NotificationBell } from './components/NotificationBell'
 import { CursorGlow } from './components/CursorGlow'
-import { computeCurrentHealthScore, calcNetWorth, nextMonthlyDueDate } from '@/lib/logic'
+import { computeCurrentHealthScore, calcNetWorth, dueTodayBills } from '@/lib/logic'
 import { cn, formatCurrency, todayIso } from '@/lib/utils'
 import { captureThumbnail } from '@/lib/thumbnailCache'
 import {
@@ -177,14 +177,31 @@ function AppContent() {
 
   // Round 21, item #19 — a real count of active monthly bills due TODAY (not "soon"), surfaced
   // as a small badge dot on the Upcoming Payments nav tab so it's visible without opening the tab.
-  const billsDueToday = useMemo(
-    () => state.bills.filter((b) => b.active && b.frequency === 'monthly' && nextMonthlyDueDate(b.dueDay, todayIso()) === todayIso()).length,
-    [state.bills]
-  )
+  // Real fix (Deep): the badge told him a NUMBER was due but never WHAT — a Nielsen #1
+  // violation (a tooltip that can't explain itself). Now keeps the actual bills, not just a
+  // count, so the tooltip can name them; `dueTodayBills` is the same shared helper
+  // UpcomingPayments.tsx uses for its highlight-on-click, so the two can never disagree.
+  const billsDueTodayList = useMemo(() => dueTodayBills(state.bills, todayIso()), [state.bills])
+  const billsDueToday = billsDueTodayList.length
 
   const goTo = (id: TabId) => {
     if (tab === id) return
     setTab(id)
+  }
+
+  // Real fix (Deep): clicking the Upcoming Payments badge while ALREADY on that tab used to
+  // do nothing perceptible (goTo() is a no-op for the current tab) — "looks like it's
+  // something important but it's not telling me." Fresh navigation TO the tab already gets its
+  // own visible feedback (the page itself changes), so this only fires for the specific
+  // already-there case Deep hit — which also sidesteps a real mount-order race: dispatching on
+  // first navigation fires before UpcomingPayments.tsx has mounted its listener (confirmed live
+  // — the event fired into the void, no highlight ever appeared), since `setTab` is
+  // async/batched but the dispatch was synchronous.
+  const handleTabClick = (id: TabId) => {
+    if (id === 'upcoming' && tab === 'upcoming' && billsDueToday > 0) {
+      window.dispatchEvent(new CustomEvent('clarity:highlight-due-bills'))
+    }
+    goTo(id)
   }
 
   const tabCommands: PaletteCommand[] = TABS.map((t) => ({
@@ -285,7 +302,7 @@ function AppContent() {
                 <button
                   key={t.id}
                   data-tab={t.id}
-                  onClick={() => goTo(t.id)}
+                  onClick={() => handleTabClick(t.id)}
                   style={{ '--tab-accent': TAB_ACCENTS[t.id] } as CSSProperties}
                   className={cn(
                     'nav-tab relative flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-all',
@@ -297,10 +314,16 @@ function AppContent() {
                   <Icon className="nav-icon w-3.5 h-3.5" />
                   <span className={isActive ? 'gradient-heading' : undefined}>{t.label}</span>
                   {/* Round 21, item #19 — real count of bills due TODAY, not "soon"; only ever
-                      shown on the tab that actually owns bill data, and only when real. */}
+                      shown on the tab that actually owns bill data, and only when real.
+                      Real fix (Deep): tooltip now names the actual bill(s), not just the count —
+                      a badge that can't explain itself on hover is the real heuristic-#1 gap here. */}
                   {t.id === 'upcoming' && billsDueToday > 0 && (
                     <span
-                      title={`${billsDueToday} bill${billsDueToday === 1 ? '' : 's'} due today`}
+                      title={
+                        billsDueToday === 1
+                          ? `${billsDueTodayList[0].name} due today — click to see it`
+                          : `${billsDueToday} bills due today: ${billsDueTodayList.map((b) => b.name).join(', ')} — click to see them`
+                      }
                       className="absolute -top-1 -right-1 min-w-[15px] h-[15px] px-[3px] rounded-full bg-rose-500 text-white text-[9px] font-bold flex items-center justify-center leading-none shadow-[0_0_8px_-1px_rgba(255,45,85,0.8)]"
                     >
                       {billsDueToday}

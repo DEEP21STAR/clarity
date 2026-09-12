@@ -58,26 +58,26 @@ export const AU_GST_RATE = 0.10
  * real recurring cash outflow in the Upcoming Payments window math.
  */
 export const SEED_BILLS: RecurringBill[] = [
-  { id: 'bill-rent', name: 'Rent', amount: 1960, frequency: 'monthly', dueDay: 1, dueDayIsEstimate: true, category: 'housing', active: true, owner: 'shared' },
+  { id: 'bill-rent', name: 'Rent', amount: 1960, frequency: 'monthly', dueDay: 1, dueDayIsEstimate: true, category: 'housing', active: true, owner: 'shared', paymentMethod: 'manual' },
   {
     id: 'bill-internet-mobile', name: 'Internet & Mobile', amount: 147.25, frequency: 'monthly', dueDay: 1, dueDayIsEstimate: true, category: 'utilities', active: true,
     note: 'Telstra Sep 2026 cycle: previous bill $96.66, payment received $150.00 CR, credit carried forward $53.34 CR, total new charges $200.59 → amount due $147.25. Will vary by cycle; due-day still a placeholder.',
-    owner: 'shared',
+    owner: 'shared', paymentMethod: 'manual',
   },
-  { id: 'bill-water', name: 'Water', amount: 50, frequency: 'monthly', dueDay: 1, dueDayIsEstimate: true, category: 'utilities', active: true, owner: 'shared' },
-  { id: 'bill-spotify', name: 'Spotify', amount: 17.99, frequency: 'monthly', dueDay: 2, dueDayIsEstimate: false, category: 'subscription', active: true, owner: 'shared' },
-  { id: 'bill-google-one', name: 'Google One', amount: 2.99, frequency: 'monthly', dueDay: 12, dueDayIsEstimate: false, category: 'subscription', active: true, owner: 'shared' },
-  { id: 'bill-car-insurance', name: 'Car Insurance', amount: 140, frequency: 'monthly', dueDay: 1, dueDayIsEstimate: true, category: 'insurance', active: true, owner: 'shared' },
-  { id: 'bill-contents-home-insurance', name: 'Contents Home Insurance', amount: 60, frequency: 'monthly', dueDay: 1, dueDayIsEstimate: true, category: 'insurance', active: true, owner: 'shared' },
+  { id: 'bill-water', name: 'Water', amount: 50, frequency: 'monthly', dueDay: 1, dueDayIsEstimate: true, category: 'utilities', active: true, owner: 'shared', paymentMethod: 'manual' },
+  { id: 'bill-spotify', name: 'Spotify', amount: 17.99, frequency: 'monthly', dueDay: 2, dueDayIsEstimate: false, category: 'subscription', active: true, owner: 'shared', paymentMethod: 'direct-debit' },
+  { id: 'bill-google-one', name: 'Google One', amount: 2.99, frequency: 'monthly', dueDay: 12, dueDayIsEstimate: false, category: 'subscription', active: true, owner: 'shared', paymentMethod: 'direct-debit' },
+  { id: 'bill-car-insurance', name: 'Car Insurance', amount: 140, frequency: 'monthly', dueDay: 1, dueDayIsEstimate: true, category: 'insurance', active: true, owner: 'shared', paymentMethod: 'direct-debit' },
+  { id: 'bill-contents-home-insurance', name: 'Contents Home Insurance', amount: 60, frequency: 'monthly', dueDay: 1, dueDayIsEstimate: true, category: 'insurance', active: true, owner: 'shared', paymentMethod: 'direct-debit' },
   {
     id: 'bill-gem-visa-deep', name: 'GEM VISA Deep', amount: 305.33, frequency: 'monthly', dueDay: 17, dueDayIsEstimate: false, category: 'debt', active: true,
     note: 'Real minimum payment due 17 Sep 2026. Full card + plan breakdown is in the Installment Plans section below.',
-    owner: 'deep',
+    owner: 'deep', paymentMethod: 'manual',
   },
   {
     id: 'bill-gem-visa-mimi', name: 'GEM VISA Mimi', amount: 0, frequency: 'monthly', dueDay: 1, dueDayIsEstimate: true, category: 'debt', active: true,
     note: 'No minimum payment currently required on this card. Two plans on it are already expired and accruing 29.99% p.a. — see Installment Plans below.',
-    owner: 'mimi',
+    owner: 'mimi', paymentMethod: 'manual',
   },
   { id: 'bill-anytime-fitness', name: 'Anytime Fitness', amount: 46, frequency: 'fortnightly', dueDay: 1, dueDayIsEstimate: true, category: 'subscription', active: true, owner: 'shared' },
   {

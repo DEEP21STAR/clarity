@@ -3,7 +3,7 @@ import { StatCard } from './StatCard'
 import { useStore } from '@/lib/store'
 import { formatCurrency, formatShortDate } from '@/lib/utils'
 import type { SavingsGoal } from '@/lib/types'
-import { Plus, Trash2, PiggyBank, X, CircleDot, Rows3 } from 'lucide-react'
+import { Plus, Trash2, PiggyBank, X, CircleDot, Rows3, Plane } from 'lucide-react'
 import { useUndoableDelete } from '@/lib/useUndoableDelete'
 import { fireSavingsConfetti } from '@/lib/confetti'
 import { DateField } from './DateField'
@@ -98,6 +98,8 @@ function GoalCard({ goal, onUpdate, onRemove, onLogContribution }: {
             </svg>
             <div className="absolute inset-0 flex items-center justify-center text-[11px] font-bold text-white">{progress.toFixed(0)}%</div>
           </div>
+        ) : goal.category === 'holiday' ? (
+          <Plane className="w-6 h-6 text-cyan-300 shrink-0" />
         ) : (
           <PiggyBank className="w-6 h-6 text-emerald-300 shrink-0" />
         )}
@@ -136,11 +138,12 @@ function GoalCard({ goal, onUpdate, onRemove, onLogContribution }: {
   )
 }
 
-function GoalForm({ onCancel, onSave }: { onCancel: () => void; onSave: (v: { name: string; targetAmount: number; targetDate?: string; fundedThisPeriod: number }) => void }) {
+function GoalForm({ onCancel, onSave }: { onCancel: () => void; onSave: (v: { name: string; targetAmount: number; targetDate?: string; fundedThisPeriod: number; category?: 'holiday' }) => void }) {
   const [name, setName] = useState('')
   const [targetAmount, setTargetAmount] = useState(0)
   const [targetDate, setTargetDate] = useState('')
   const [fundedThisPeriod, setFundedThisPeriod] = useState(0)
+  const [isHoliday, setIsHoliday] = useState(false)
 
   // tilt off: 4-field form — rotating under the cursor mid-type is a real regression.
   return (
@@ -153,6 +156,10 @@ function GoalForm({ onCancel, onSave }: { onCancel: () => void; onSave: (v: { na
           <label className="text-xs text-white/50">Goal name</label>
           <input value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. Christmas" className="mt-1 w-full bg-black/30 border border-white/10 rounded-lg px-3 py-2 outline-none focus:border-emerald-400/50" />
         </div>
+        <label className="flex items-center gap-2 text-xs text-white/50 cursor-pointer w-fit">
+          <input type="checkbox" checked={isHoliday} onChange={(e) => setIsHoliday(e.target.checked)} className="accent-cyan-400 w-3.5 h-3.5" />
+          <Plane className="w-3.5 h-3.5 text-cyan-300" /> This is a holiday savings goal
+        </label>
         <div className="grid grid-cols-2 gap-3">
           <div>
             <label className="text-xs text-white/50">Target amount</label>
@@ -181,7 +188,7 @@ function GoalForm({ onCancel, onSave }: { onCancel: () => void; onSave: (v: { na
           </div>
         </div>
         <button
-          onClick={() => name.trim() && onSave({ name: name.trim(), targetAmount, targetDate: targetDate || undefined, fundedThisPeriod })}
+          onClick={() => name.trim() && onSave({ name: name.trim(), targetAmount, targetDate: targetDate || undefined, fundedThisPeriod, category: isHoliday ? 'holiday' : undefined })}
           className="px-4 py-2 rounded-lg bg-gradient-to-r from-emerald-400 to-cyan-400 text-black text-sm font-semibold hover:opacity-90"
         >
           Add goal
