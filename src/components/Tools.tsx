@@ -10,6 +10,7 @@ import { formatCurrency, formatShortDate, todayIso } from '@/lib/utils'
 import { Plus, Trash2, Volume2, VolumeX, AlertTriangle, Info, ShieldCheck, Coffee } from 'lucide-react'
 import { useUndoableDelete } from '@/lib/useUndoableDelete'
 import { DateField } from './DateField'
+import { Help } from './Help'
 
 export function Tools() {
   const { state, addOneOffEntry, removeOneOffEntry, setSoundEnabled } = useStore()
@@ -62,6 +63,8 @@ export function Tools() {
           Sound {state.soundEnabled ? 'on' : 'off'}
         </button>
       </div>
+
+      <Help />
 
       <StatCard label="Home Office / WFH Deduction" glow="cyan">
         <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">

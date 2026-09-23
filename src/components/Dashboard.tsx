@@ -17,6 +17,7 @@ import { fireHealthScoreConfetti } from '@/lib/confetti'
 import { YearInReview } from './YearInReview'
 import { DashboardForecastCard } from './DashboardForecastCard'
 import { FinancialTipOfDay } from './FinancialTipOfDay'
+import { GettingStartedCard } from './GettingStartedCard'
 
 /**
  * Renders the plain-language headline with weight/gradient emphasis on just
@@ -308,6 +309,8 @@ export function Dashboard() {
           read as flat grey per direct feedback); the dollar figure and health-score
           fraction specifically get gradient emphasis via renderHeadline() above. */}
       <p className="text-xl md:text-2xl font-semibold text-white leading-snug">{renderHeadline(headline)}</p>
+
+      <GettingStartedCard />
 
       <FinancialTipOfDay />
 
