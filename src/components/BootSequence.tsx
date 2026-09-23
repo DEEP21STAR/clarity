@@ -35,7 +35,17 @@ interface Particle {
  * static one, and a punchier scale+glow text reveal instead of a plain fade-up. Total runtime
  * ~4.2s (was ~1.9s) — still fully skippable by tap, same as before.
  */
-function sampleDollarSignPoints(width: number, height: number, count: number): { x: number; y: number }[] {
+function sampleDollarSignPoints(rawWidth: number, rawHeight: number, count: number): { x: number; y: number }[] {
+  // 2026-09-23 round 6 — real bug found from Deep's own screen recording (particles rendering
+  // as a correctly-shaped but badly mispositioned cluster): glyphBoxSize is almost never a whole
+  // number (Math.max(w,h)*0.85 on a real device's dimensions), but a <canvas> silently truncates
+  // a fractional .width/.height to an integer. The scan loop below indexed the pixel buffer using
+  // the ORIGINAL fractional width/height as the row stride, while the buffer itself was laid out
+  // using the truncated integer width — every row after the first read from a progressively
+  // wrong offset, corrupting the detected shape more with every row. Rounding once here, up
+  // front, keeps the canvas's real dimensions and the indexing math in exact agreement.
+  const width = Math.round(rawWidth)
+  const height = Math.round(rawHeight)
   const off = document.createElement('canvas')
   off.width = width
   off.height = height
@@ -77,42 +87,78 @@ export function BootSequence({ onDone }: { onDone: () => void }) {
     if (!ctx) return
 
     const dpr = Math.min(window.devicePixelRatio || 1, 2)
-    const w = window.innerWidth
-    const h = window.innerHeight
-    canvas.width = w * dpr
-    canvas.height = h * dpr
-    ctx.scale(dpr, dpr)
+
+    // 2026-09-23 round 6 — real device bug, found from Deep's own screen recording: on his
+    // phone the particles rendered as a correctly-shaped but tiny, MISPOSITIONED cluster
+    // jammed into the top-left corner, not centered. Root cause: mobile Chrome's collapsing
+    // URL bar means window.innerWidth/innerHeight read at mount time can be smaller than the
+    // viewport the canvas's own `100vw`/`100vh` CSS resolves to a moment later once the toolbar
+    // hides — the canvas's device-pixel buffer (sized once from the stale, smaller reading)
+    // then gets stretched by CSS to fill the larger final box, visually compressing everything
+    // drawn on it into a fraction of the corner. A fixed 420x900 desktop-emulated Playwright
+    // viewport can never reproduce this — it has no collapsing toolbar to race against.
+    // Fix: read the canvas's OWN actual rendered box (getBoundingClientRect, reflects whatever
+    // 100vw/100vh really resolved to) instead of window.innerWidth/innerHeight, and redo this
+    // resync on every resize/orientationchange for the lifetime of the animation, so a toolbar
+    // collapse mid-boot corrects itself instead of freezing the wrong layout in place.
+    let w = 0
+    let h = 0
+    let glyphBoxSize = 0
+    let glyphOffsetX = 0
+    let glyphOffsetY = 0
+    let glyphCenterX = 0
+    let glyphCenterY = 0
+    let particles: Particle[] = []
+
+    const resync = () => {
+      const rect = canvas.getBoundingClientRect()
+      const nextW = rect.width || window.innerWidth
+      const nextH = rect.height || window.innerHeight
+      if (nextW === w && nextH === h) return
+      w = nextW
+      h = nextH
+      canvas.width = w * dpr
+      canvas.height = h * dpr
+      ctx.scale(dpr, dpr)
+
+      // Real bug found in Playwright verification: a "$" glyph's actual ink only fills a modest
+      // fraction of its own font em-box (it's a narrow, tall character) — sizing the sampling
+      // box off the viewport's SMALLER dimension (portrait width, ~420px on a phone) capped the
+      // glyph to a small ~76x84px result even after raising the multiplier. Sizing off the
+      // LARGER dimension instead produces a properly large, prominent glyph.
+      glyphBoxSize = Math.max(w, h) * 0.85
+      glyphOffsetX = w / 2 - glyphBoxSize / 2
+      glyphOffsetY = h / 2 - glyphBoxSize / 2 - h * 0.1
+      glyphCenterX = w / 2
+      glyphCenterY = glyphOffsetY + glyphBoxSize / 2
+      const targets = sampleDollarSignPoints(glyphBoxSize, glyphBoxSize, 460)
+
+      // Re-target existing particles from wherever they currently are (not a fresh random
+      // scatter) so a mid-animation resync never looks like a jump-cut — only the destination
+      // moves, matching the corrected layout.
+      particles = targets.map((t, i) => {
+        const prev = particles[i]
+        return {
+          x: prev?.x ?? 0,
+          y: prev?.y ?? 0,
+          tx: t.x + glyphOffsetX,
+          ty: t.y + glyphOffsetY,
+          sx: prev ? prev.x : Math.random() * w,
+          sy: prev ? prev.y : Math.random() * h,
+          size: prev?.size ?? 1.2 + Math.random() * 1.7,
+          hue: prev?.hue ?? (Math.random() < 0.5 ? 190 : 280), // cyan/purple mix, matches the app's own palette
+        }
+      })
+    }
+    resync()
+    window.addEventListener('resize', resync)
+    window.addEventListener('orientationchange', resync)
 
     // Reduced-motion / low-power fallback: skip straight to the static formed glyph, no
     // scatter-converge animation, same as the old version's respect for this preference.
     if (reduceMotion) {
       progressRef.current.t = 1
     }
-
-    // Real bug found in Playwright verification: a "$" glyph's actual ink only fills a modest
-    // fraction of its own font em-box (it's a narrow, tall character) — sizing the sampling box
-    // off the viewport's SMALLER dimension (portrait width, ~420px on a phone) capped the glyph
-    // to a small ~76x84px result even after raising the multiplier, which is exactly why it read
-    // as small/underwhelming. Sizing off the LARGER dimension (portrait height, where there's far
-    // more room) and measuring the actual rendered ink afterward (not assuming a ratio) confirmed
-    // this produces a properly large, prominent glyph instead.
-    const glyphBoxSize = Math.max(w, h) * 0.85
-    const glyphOffsetX = w / 2 - glyphBoxSize / 2
-    const glyphOffsetY = h / 2 - glyphBoxSize / 2 - h * 0.1
-    const glyphCenterX = w / 2
-    const glyphCenterY = glyphOffsetY + glyphBoxSize / 2
-    const targets = sampleDollarSignPoints(glyphBoxSize, glyphBoxSize, 460)
-
-    const particles: Particle[] = targets.map((t) => ({
-      x: 0,
-      y: 0,
-      tx: t.x + glyphOffsetX,
-      ty: t.y + glyphOffsetY,
-      sx: Math.random() * w,
-      sy: Math.random() * h,
-      size: 1.2 + Math.random() * 1.7,
-      hue: Math.random() < 0.5 ? 190 : 280, // cyan/purple mix, matches the app's own palette
-    }))
 
     let raf = 0
     let wasFormed = false
@@ -205,6 +251,8 @@ export function BootSequence({ onDone }: { onDone: () => void }) {
     return () => {
       tl.kill()
       cancelAnimationFrame(raf)
+      window.removeEventListener('resize', resync)
+      window.removeEventListener('orientationchange', resync)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])

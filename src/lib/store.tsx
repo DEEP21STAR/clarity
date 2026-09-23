@@ -57,6 +57,13 @@ export interface AppState {
   paymentRecords: PaymentRecord[]
   /** #38 — real sound design toggle, OFF by default per the explicit ask. */
   soundEnabled: boolean
+  /** 2026-09-23 round 6 — real per-instance names, set once during onboarding (see
+   * SetupWizard.tsx's buildDemoSeed). Defaults preserve Deep's own existing account's exact
+   * current display (his real saved state has no such key, so loadState's merge falls back to
+   * these defaults). secondaryName === '' means a genuinely single-person household — the
+   * header's Deep/Mimi/Combined view toggle only makes sense once a second person exists. */
+  primaryName: string
+  secondaryName: string
 }
 
 export const DEFAULT_STATE: AppState = {
@@ -84,6 +91,8 @@ export const DEFAULT_STATE: AppState = {
   dashboardCardOrder: ['stats', 'health', 'tax', 'insights'],
   paymentRecords: [],
   soundEnabled: false,
+  primaryName: 'Deep',
+  secondaryName: 'Mimi',
 }
 
 /**

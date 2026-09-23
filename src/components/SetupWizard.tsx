@@ -287,6 +287,13 @@ export function SetupWizard({ mode = 'demo' }: { mode?: 'demo' | 'onboarding' } 
       grossAnnualIncome: monthlyIncome * 12,
       incomeAnchor,
       dashboardCardOrder: DEFAULT_STATE.dashboardCardOrder,
+      // 2026-09-23 round 6 — "it should just say the user who's logged in" / "when you enter
+      // the name, it should come up on the footer" (Deep). Real names now actually flow
+      // through into the seed instead of being collected and then dropped — secondaryName
+      // stays '' (not a fallback like "Mimi") when no second person was entered, which is what
+      // lets the header correctly detect a single-person household and skip the 3-way toggle.
+      primaryName: primaryName.trim() || 'You',
+      secondaryName: secondaryName.trim(),
     }
   }
 
@@ -400,12 +407,12 @@ export function SetupWizard({ mode = 'demo' }: { mode?: 'demo' | 'onboarding' } 
                 <p className="text-xs text-white/40">Just a name — add a second person for a shared household, or leave it blank for a single view.</p>
                 <div>
                   <label className="text-xs text-white/50">Your name</label>
-                  <input value={primaryName} onChange={(e) => setPrimaryName(e.target.value)} placeholder="e.g. Deep" className="mt-1 w-full bg-black/30 border border-white/10 rounded-lg px-3 py-2 text-sm outline-none focus:border-cyan-400/50" />
+                  <input value={primaryName} onChange={(e) => setPrimaryName(e.target.value)} placeholder="Your first name" className="mt-1 w-full bg-black/30 border border-white/10 rounded-lg px-3 py-2 text-sm outline-none focus:border-cyan-400/50" />
                   <IdentityColorPicker value={primaryColor} onChange={setPrimaryColor} />
                 </div>
                 <div>
                   <label className="text-xs text-white/50">Add a second person (optional)</label>
-                  <input value={secondaryName} onChange={(e) => setSecondaryName(e.target.value)} placeholder="e.g. Mimi" className="mt-1 w-full bg-black/30 border border-white/10 rounded-lg px-3 py-2 text-sm outline-none focus:border-cyan-400/50" />
+                  <input value={secondaryName} onChange={(e) => setSecondaryName(e.target.value)} placeholder="Second person's name" className="mt-1 w-full bg-black/30 border border-white/10 rounded-lg px-3 py-2 text-sm outline-none focus:border-cyan-400/50" />
                   <IdentityColorPicker value={secondaryColor} onChange={setSecondaryColor} />
                 </div>
               </div>

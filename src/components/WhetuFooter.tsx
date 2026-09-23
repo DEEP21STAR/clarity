@@ -8,8 +8,12 @@
  * PinGate.tsx only — never on the real dashboard itself, which is the actual product Mimi
  * uses day to day. Mounted once in App.tsx's AppContent, below the tab content, so every tab
  * carries it without duplicating it per-tab.
+ *
+ * 2026-09-23 round 6 — "when you enter the name, it should come up on the footer" (Deep). Was
+ * hardcoded to "Mimi" regardless of who actually set the dashboard up — now takes the real
+ * onboarded name as a prop.
  */
-export function WhetuFooter() {
+export function WhetuFooter({ name }: { name: string }) {
   return (
     <div className="wfd-footer">
       <div className="wfd-logo">WHETŪ DIGITAL</div>
@@ -18,7 +22,7 @@ export function WhetuFooter() {
         © 2026 Whetū Digital Ltd. &nbsp;·&nbsp; <a href="mailto:hello@whetudigital.co.nz">hello@whetudigital.co.nz</a>
       </div>
       <span className="wfd-ded">
-        Built with care for Mimi <span className="wfd-heart">♥</span>
+        Built with care for {name} <span className="wfd-heart">♥</span>
       </span>
       <br />
       <span className="wfd-badge">Licensed Dashboard — Whetū Digital 2026</span>

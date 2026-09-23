@@ -709,14 +709,16 @@ mark.search-hit { background: rgba(34, 211, 238, 0.35); color: #fff; border-radi
 }
 
 /* Quick-add "+ Add" pills (UpcomingPayments.tsx) — 2026-09-23 round 4: "illuminating, better
-   and pulsing" (Deep). A slow breathing glow so the control keeps drawing the eye at rest,
-   not just on hover — same box-shadow-pulse technique as .donation-pulse above, generic white
-   glow so it reads correctly regardless of which tile's own accent colour fills the pill. */
+   and pulsing" (Deep). round 6 follow-up: "the background color outweighs it so you can't
+   really see it illuminating" — the original generic white glow at 0.18-0.4 alpha was too
+   subtle against this app's near-black cards to read as "illuminated" at all. Switched to a
+   colored glow matching each tile's own accent (--quickadd-glow, set inline per pill) at much
+   higher intensity/spread, which reads as a real halo instead of a faint white fuzz. */
 @keyframes quickadd-breathe {
-  0%, 100% { box-shadow: 0 0 10px 0 rgba(255,255,255,0.18); }
-  50% { box-shadow: 0 0 20px 4px rgba(255,255,255,0.4); }
+  0%, 100% { box-shadow: 0 0 14px 2px var(--quickadd-glow, rgba(255,255,255,0.4)); }
+  50% { box-shadow: 0 0 32px 10px var(--quickadd-glow, rgba(255,255,255,0.85)); }
 }
-.quickadd-pulse { animation: quickadd-breathe 2.4s ease-in-out infinite; }
+.quickadd-pulse { animation: quickadd-breathe 2s ease-in-out infinite; }
 @media (prefers-reduced-motion: reduce) {
   .quickadd-pulse { animation: none; }
 }

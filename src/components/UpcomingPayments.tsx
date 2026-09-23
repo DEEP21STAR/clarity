@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react'
 import gsap from 'gsap'
 import { useStore } from '@/lib/store'
 import { StatCard } from './StatCard'
@@ -545,7 +545,7 @@ function toPeriodicBill(values: PeriodicBillFormValues, existing?: PeriodicBill)
  * existing typed field is for, when Deep wants to set an exact total or correct a mistake) —
  * this is purely for "I just spent $12, log it" in as few taps as possible.
  */
-function QuickAddButton({ onSubmit, accent }: { onSubmit: (amount: number) => void; accent: string }) {
+function QuickAddButton({ onSubmit, accent, glowColor }: { onSubmit: (amount: number) => void; accent: string; glowColor: string }) {
   const [open, setOpen] = useState(false)
   const [value, setValue] = useState('')
   const inputRef = useRef<HTMLInputElement>(null)
@@ -573,6 +573,7 @@ function QuickAddButton({ onSubmit, accent }: { onSubmit: (amount: number) => vo
         type="button"
         onClick={() => setOpen(true)}
         aria-label="Add a manual spend"
+        style={{ '--quickadd-glow': glowColor } as CSSProperties}
         className={cn(
           'quickadd-pulse flex items-center gap-1 rounded-full pl-1.5 pr-2.5 py-1.5 text-[11px] font-bold text-black shrink-0 hover:scale-105 active:scale-95 transition-transform',
           accent
@@ -635,6 +636,7 @@ function AllocationTile({ label, amount, spent, pct, glowFrom, glowTo, ringColor
         <QuickAddButton
           onSubmit={(v) => { const warning = onQuickAdd(v); if (warning) setPending({ amount: v, message: warning }) }}
           accent={cn('bg-gradient-to-r', glowFrom, glowTo)}
+          glowColor={ringColors[0]}
         />
       </div>
       {pending && (
@@ -729,6 +731,7 @@ function PersonalAllocationTile({
         <QuickAddButton
           onSubmit={(v) => { const warning = onQuickAdd(v); if (warning) setPending({ amount: v, message: warning }) }}
           accent="bg-gradient-to-r from-purple-400 to-pink-500"
+          glowColor="#c084fc"
         />
       </div>
       {pending && (

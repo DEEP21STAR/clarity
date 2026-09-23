@@ -287,18 +287,29 @@ export function AppContent() {
                   show), but a global header toggle silently doing nothing on 8 of 9 tabs reads
                   as broken rather than intentional — this tooltip makes the real scope honest
                   instead of leaving it to look like a bug. */}
-              <span title="Filters which GEM VISA card(s) show on Upcoming Payments. Every other tab (including this Dashboard) always shows the full combined household total — income and bills aren't tracked per-person.">
-                <SegmentedControl
-                  size="sm"
-                  value={state.householdView}
-                  onChange={setHouseholdView}
-                  options={[
-                    { value: 'deep', label: 'Deep' },
-                    { value: 'mimi', label: 'Mimi' },
-                    { value: 'combined', label: 'Combined' },
-                  ]}
-                />
-              </span>
+              {/* 2026-09-23 round 6 — "it should just say the user who's logged in" (Deep). This
+                  toggle only ever made sense for a two-person household (it's a GEM VISA card
+                  filter, per-card ownership of two real cards) — for a single-person account
+                  (secondaryName === '', the real signal a solo onboarding leaves behind) there's
+                  nothing to filter between, so showing a 3-way Deep/Mimi/Combined toggle read as
+                  broken rather than just unnecessary. Labels are now the real onboarded names,
+                  not hardcoded "Deep"/"Mimi" literals, for the two-person case. */}
+              {state.secondaryName ? (
+                <span title="Filters which GEM VISA card(s) show on Upcoming Payments. Every other tab (including this Dashboard) always shows the full combined household total — income and bills aren't tracked per-person.">
+                  <SegmentedControl
+                    size="sm"
+                    value={state.householdView}
+                    onChange={setHouseholdView}
+                    options={[
+                      { value: 'deep', label: state.primaryName },
+                      { value: 'mimi', label: state.secondaryName },
+                      { value: 'combined', label: 'Combined' },
+                    ]}
+                  />
+                </span>
+              ) : (
+                <span className="text-xs font-medium text-white/50 px-1">{state.primaryName}</span>
+              )}
               <button
                 type="button"
                 onClick={() => window.dispatchEvent(new CustomEvent('clarity:open-command-palette'))}
@@ -378,7 +389,7 @@ export function AppContent() {
           {tab === 'shopping' && <ShoppingExpenses />}
           {tab === 'tools' && <Tools />}
         </main>
-        <WhetuFooter />
+        <WhetuFooter name={state.primaryName} />
       </div>
       {/* Coordinator follow-up fix, verified live — the ⌘K hover-preview mechanism itself
           worked, but only cached a thumbnail AFTER a real visit, so most tabs legitimately
