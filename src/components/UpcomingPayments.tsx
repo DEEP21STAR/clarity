@@ -3,7 +3,7 @@ import gsap from 'gsap'
 import { useStore } from '@/lib/store'
 import { StatCard } from './StatCard'
 import { CountUp } from './CountUp'
-import { addDaysIso, totalBillsInWindow, totalIncomeInWindow, totalPeriodicSmoothedInWindow, totalSinkingFundsSmoothedInWindow, windowLengthDays, isBillAmountChanged, nextMonthlyDueDate, resolvePaymentMethod, dueTodayBills, round2 } from '@/lib/logic'
+import { addDaysIso, totalBillsInWindow, totalIncomeInWindow, totalPeriodicSmoothedInWindow, totalSinkingFundsSmoothedInWindow, windowLengthDays, isBillAmountChanged, nextMonthlyDueDate, resolvePaymentMethod, dueTodayBills, round2, isPayday, incomeOnDate } from '@/lib/logic'
 import { cn, formatCurrency, todayIso, formatShortDate } from '@/lib/utils'
 import type { UpcomingWindow, RecurringBill, BillFrequency, PeriodicBill } from '@/lib/types'
 import { Plus, Trash2, Info, AlertTriangle, ChevronDown, Wallet, PiggyBank, RefreshCw, HandCoins, Check } from 'lucide-react'
@@ -19,6 +19,7 @@ import { HouseholdSplit } from './HouseholdSplit'
 import { BillIcon } from './BillIcons'
 import { SegmentedControl } from './SegmentedControl'
 import { TipScroller, buildTips } from './TipScroller'
+import { RadialGuideRing } from './RadialGuideRing'
 import { DueBadge } from './DueBadge'
 import { useToast } from './Toast'
 import { useUndoableDelete } from '@/lib/useUndoableDelete'
@@ -42,6 +43,7 @@ const DEFAULT_PERSONAL_SPLIT: PersonalSplit = { takeaways: 30, entertainment: 25
 
 export function UpcomingPayments() {
   const { state, updateBill, addBill, removeBill, addPeriodicBill, updatePeriodicBill, removePeriodicBill, addDeviceRepayment, updateDeviceRepayment, removeDeviceRepayment, updateSpendTracker } = useStore()
+  const { showToast } = useToast()
   const withUndo = useUndoableDelete()
   const [window_, setWindow] = useState<UpcomingWindow>('week')
   const [allocation, setAllocation] = useState<Allocation>(DEFAULT_ALLOCATION)
@@ -169,6 +171,37 @@ export function UpcomingPayments() {
     hasMounted.current = true
   }, [isOverspent])
 
+  // 2026-09-23 — "payday landing moment" (from the polish table). Distinct from the
+  // recovered-from-overspent confetti above — that fires on a DIFFERENT event (crossing back
+  // to positive, which could happen for any reason: less spend, a bill changing). This fires
+  // specifically when today is a real payday per the household's own incomeAnchor, once per
+  // real calendar day (localStorage-flagged, same spirit as the streak's own once-per-day
+  // guard) — not on every reload/re-render.
+  useEffect(() => {
+    if (!isPayday(today, state.incomeAnchor.anchorDate)) return
+    const amount = incomeOnDate(today, state.incomeAnchor)
+    if (amount <= 0) return
+    const flagKey = `clarity:payday-celebrated:${today}`
+    try {
+      if (localStorage.getItem(flagKey)) return
+      localStorage.setItem(flagKey, '1')
+    } catch {
+      // Private mode / storage blocked — still celebrate this once this session, just won't
+      // remember not to repeat it on a reload the same day.
+    }
+    fireConfetti()
+    chimePaydayLanding(state.soundEnabled)
+    showToast(`💰 Payday! ${formatCurrency(amount)} landed`, { tone: 'success' })
+    if (liveRef.current) {
+      gsap.fromTo(
+        liveRef.current,
+        { boxShadow: '0 0 0px 0px rgba(52,211,153,0)' },
+        { boxShadow: '0 0 60px 8px rgba(52,211,153,0.45)', duration: 0.7, yoyo: true, repeat: 1, ease: 'power2.out' }
+      )
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
   const priceChangedBills = state.bills.filter(isBillAmountChanged)
 
   // Real UX fix: the Upcoming Payments nav badge previously did nothing perceptible when
@@ -280,8 +313,8 @@ export function UpcomingPayments() {
 
           {/* Food / Fuel / Personal breakdown — the whole point of this feature */}
           <div className="mt-8 grid grid-cols-1 md:grid-cols-3 gap-4 text-left">
-            <AllocationTile label="Food Shopping" amount={foodAmount} spent={state.spendTracker.food} pct={allocation.food} glowFrom="from-emerald-400" glowTo="to-cyan-400" onChange={(v) => setAllocation((a) => ({ ...a, food: v }))} onQuickAdd={(v) => quickAdd('food', v)} onForceAdd={(v) => commitQuickAdd('food', v)} />
-            <AllocationTile label="Fuel" amount={fuelAmount} spent={state.spendTracker.fuel} pct={allocation.fuel} glowFrom="from-amber-400" glowTo="to-orange-500" onChange={(v) => setAllocation((a) => ({ ...a, fuel: v }))} onQuickAdd={(v) => quickAdd('fuel', v)} onForceAdd={(v) => commitQuickAdd('fuel', v)} />
+            <AllocationTile label="Food Shopping" amount={foodAmount} spent={state.spendTracker.food} pct={allocation.food} glowFrom="from-emerald-400" glowTo="to-cyan-400" ringColors={['#34d399', '#22d3ee']} ringId="ring-food" onChange={(v) => setAllocation((a) => ({ ...a, food: v }))} onQuickAdd={(v) => quickAdd('food', v)} onForceAdd={(v) => commitQuickAdd('food', v)} />
+            <AllocationTile label="Fuel" amount={fuelAmount} spent={state.spendTracker.fuel} pct={allocation.fuel} glowFrom="from-amber-400" glowTo="to-orange-500" ringColors={['#fbbf24', '#f97316']} ringId="ring-fuel" onChange={(v) => setAllocation((a) => ({ ...a, fuel: v }))} onQuickAdd={(v) => quickAdd('fuel', v)} onForceAdd={(v) => commitQuickAdd('fuel', v)} />
             <PersonalAllocationTile
               amount={personalAmount}
               spent={state.spendTracker.personal}
@@ -333,12 +366,15 @@ export function UpcomingPayments() {
                 : `Pay pattern: ${formatCurrency(state.incomeAnchor.weeklyAmount)} every payday.`}
           </p>
         </StatCard>
-        <StatCard label={`Bills & Funds due — this ${window_} (estimate)`} glow="amber">
+        {/* 2026-09-23 copy pass — "Bills & Funds due — this week (estimate)" read like a
+            spreadsheet header next to the hero's own "what's actually left" voice. Same real
+            number, same genuinely useful breakdown underneath — just matched the tone. */}
+        <StatCard label={`What's due — this ${window_}`} glow="amber">
           <div className="mt-4 text-3xl font-bold text-amber-300 tabular-nums">
             <CountUp value={billsInWindow} prefix="$" />
           </div>
           <p className="text-xs text-white/45 mt-2">
-            Flat bills (prorated) + Periodic Bills' smoothed set-asides + Sinking Funds' smoothed set-asides + Savings Goals funded this period.
+            A smoothed estimate — bills (prorated), plus set-asides for periodic bills, sinking funds, and savings goals funded this period.
           </p>
         </StatCard>
       </div>
@@ -545,9 +581,10 @@ function QuickAddButton({ onSubmit, accent }: { onSubmit: (amount: number) => vo
   )
 }
 
-function AllocationTile({ label, amount, spent, pct, glowFrom, glowTo, onChange, onQuickAdd, onForceAdd }: { label: string; amount: number; spent: number; pct: number; glowFrom: string; glowTo: string; onChange: (v: number) => void; onQuickAdd: (v: number) => string | null; onForceAdd: (v: number) => void }) {
+function AllocationTile({ label, amount, spent, pct, glowFrom, glowTo, ringColors, ringId, onChange, onQuickAdd, onForceAdd }: { label: string; amount: number; spent: number; pct: number; glowFrom: string; glowTo: string; ringColors: [string, string]; ringId: string; onChange: (v: number) => void; onQuickAdd: (v: number) => string | null; onForceAdd: (v: number) => void }) {
   const remaining = round2(amount - spent)
   const over = remaining < 0
+  const spentPct = amount > 0 ? (spent / amount) * 100 : 0
   const [pending, setPending] = useState<{ amount: number; message: string } | null>(null)
   return (
     <div className="rounded-xl border border-white/10 bg-black/30 p-4">
@@ -555,18 +592,21 @@ function AllocationTile({ label, amount, spent, pct, glowFrom, glowTo, onChange,
         <span className="text-xs font-semibold uppercase tracking-wide text-white/60">{label}</span>
         <span className="text-[10px] text-white/35">{pct}% guide</span>
       </div>
-      <div className="mt-2 flex items-center justify-between gap-2">
-        <div className={cn('text-2xl font-bold tabular-nums text-transparent bg-clip-text bg-gradient-to-r', over ? 'from-rose-400 to-rose-500' : glowFrom, over ? '' : glowTo)}>
-          {formatCurrency(remaining)}
+      <div className="mt-2 flex items-center gap-3">
+        <RadialGuideRing pct={spentPct} over={over} gradientId={ringId} colors={ringColors} />
+        <div className="flex-1 min-w-0">
+          <div className={cn('text-2xl font-bold tabular-nums text-transparent bg-clip-text bg-gradient-to-r', over ? 'from-rose-400 to-rose-500' : glowFrom, over ? '' : glowTo)}>
+            {formatCurrency(remaining)}
+          </div>
+          <p className={cn('text-[10px] mt-0.5', over ? 'text-rose-300' : 'text-white/35')}>
+            {over ? `${formatCurrency(-remaining)} over ` : ''}{formatCurrency(spent)} of {formatCurrency(amount)} spent
+          </p>
         </div>
         <QuickAddButton
           onSubmit={(v) => { const warning = onQuickAdd(v); if (warning) setPending({ amount: v, message: warning }) }}
           accent={cn('bg-gradient-to-r', glowFrom, glowTo)}
         />
       </div>
-      <p className={cn('text-[10px] mt-0.5', over ? 'text-rose-300' : 'text-white/35')}>
-        {over ? `${formatCurrency(-remaining)} over ` : ''}{formatCurrency(spent)} of {formatCurrency(amount)} guide spent
-      </p>
       {pending && (
         <div className="streak-badge-pop mt-2.5 rounded-lg border border-amber-400/30 bg-amber-500/10 p-2.5">
           <p className="text-[11px] text-amber-200 leading-relaxed">⚠ {pending.message}</p>
@@ -635,6 +675,7 @@ function PersonalAllocationTile({
 }) {
   const remaining = round2(amount - spent)
   const over = remaining < 0
+  const spentPct = amount > 0 ? (spent / amount) * 100 : 0
   const [pending, setPending] = useState<{ amount: number; message: string } | null>(null)
   return (
     <div className="rounded-xl border border-white/10 bg-black/30 p-4">
@@ -645,18 +686,21 @@ function PersonalAllocationTile({
         </span>
         <span className="text-[10px] text-white/35">{pct}% guide</span>
       </button>
-      <div className="mt-2 flex items-center justify-between gap-2">
-        <div className={cn('text-2xl font-bold tabular-nums text-transparent bg-clip-text bg-gradient-to-r', over ? 'from-rose-400 to-rose-500' : 'from-purple-400 to-pink-500')}>
-          {formatCurrency(remaining)}
+      <div className="mt-2 flex items-center gap-3">
+        <RadialGuideRing pct={spentPct} over={over} gradientId="ring-personal" colors={['#c084fc', '#ec4899']} />
+        <div className="flex-1 min-w-0">
+          <div className={cn('text-2xl font-bold tabular-nums text-transparent bg-clip-text bg-gradient-to-r', over ? 'from-rose-400 to-rose-500' : 'from-purple-400 to-pink-500')}>
+            {formatCurrency(remaining)}
+          </div>
+          <p className={cn('text-[10px] mt-0.5', over ? 'text-rose-300' : 'text-white/35')}>
+            {over ? `${formatCurrency(-remaining)} over ` : ''}{formatCurrency(spent)} of {formatCurrency(amount)} spent
+          </p>
         </div>
         <QuickAddButton
           onSubmit={(v) => { const warning = onQuickAdd(v); if (warning) setPending({ amount: v, message: warning }) }}
           accent="bg-gradient-to-r from-purple-400 to-pink-500"
         />
       </div>
-      <p className={cn('text-[10px] mt-0.5', over ? 'text-rose-300' : 'text-white/35')}>
-        {over ? `${formatCurrency(-remaining)} over ` : ''}{formatCurrency(spent)} of {formatCurrency(amount)} guide spent
-      </p>
       {pending && (
         <div className="streak-badge-pop mt-2.5 rounded-lg border border-amber-400/30 bg-amber-500/10 p-2.5">
           <p className="text-[11px] text-amber-200 leading-relaxed">⚠ {pending.message}</p>
@@ -725,6 +769,10 @@ function PaidToggle({ billId, billName, dueDateIso, amount }: { billId: string; 
       showToast(`${billName} marked unpaid`, { tone: 'info' })
     } else {
       const id = recordPayment({ targetType: 'recurringBill', targetId: billId, targetLabel: billName, amount, date: todayIso(), dueDateIso })
+      // 2026-09-23 self-review of the polish table: this only ever chimed, no confetti at all
+      // despite the earlier table note claiming it already had it — genuine gap, not
+      // redundant with anything.
+      fireConfetti()
       chimeBillPaid(state.soundEnabled)
       showToast(`${billName} marked paid — $${amount.toFixed(2)} recorded for ${formatShortDate(dueDateIso)}`, { tone: 'success', actionLabel: 'Undo', onAction: () => deletePaymentRecord(id) })
     }
@@ -735,7 +783,8 @@ function PaidToggle({ billId, billName, dueDateIso, amount }: { billId: string; 
       type="button"
       onClick={toggle}
       title={paid ? `Paid for ${dueDateIso} — click to undo` : `Mark paid for ${dueDateIso}`}
-      className={`w-6 h-6 rounded-full border flex items-center justify-center transition-colors ${paid ? 'bg-emerald-500/20 border-emerald-400/50' : 'border-white/15 hover:border-cyan-400/40'}`}
+      key={paid ? `paid-${dueDateIso}` : 'unpaid'}
+      className={`w-6 h-6 rounded-full border flex items-center justify-center transition-colors ${paid ? 'bg-emerald-500/20 border-emerald-400/50 streak-badge-pop' : 'border-white/15 hover:border-cyan-400/40'}`}
     >
       {paid && (
         <svg key={dueDateIso} className="checkmark-draw w-3.5 h-3.5 text-emerald-400" viewBox="0 0 24 24" fill="none">
