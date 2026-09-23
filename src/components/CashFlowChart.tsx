@@ -17,8 +17,10 @@ export function CashFlowChart() {
   )
 
   const series = useMemo(
-    () => projectBalanceSeries(startBalance, today, horizon, state.bills, state.periodicBills, state.oneOffEntries),
-    [startBalance, today, horizon, state.bills, state.periodicBills, state.oneOffEntries]
+    // Real bug fix (round 8) — this was silently using the hardcoded default income anchor
+    // instead of this account's own state.incomeAnchor. See projectBalanceSeries's doc comment.
+    () => projectBalanceSeries(startBalance, today, horizon, state.bills, state.periodicBills, state.oneOffEntries, state.incomeAnchor),
+    [startBalance, today, horizon, state.bills, state.periodicBills, state.oneOffEntries, state.incomeAnchor]
   )
 
   const chartData = series.map((p) => ({ date: p.date.slice(5), balance: p.balance }))

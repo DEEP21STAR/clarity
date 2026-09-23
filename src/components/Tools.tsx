@@ -5,9 +5,9 @@ import { CountUp } from './CountUp'
 import { DataExportPanel } from './DataExportPanel'
 import { PaymentHistoryPanel } from './PaymentHistoryPanel'
 import { SegmentedControl } from './SegmentedControl'
-import { calcWfhFixedRate, gstOnExclusive, gstFromInclusive, NZ_WFH_FIXED_RATE_PER_HOUR, AU_WFH_FIXED_RATE_PER_HOUR, calcRoundUpSavings, runDataHealthCheck } from '@/lib/logic'
+import { calcWfhFixedRate, gstOnExclusive, gstFromInclusive, NZ_WFH_FIXED_RATE_PER_HOUR, AU_WFH_FIXED_RATE_PER_HOUR, calcRoundUpSavings, runDataHealthCheck, projectBalanceSeries } from '@/lib/logic'
 import { formatCurrency, formatShortDate, todayIso } from '@/lib/utils'
-import { Plus, Trash2, Volume2, VolumeX, AlertTriangle, Info, ShieldCheck, Coffee } from 'lucide-react'
+import { Plus, Trash2, Volume2, VolumeX, AlertTriangle, Info, ShieldCheck, Coffee, TrendingUp } from 'lucide-react'
 import { useUndoableDelete } from '@/lib/useUndoableDelete'
 import { DateField } from './DateField'
 import { Help } from './Help'
@@ -26,6 +26,7 @@ export function Tools() {
   const [extraUsageDesc, setExtraUsageDesc] = useState('')
   const [extraUsageAmount, setExtraUsageAmount] = useState(0)
   const [extraUsageDate, setExtraUsageDate] = useState(todayIso())
+  const [whatIfExtraPerWeek, setWhatIfExtraPerWeek] = useState(0)
 
   const roundUpSavings = useMemo(() => calcRoundUpSavings(state.transactions, roundTo), [state.transactions, roundTo])
 
@@ -45,6 +46,24 @@ export function Tools() {
     () => runDataHealthCheck({ bills: state.bills, creditCards: state.creditCards, accounts: state.accounts }),
     [state.bills, state.creditCards, state.accounts]
   )
+
+  // 2026-09-23 round 8 — "what-if income simulator" (Deep, via the ideation table). Reuses the
+  // exact same projectBalanceSeries the real Cash-Flow Forecast chart uses, just run twice: once
+  // with the real incomeAnchor, once with a hypothetical raise added to weeklyAmount (adding to
+  // weeklyAmount — not fortnightlyBonusAmount — is correct regardless of the account's own
+  // pattern, since incomeOnDate always pays weeklyAmount every payday and only ADDS the
+  // fortnightly bonus on top on combined weeks; see incomeOnDate's own doc comment).
+  const whatIfStartBalance = useMemo(
+    () => state.accounts.filter((a) => a.countsTowardLiveFunds).reduce((s, a) => s + a.value, 0),
+    [state.accounts]
+  )
+  const whatIfComparison = useMemo(() => {
+    const today = todayIso()
+    const real = projectBalanceSeries(whatIfStartBalance, today, 30, state.bills, state.periodicBills, state.oneOffEntries, state.incomeAnchor)
+    const hypotheticalAnchor = { ...state.incomeAnchor, weeklyAmount: state.incomeAnchor.weeklyAmount + whatIfExtraPerWeek }
+    const hypothetical = projectBalanceSeries(whatIfStartBalance, today, 30, state.bills, state.periodicBills, state.oneOffEntries, hypotheticalAnchor)
+    return { realEnd: real[real.length - 1].balance, hypotheticalEnd: hypothetical[hypothetical.length - 1].balance }
+  }, [whatIfStartBalance, state.bills, state.periodicBills, state.oneOffEntries, state.incomeAnchor, whatIfExtraPerWeek])
 
   return (
     <div className="space-y-6">
@@ -125,6 +144,41 @@ export function Tools() {
           <Metric label="Inc-GST" value={gstResult.amountIncGst} />
         </div>
         <p className="text-xs text-white/40 mt-3">{state.country} GST rate: {state.country === 'NZ' ? '15%' : '10%'}.</p>
+      </StatCard>
+
+      <StatCard label="What-If Income Simulator" glow="success" tooltip="Reuses the same 30-day projection as the Cash-Flow Forecast on Upcoming Payments — just run twice, with and without the hypothetical amount.">
+        <div className="mt-4 flex flex-col md:flex-row items-start md:items-end gap-4">
+          <div>
+            <label className="text-xs text-white/50">Extra income, per week</label>
+            <div className="mt-1 flex items-center gap-2 bg-black/30 border border-white/10 rounded-lg px-3 py-2">
+              <span className="text-white/40">$</span>
+              <input
+                type="number"
+                step="1"
+                value={whatIfExtraPerWeek || ''}
+                onChange={(e) => setWhatIfExtraPerWeek(parseFloat(e.target.value) || 0)}
+                placeholder="e.g. a $50/week raise"
+                className="w-40 bg-transparent outline-none tabular-nums text-sm"
+              />
+            </div>
+          </div>
+          <div className="flex items-center gap-4">
+            <div>
+              <p className="text-[10px] text-white/40 uppercase tracking-wide">Balance in 30 days — now</p>
+              <p className="text-lg font-bold tabular-nums text-white/70">{formatCurrency(whatIfComparison.realEnd)}</p>
+            </div>
+            <TrendingUp className="w-4 h-4 text-emerald-400 mt-3" />
+            <div>
+              <p className="text-[10px] text-emerald-300/70 uppercase tracking-wide">With this change</p>
+              <p className="text-lg font-bold tabular-nums text-emerald-300">{formatCurrency(whatIfComparison.hypotheticalEnd)}</p>
+            </div>
+          </div>
+        </div>
+        {whatIfExtraPerWeek > 0 && (
+          <p className="mt-3 text-xs text-white/40">
+            An extra {formatCurrency(whatIfExtraPerWeek)}/week would leave you {formatCurrency(whatIfComparison.hypotheticalEnd - whatIfComparison.realEnd)} better off after 30 days.
+          </p>
+        )}
       </StatCard>
 
       <StatCard label="Round-Up Savings Simulator" glow="amber">

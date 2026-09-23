@@ -616,11 +616,19 @@ function AllocationTile({ label, amount, spent, pct, glowFrom, glowTo, ringColor
   const remaining = round2(amount - spent)
   const over = remaining < 0
   const spentPct = amount > 0 ? (spent / amount) * 100 : 0
+  // 2026-09-23 round 8 — "category mood icons" (Deep, via the ideation table). Over-budget
+  // reuses the existing overspend-alert pulse (already proven on the hero card, just applied
+  // to a smaller tile here); "close" is a calmer, non-urgent amber cue — never both at once.
+  const close = !over && spentPct >= 85
   const [pending, setPending] = useState<{ amount: number; message: string } | null>(null)
   return (
-    <div className="rounded-xl border border-white/10 bg-black/30 p-4">
+    <div className={cn('rounded-xl border bg-black/30 p-4', over ? 'overspend-alert border-rose-500/40' : 'border-white/10')}>
       <div className="flex items-center justify-between">
-        <span className="text-xs font-semibold uppercase tracking-wide text-white/60">{label}</span>
+        <span className="text-xs font-semibold uppercase tracking-wide text-white/60 flex items-center gap-1.5">
+          {label}
+          {over && <AlertTriangle className="w-3 h-3 text-rose-400 animate-pulse" />}
+          {close && <AlertTriangle className="w-3 h-3 text-amber-300/80" />}
+        </span>
         <span className="text-[10px] text-white/35">{pct}% guide</span>
       </div>
       <div className="mt-2 flex items-center gap-3">
@@ -708,13 +716,16 @@ function PersonalAllocationTile({
   const remaining = round2(amount - spent)
   const over = remaining < 0
   const spentPct = amount > 0 ? (spent / amount) * 100 : 0
+  const close = !over && spentPct >= 85
   const [pending, setPending] = useState<{ amount: number; message: string } | null>(null)
   return (
-    <div className="rounded-xl border border-white/10 bg-black/30 p-4">
+    <div className={cn('rounded-xl border bg-black/30 p-4', over ? 'overspend-alert border-rose-500/40' : 'border-white/10')}>
       <button type="button" onClick={onToggleOpen} className="w-full flex items-center justify-between text-left" aria-expanded={open}>
         <span className="text-xs font-semibold uppercase tracking-wide text-white/60 flex items-center gap-1.5">
           Personal
           <ChevronDown className={cn('w-3 h-3 transition-transform text-white/35', open && 'rotate-180')} />
+          {over && <AlertTriangle className="w-3 h-3 text-rose-400 animate-pulse" />}
+          {close && <AlertTriangle className="w-3 h-3 text-amber-300/80" />}
         </span>
         <span className="text-[10px] text-white/35">{pct}% guide</span>
       </button>

@@ -37,6 +37,22 @@ export default defineConfig({
           { src: 'pwa-512x512.png', sizes: '512x512', type: 'image/png' },
           { src: 'pwa-512x512-maskable.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
         ],
+        // 2026-09-23 round 8 — "PWA home-screen shortcuts" (Deep). Long-pressing the installed
+        // app icon offers these; App.tsx reads the ?tab= param on load to land there directly.
+        shortcuts: [
+          {
+            name: 'Upcoming Payments',
+            short_name: 'Upcoming',
+            url: '/clarity/?tab=upcoming',
+            icons: [{ src: 'pwa-192x192.png', sizes: '192x192', type: 'image/png' }],
+          },
+          {
+            name: 'Log a One-Off Entry',
+            short_name: 'Log Entry',
+            url: '/clarity/?tab=tools',
+            icons: [{ src: 'pwa-192x192.png', sizes: '192x192', type: 'image/png' }],
+          },
+        ],
       },
       workbox: {
         globPatterns: ['**/*.{js,css,html,svg}'],

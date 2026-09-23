@@ -75,7 +75,17 @@ function useTimeOfDayTint(): string {
 export function AppContent() {
   const { state, setHouseholdView } = useStore()
   const { showToast } = useToast()
-  const [tab, setTab] = useState<TabId>('upcoming')
+  // 2026-09-23 round 8 — "PWA home-screen shortcuts" (Deep, via the ideation table). Long-
+  // pressing the installed app icon now offers real deep links (see vite.config.ts's manifest
+  // shortcuts) straight to a tab, e.g. Tools for one-off entries. Falls back to the existing
+  // default ('upcoming') for a plain launch or an unrecognized/missing tab id.
+  const initialTab = (): TabId => {
+    if (typeof window === 'undefined') return 'upcoming'
+    const requested = new URLSearchParams(window.location.search).get('tab')
+    const valid = TABS.some((t) => t.id === requested)
+    return valid ? (requested as TabId) : 'upcoming'
+  }
+  const [tab, setTab] = useState<TabId>(initialTab)
   const mainRef = useRef<HTMLDivElement>(null)
   const tint = useTimeOfDayTint()
   const [isOnline, setIsOnline] = useState(() => (typeof navigator === 'undefined' ? true : navigator.onLine))

@@ -1088,19 +1088,26 @@ export interface ProjectedBalancePoint {
  * one-off entries. This is the same engines already built (payday, bills,
  * periodic smoothing) — just walked day-by-day instead of summed over a window.
  */
+// 2026-09-23 round 8 — real bug found while building the what-if simulator: this never took
+// an income anchor parameter at all, so it always used the module-level default INCOME_ANCHOR
+// (Deep's own real weekly/fortnightly-bonus pattern) regardless of what a wizard-onboarded
+// account's OWN incomeAnchor actually is. Any account set up through the real onboarding flow
+// (round 5) has been getting a Cash-Flow Forecast computed against the wrong income pattern
+// since that flow shipped. Default preserves every existing call site's exact prior behavior.
 export function projectBalanceSeries(
   startBalance: number,
   startDateIso: string,
   days: number,
   bills: RecurringBill[],
   periodicBills: PeriodicBill[],
-  oneOffEntries: OneOffEntry[]
+  oneOffEntries: OneOffEntry[],
+  anchor: IncomeAnchor = INCOME_ANCHOR
 ): ProjectedBalancePoint[] {
   const points: ProjectedBalancePoint[] = []
   let balance = startBalance
   for (let i = 0; i < days; i++) {
     const dateIso = addDaysIso(startDateIso, i)
-    const income = incomeOnDate(dateIso)
+    const income = incomeOnDate(dateIso, anchor)
     const billCharge = dailyRecurringBillCharge(bills, dateIso)
     const periodicCharge = dailyPeriodicSmoothedCharge(periodicBills, dateIso)
     const oneOff = dailyOneOffCharge(oneOffEntries, dateIso)

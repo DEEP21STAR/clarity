@@ -39,7 +39,25 @@ export function SavingsGoalsSection() {
 
       {state.savingsGoals.length === 0 && !showAdd && (
         <StatCard label="No Goals Yet" glow="purple">
-          <p className="mt-4 text-sm text-white/40">Add a savings goal to start tracking progress toward something specific.</p>
+          {/* 2026-09-23 round 8 — "illustrated empty states" (Deep, via the ideation table). Was
+              plain hint text with no visual anchor — a real gap since this is the very first
+              thing a new user (or one who's cleared their goals) sees on this section. */}
+          <div className="mt-4 flex flex-col items-center text-center py-4">
+            <div className="relative">
+              <div className="absolute inset-0 rounded-full bg-purple-400/20 blur-xl animate-pulse" />
+              <PiggyBank className="relative w-12 h-12 text-purple-300" strokeWidth={1.5} />
+            </div>
+            <p className="mt-4 text-sm text-white/60 max-w-xs">
+              Nothing saved yet — a house deposit, a holiday, an emergency fund. Give it a name and a target.
+            </p>
+            <button
+              type="button"
+              onClick={() => setShowAdd(true)}
+              className="mt-4 flex items-center gap-1.5 text-sm font-semibold rounded-lg px-4 py-2 bg-gradient-to-r from-purple-400 to-pink-500 text-black hover:opacity-90 transition-opacity"
+            >
+              <Plus className="w-4 h-4" /> Add your first goal
+            </button>
+          </div>
         </StatCard>
       )}
 
