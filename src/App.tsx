@@ -326,7 +326,22 @@ export function AppContent() {
                   />
                 </span>
               ) : (
-                <span className="text-xs font-medium text-white/50 px-1">{state.primaryName}</span>
+                // 2026-09-23 round 10 — "the font colour and style needs a huge uplift... it
+                // looks very dull and boring" (Deep). Real per-identity shimmering gradient
+                // pill instead of plain grey text — see .header-name-pill/.header-name-text in
+                // index.css. Border/glow color keyed off the same primaryColor the wizard's
+                // Identity step collects (light blue neon / pink neon / neutral cyan-purple).
+                <span
+                  className="header-name-pill"
+                  style={{
+                    '--name-border': state.primaryColor === 'blue' ? 'rgba(56,189,248,0.4)' : state.primaryColor === 'pink' ? 'rgba(244,114,182,0.4)' : 'rgba(168,85,247,0.35)',
+                    '--name-glow': state.primaryColor === 'blue' ? 'rgba(56,189,248,0.55)' : state.primaryColor === 'pink' ? 'rgba(244,114,182,0.55)' : 'rgba(168,85,247,0.5)',
+                  } as CSSProperties}
+                >
+                  <span className={cn('header-name-text', state.primaryColor === 'blue' ? 'header-name-blue' : state.primaryColor === 'pink' ? 'header-name-pink' : 'header-name-neutral')}>
+                    {state.primaryName}
+                  </span>
+                </span>
               )}
               <button
                 type="button"

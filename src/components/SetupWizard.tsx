@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { SegmentedControl } from './SegmentedControl'
 import { DateField } from './DateField'
-import { StoreProvider, DEFAULT_STATE, STORAGE_KEY, type AppState } from '@/lib/store'
+import { StoreProvider, DEFAULT_STATE, STORAGE_KEY, type AppState, type NameColor } from '@/lib/store'
 import { ToastProvider } from './Toast'
 import { AppContent } from '../App'
 import { BootSequence } from './BootSequence'
@@ -102,8 +102,6 @@ function parseCsvPreview(text: string, maxRows = 5): string[][] {
     .slice(0, maxRows)
     .map((line) => line.split(',').map((cell) => cell.trim()))
 }
-
-type NameColor = 'blue' | 'pink' | 'neutral'
 
 const NAME_COLOR_STYLE: Record<NameColor, { text: string; glow: string; swatch: string }> = {
   blue: { text: 'text-sky-300', glow: 'drop-shadow-[0_0_10px_rgba(56,189,248,0.75)]', swatch: 'bg-sky-400' },
@@ -295,6 +293,12 @@ export function SetupWizard({ mode = 'demo' }: { mode?: 'demo' | 'onboarding' } 
       // lets the header correctly detect a single-person household and skip the 3-way toggle.
       primaryName: primaryName.trim() || 'You',
       secondaryName: secondaryName.trim(),
+      // 2026-09-23 round 10 — "font colour and style needs a huge uplift" (Deep). The Identity
+      // step's Male/Female/Prefer-not-to-say choice was collected but only ever reached the
+      // wizard's OWN completion screen, never the real seed — the real dashboard header had no
+      // color identity to work with at all. Flows through for real now.
+      primaryColor,
+      secondaryColor,
     }
   }
 

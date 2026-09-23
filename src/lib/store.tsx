@@ -24,6 +24,13 @@ export const STORAGE_KEY = 'clarity-dashboard-state-v5'
 
 export type TextScale = 'small' | 'medium' | 'large'
 
+/** 2026-09-23 round 10 — the wizard's own Identity step already collects this (Male -> light
+ * blue neon, Female -> pink neon, Prefer not to say -> neutral cyan/purple), but it was only
+ * ever used on the wizard's OWN completion screen, never persisted into the real seed state —
+ * so the real dashboard header had no way to give a name its own color identity. Wiring it
+ * through properly now (see App.tsx's header). */
+export type NameColor = 'blue' | 'pink' | 'neutral'
+
 export interface AppState {
   mode: Mode
   country: Country
@@ -66,6 +73,10 @@ export interface AppState {
    * header's Deep/Mimi/Combined view toggle only makes sense once a second person exists. */
   primaryName: string
   secondaryName: string
+  /** 2026-09-23 round 10 — real per-instance name color, set once during onboarding. Default
+   * 'neutral' matches the wizard's own default and every existing account's current display. */
+  primaryColor: NameColor
+  secondaryColor: NameColor
   /** 2026-09-23 round 7 — real app-wide text-size preference, default 'small' preserves every
    * existing account's exact current appearance. */
   textScale: TextScale
@@ -98,6 +109,8 @@ export const DEFAULT_STATE: AppState = {
   soundEnabled: false,
   primaryName: 'Deep',
   secondaryName: 'Mimi',
+  primaryColor: 'neutral',
+  secondaryColor: 'neutral',
   textScale: 'small',
 }
 
