@@ -6,7 +6,7 @@ import { CountUp } from './CountUp'
 import { addDaysIso, totalBillsInWindow, totalIncomeInWindow, totalPeriodicSmoothedInWindow, totalSinkingFundsSmoothedInWindow, windowLengthDays, isBillAmountChanged, nextMonthlyDueDate, resolvePaymentMethod, dueTodayBills, round2, isPayday, incomeOnDate } from '@/lib/logic'
 import { cn, formatCurrency, todayIso, formatShortDate } from '@/lib/utils'
 import type { UpcomingWindow, RecurringBill, BillFrequency, PeriodicBill } from '@/lib/types'
-import { Plus, Trash2, Info, AlertTriangle, ChevronDown, Wallet, PiggyBank, RefreshCw, HandCoins, Check } from 'lucide-react'
+import { Plus, Trash2, Info, AlertTriangle, ChevronDown, Wallet, PiggyBank, RefreshCw, HandCoins, Check, Pencil } from 'lucide-react'
 import { CreditCardAccountPanel, DeviceRepaymentCard } from './InstallmentPlanTracker'
 import { PeriodicBillGauge } from './PeriodicBillGauge'
 import { PeriodicBillForm, type PeriodicBillFormValues } from './PeriodicBillForm'
@@ -55,6 +55,12 @@ export function UpcomingPayments() {
   const highlightTimerRef = useRef<number | null>(null)
   const [periodicFormMode, setPeriodicFormMode] = useState<'none' | 'add' | string>('none') // 'string' = editing that bill's id
   const [milestoneToast, setMilestoneToast] = useState<number | null>(null)
+  // 2026-09-23 round 4 — "want the life funds to be editable as well manually" (Deep). The
+  // underlying HSBC/Overdraft balances that make up this figure were already editable via
+  // AccountsPanel (compact prop existed but was unused) — it just lived down the page,
+  // disconnected from the headline number that displays their sum. This surfaces that same
+  // editor directly on the hero card instead of building a second, competing edit path.
+  const [showBalanceEdit, setShowBalanceEdit] = useState(false)
 
   const today = todayIso()
   const windowEnd = useMemo(() => addDaysIso(today, windowLengthDays(window_) - 1), [today, window_])
@@ -307,6 +313,18 @@ export function UpcomingPayments() {
               HSBC + Overdraft + income landing this {window_}, minus bills/funds due — what's actually free to spend.
             </p>
           )}
+          <button
+            type="button"
+            onClick={() => setShowBalanceEdit((v) => !v)}
+            className="mt-3 inline-flex items-center gap-1.5 text-[11px] font-semibold text-cyan-300/70 hover:text-cyan-200 transition-colors"
+          >
+            <Pencil className="w-3 h-3" /> {showBalanceEdit ? 'Hide balances' : 'Edit balances'}
+          </button>
+          {showBalanceEdit && (
+            <div className="mt-4 text-left">
+              <AccountsPanel compact />
+            </div>
+          )}
           {view === 'mimi' && (
             <p className="mt-1 text-[11px] text-white/35">No income data is tracked for Mimi — this view shows $0 income honestly rather than guessing.</p>
           )}
@@ -556,7 +574,7 @@ function QuickAddButton({ onSubmit, accent }: { onSubmit: (amount: number) => vo
         onClick={() => setOpen(true)}
         aria-label="Add a manual spend"
         className={cn(
-          'flex items-center gap-1 rounded-full pl-1.5 pr-2.5 py-1.5 text-[11px] font-bold text-black shrink-0 shadow-[0_0_14px_rgba(255,255,255,0.22)] hover:scale-105 hover:shadow-[0_0_18px_rgba(255,255,255,0.35)] active:scale-95 transition-all',
+          'quickadd-pulse flex items-center gap-1 rounded-full pl-1.5 pr-2.5 py-1.5 text-[11px] font-bold text-black shrink-0 hover:scale-105 active:scale-95 transition-transform',
           accent
         )}
       >

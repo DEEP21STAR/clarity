@@ -20,6 +20,7 @@ import { NotificationBell } from './components/NotificationBell'
 import { CursorGlow } from './components/CursorGlow'
 import { MobileNavDrawer } from './components/MobileNavDrawer'
 import { SetupWizard } from './components/SetupWizard'
+import { WhetuFooter } from './components/WhetuFooter'
 import { computeCurrentHealthScore, calcNetWorth, dueTodayBills } from '@/lib/logic'
 import { cn, formatCurrency, todayIso } from '@/lib/utils'
 import { captureThumbnail } from '@/lib/thumbnailCache'
@@ -376,6 +377,7 @@ export function AppContent() {
           {tab === 'shopping' && <ShoppingExpenses />}
           {tab === 'tools' && <Tools />}
         </main>
+        <WhetuFooter />
       </div>
       {/* Coordinator follow-up fix, verified live — the ⌘K hover-preview mechanism itself
           worked, but only cached a thumbnail AFTER a real visit, so most tabs legitimately
