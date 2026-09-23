@@ -48,7 +48,7 @@ export interface AppState {
   soundEnabled: boolean
 }
 
-const DEFAULT_STATE: AppState = {
+export const DEFAULT_STATE: AppState = {
   mode: 'personal',
   country: 'NZ',
   bills: SEED_BILLS,
@@ -93,16 +93,16 @@ function backfillPaymentMethod(bills: RecurringBill[]): RecurringBill[] {
   })
 }
 
-function loadState(): AppState {
+function loadState(key: string, fallback: AppState): AppState {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY)
-    if (!raw) return DEFAULT_STATE
+    const raw = localStorage.getItem(key)
+    if (!raw) return fallback
     const parsed = JSON.parse(raw)
     // Merge with defaults so new fields introduced later don't crash old saved state.
-    const merged: AppState = { ...DEFAULT_STATE, ...parsed }
+    const merged: AppState = { ...fallback, ...parsed }
     return { ...merged, bills: backfillPaymentMethod(merged.bills) }
   } catch {
-    return DEFAULT_STATE
+    return fallback
   }
 }
 
@@ -160,17 +160,27 @@ interface StoreContextValue {
 
 const StoreContext = createContext<StoreContextValue | null>(null)
 
-export function StoreProvider({ children }: { children: ReactNode }) {
-  const [state, setState] = useState<AppState>(loadState)
+/**
+ * 2026-09-23 — `storageKey`/`seedState` let a second, fully isolated instance of the real app
+ * mount (the wizard preview's "launch a live dashboard from what you just entered") without
+ * ever touching Deep's own real 'clarity-dashboard-state-v5' data. Both are optional and
+ * default to the original single-instance behavior, so every existing call site
+ * (<StoreProvider><AppContent/></StoreProvider> in App()) is completely unaffected — this is
+ * additive, not a behavior change to the real app. `seedState`, when given, is ONLY the
+ * first-load fallback (a fresh key with nothing saved yet) — once something's actually
+ * persisted under that key, the saved state wins on every subsequent load, same as normal.
+ */
+export function StoreProvider({ children, storageKey = STORAGE_KEY, seedState = DEFAULT_STATE }: { children: ReactNode; storageKey?: string; seedState?: AppState }) {
+  const [state, setState] = useState<AppState>(() => loadState(storageKey, seedState))
   const lastNetWorthInputs = useRef<string>('')
 
   useEffect(() => {
     try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(state))
+      localStorage.setItem(storageKey, JSON.stringify(state))
     } catch {
       // Storage unavailable (private mode etc) — fail silently, app still works in-memory.
     }
-  }, [state])
+  }, [state, storageKey])
 
   // Net worth snapshot — at most one entry per calendar day, recomputed whenever
   // the underlying accounts/cards/debts actually change (not on every render).

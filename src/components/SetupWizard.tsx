@@ -1,9 +1,14 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { SegmentedControl } from './SegmentedControl'
 import { DateField } from './DateField'
+import { StoreProvider, DEFAULT_STATE, type AppState } from '@/lib/store'
+import { ToastProvider } from './Toast'
+import { AppContent } from '../App'
 import { cn, formatCurrency, todayIso } from '@/lib/utils'
-import type { Country } from '@/lib/types'
-import { Check, ChevronRight, ChevronLeft, Building2, Wallet, Sparkles, Plus, Trash2, Upload, FileText, Info } from 'lucide-react'
+import type { Country, RecurringBill } from '@/lib/types'
+import { Check, ChevronRight, ChevronLeft, Building2, Wallet, Sparkles, Plus, Trash2, Upload, FileText, Info, LayoutDashboard } from 'lucide-react'
+
+const DEMO_DASHBOARD_KEY = 'clarity-wizard-live-demo-v1'
 
 /**
  * Standalone onboarding wizard demo — reachable via ?wizard=demo, entirely bypasses PinGate
@@ -33,11 +38,16 @@ interface WizardBill {
   amount: number
   frequency: Frequency
   nextDue: string
+  /** "or put a skip as well" (Deep) — the date-picker isn't the only way in; you can also say
+   * you don't know it yet instead of being forced to pick some date. */
+  dueUnknown: boolean
 }
 
 interface WizardConfig {
   primaryName: string
   secondaryName: string
+  primaryColor: NameColor
+  secondaryColor: NameColor
   country: Country
   bank: string
   payFrequency: Frequency
@@ -90,10 +100,42 @@ function parseCsvPreview(text: string, maxRows = 5): string[][] {
     .map((line) => line.split(',').map((cell) => cell.trim()))
 }
 
+type NameColor = 'blue' | 'pink' | 'neutral'
+
+const NAME_COLOR_STYLE: Record<NameColor, { text: string; glow: string; swatch: string }> = {
+  blue: { text: 'text-sky-300', glow: 'drop-shadow-[0_0_10px_rgba(56,189,248,0.75)]', swatch: 'bg-sky-400' },
+  pink: { text: 'text-pink-300', glow: 'drop-shadow-[0_0_10px_rgba(244,114,182,0.75)]', swatch: 'bg-pink-400' },
+  neutral: { text: 'text-transparent bg-clip-text bg-gradient-to-r from-cyan-300 to-purple-300', glow: '', swatch: 'bg-gradient-to-br from-cyan-400 to-purple-400' },
+}
+
+/** Small swatch picker, not a gendered dropdown — three equal, explicit choices (including
+ * neutral) rather than defaulting anyone into blue or pink. */
+function ColorSwatchPicker({ value, onChange }: { value: NameColor; onChange: (c: NameColor) => void }) {
+  const options: NameColor[] = ['neutral', 'blue', 'pink']
+  return (
+    <div className="flex items-center gap-1 shrink-0">
+      {options.map((c) => (
+        <button
+          key={c}
+          type="button"
+          onClick={() => onChange(c)}
+          aria-label={`${c} name colour`}
+          className={cn('w-6 h-6 rounded-full border-2 transition-transform', NAME_COLOR_STYLE[c].swatch, value === c ? 'border-white scale-110' : 'border-white/20')}
+        />
+      ))}
+    </div>
+  )
+}
+
 export function SetupWizard() {
   const [step, setStep] = useState(0)
   const [primaryName, setPrimaryName] = useState('')
   const [secondaryName, setSecondaryName] = useState('')
+  // "neon lights whether it's pink or blue" (Deep) — an explicit per-person choice, never
+  // inferred from the name itself. 'neutral' (cyan/purple, matching the app's own brand
+  // gradient) is the default so nobody's forced to pick blue or pink if neither fits.
+  const [primaryColor, setPrimaryColor] = useState<'blue' | 'pink' | 'neutral'>('neutral')
+  const [secondaryColor, setSecondaryColor] = useState<'blue' | 'pink' | 'neutral'>('neutral')
   const [country, setCountry] = useState<Country>('NZ')
   const [bank, setBank] = useState('')
   const [payFrequency, setPayFrequency] = useState<Frequency>('weekly')
@@ -103,6 +145,7 @@ export function SetupWizard() {
   const [billAmount, setBillAmount] = useState(0)
   const [billFreq, setBillFreq] = useState<Frequency>('monthly')
   const [billDue, setBillDue] = useState(todayIso())
+  const [billDueUnknown, setBillDueUnknown] = useState(false)
   const [csvFileName, setCsvFileName] = useState<string | null>(null)
   const [csvPreview, setCsvPreview] = useState<string[][] | null>(null)
   const [csvError, setCsvError] = useState<string | null>(null)
@@ -125,9 +168,10 @@ export function SetupWizard() {
 
   const addBill = () => {
     if (!billName.trim() || billAmount <= 0) return
-    setBills((b) => [...b, { id: `bill-${Date.now()}`, name: billName.trim(), amount: billAmount, frequency: billFreq, nextDue: billDue }])
+    setBills((b) => [...b, { id: `bill-${Date.now()}`, name: billName.trim(), amount: billAmount, frequency: billFreq, nextDue: billDue, dueUnknown: billDueUnknown }])
     setBillName('')
     setBillAmount(0)
+    setBillDueUnknown(false)
   }
   const removeBill = (id: string) => setBills((b) => b.filter((x) => x.id !== id))
 
@@ -153,10 +197,60 @@ export function SetupWizard() {
     reader.readAsText(file)
   }
 
+  // 2026-09-23 — "why isn't the dashboard loading" (Deep, after finishing the wizard). The
+  // completion card was a static summary; he reasonably expected Finish to land him in the
+  // real Dashboard/Upcoming Payments/hamburger-nav experience, populated with what he'd just
+  // entered. Builds a real AppState seed from the wizard's own collected bills, written to a
+  // storage key (DEMO_DASHBOARD_KEY) that is NOT 'clarity-dashboard-state-v5' — his real data
+  // is a completely separate localStorage key and this code path never reads or writes it.
+  // Deliberately starts from an EMPTY base, not DEFAULT_STATE's own SEED_BILLS/SEED_CREDIT_CARDS
+  // — those are Deep's own real placeholder data (a real $9,900.25 "GEM VISA Deep" balance
+  // among them) and must never leak into a fresh client's first look at their own dashboard.
+  //
+  // Honest limitation, not silently shipped as if correct: the real app's income figure
+  // (Dashboard headline, Live Funds Available) is computed from a single hardcoded pay pattern
+  // (INCOME_ANCHOR in constants.ts — Deep's own real "$600 every Friday" schedule), not from
+  // AppState at all yet. The bills you add here ARE real and DO show correctly; the income
+  // number will show that hardcoded pattern regardless of what pay cycle/income you entered,
+  // until pay pattern becomes a real per-instance AppState field — a separate, bigger piece of
+  // work flagged in chat, not silently faked here.
+  const buildDemoSeed = (): AppState => {
+    const mappedBills: RecurringBill[] = bills.map((b) => ({
+      id: b.id,
+      name: b.name,
+      amount: b.amount,
+      frequency: b.frequency,
+      dueDay: b.dueUnknown ? 1 : Number(b.nextDue.slice(8, 10)) || 1,
+      dueDayIsEstimate: b.dueUnknown ? true : false,
+      category: 'other',
+      active: true,
+      owner: 'shared',
+    }))
+    return {
+      ...DEFAULT_STATE,
+      country,
+      bills: mappedBills,
+      accounts: DEFAULT_STATE.accounts.map((a) => ({ ...a, value: 0 })),
+      creditCards: [],
+      deviceRepayments: [],
+      periodicBills: [],
+      savingsGoals: [],
+      oneOffEntries: [],
+      netWorthHistory: [],
+      healthScoreHistory: [],
+      spendTracker: { food: 0, fuel: 0, personal: 0, periodStart: todayIso() },
+      streak: { current: 0, best: 0, lastCheckedDate: '', milestonesHit: [] },
+      grossAnnualIncome: monthlyIncome * 12,
+      dashboardCardOrder: DEFAULT_STATE.dashboardCardOrder,
+    }
+  }
+
   const finish = () => {
     const cfg: WizardConfig = {
       primaryName: primaryName.trim(),
       secondaryName: secondaryName.trim(),
+      primaryColor,
+      secondaryColor,
       country,
       bank,
       payFrequency,
@@ -170,20 +264,34 @@ export function SetupWizard() {
     setCompleted(cfg)
   }
 
+  const [launchedDashboard, setLaunchedDashboard] = useState(false)
+  const [demoSeed, setDemoSeed] = useState<AppState | null>(null)
+  const launchDashboard = () => {
+    // First-load fallback only — if this key already has something saved (a returning visit
+    // to the demo dashboard), the real saved state wins, same as the app's normal load rules.
+    setDemoSeed(buildDemoSeed())
+    setLaunchedDashboard(true)
+  }
+
   const restart = () => {
     clearDemoConfig()
     setCompleted(null)
     setStep(0)
     setPrimaryName('')
     setSecondaryName('')
+    setPrimaryColor('neutral')
+    setSecondaryColor('neutral')
     setCountry('NZ')
     setBank('')
     setPayFrequency('weekly')
     setMonthlyIncome(0)
     setBills([])
+    setBillDueUnknown(false)
     setCsvFileName(null)
     setCsvPreview(null)
     setCsvError(null)
+    setLaunchedDashboard(false)
+    setDemoSeed(null)
   }
 
   const totalMonthlyBills = useMemo(
@@ -191,6 +299,16 @@ export function SetupWizard() {
     [bills]
   )
   const weeklyPreview = completed ? (completed.monthlyIncome - totalMonthlyBills) / 4.33 : 0
+
+  if (launchedDashboard && demoSeed) {
+    return (
+      <StoreProvider storageKey={DEMO_DASHBOARD_KEY} seedState={demoSeed}>
+        <ToastProvider>
+          <AppContent />
+        </ToastProvider>
+      </StoreProvider>
+    )
+  }
 
   return (
     <div className="min-h-screen bg-[#05060a] text-white flex items-center justify-center px-4 py-10">
@@ -220,11 +338,17 @@ export function SetupWizard() {
                 <p className="text-xs text-white/40">Just a name — add a second person for a shared household, or leave it blank for a single view.</p>
                 <div>
                   <label className="text-xs text-white/50">Your name</label>
-                  <input value={primaryName} onChange={(e) => setPrimaryName(e.target.value)} placeholder="e.g. Deep" className="mt-1 w-full bg-black/30 border border-white/10 rounded-lg px-3 py-2 text-sm outline-none focus:border-cyan-400/50" />
+                  <div className="mt-1 flex items-center gap-2">
+                    <input value={primaryName} onChange={(e) => setPrimaryName(e.target.value)} placeholder="e.g. Deep" className="w-full bg-black/30 border border-white/10 rounded-lg px-3 py-2 text-sm outline-none focus:border-cyan-400/50" />
+                    <ColorSwatchPicker value={primaryColor} onChange={setPrimaryColor} />
+                  </div>
                 </div>
                 <div>
                   <label className="text-xs text-white/50">Add a second person (optional)</label>
-                  <input value={secondaryName} onChange={(e) => setSecondaryName(e.target.value)} placeholder="e.g. Mimi" className="mt-1 w-full bg-black/30 border border-white/10 rounded-lg px-3 py-2 text-sm outline-none focus:border-cyan-400/50" />
+                  <div className="mt-1 flex items-center gap-2">
+                    <input value={secondaryName} onChange={(e) => setSecondaryName(e.target.value)} placeholder="e.g. Mimi" className="w-full bg-black/30 border border-white/10 rounded-lg px-3 py-2 text-sm outline-none focus:border-cyan-400/50" />
+                    <ColorSwatchPicker value={secondaryColor} onChange={setSecondaryColor} />
+                  </div>
                 </div>
               </div>
             )}
@@ -278,7 +402,19 @@ export function SetupWizard() {
                       {FREQ_OPTIONS.map((f) => <option key={f.value} value={f.value}>{f.label}</option>)}
                     </select>
                   </div>
-                  <DateField value={billDue} onChange={setBillDue} inputClassName="w-full bg-black/30 border border-white/10 rounded-lg px-3 py-2 text-xs outline-none focus:border-cyan-400/50" overlayClassName="px-3 text-xs" />
+                  {billDueUnknown ? (
+                    <div className="flex items-center justify-between bg-black/30 border border-white/10 rounded-lg px-3 py-2 text-xs text-white/40">
+                      <span>Due date not set yet — that's fine.</span>
+                      <button type="button" onClick={() => setBillDueUnknown(false)} className="text-cyan-300 hover:text-cyan-200 shrink-0 ml-2">Set a date</button>
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-2">
+                      <DateField value={billDue} onChange={setBillDue} inputClassName="w-full bg-black/30 border border-white/10 rounded-lg px-3 py-2 text-xs outline-none focus:border-cyan-400/50" overlayClassName="px-3 text-xs" />
+                      <button type="button" onClick={() => setBillDueUnknown(true)} className="text-[11px] text-white/35 hover:text-white/60 whitespace-nowrap shrink-0">
+                        Not sure — skip
+                      </button>
+                    </div>
+                  )}
                   <button type="button" onClick={addBill} disabled={!billName.trim() || billAmount <= 0} className="flex items-center justify-center gap-1.5 text-xs font-semibold rounded-lg py-2 bg-white/5 border border-white/10 text-white/70 hover:text-white hover:border-cyan-400/40 disabled:opacity-30 transition-colors">
                     <Plus className="w-3.5 h-3.5" /> Add payment
                   </button>
@@ -289,7 +425,7 @@ export function SetupWizard() {
                       <div key={b.id} className="flex items-center justify-between text-xs bg-black/20 rounded-lg px-3 py-2 border border-white/5">
                         <div>
                           <span className="font-medium">{b.name}</span>
-                          <span className="text-white/40"> · {formatCurrency(b.amount)} {b.frequency}</span>
+                          <span className="text-white/40"> · {formatCurrency(b.amount)} {b.frequency}{b.dueUnknown ? ' · due date not set' : ''}</span>
                         </div>
                         <button type="button" onClick={() => removeBill(b.id)} className="text-white/30 hover:text-rose-400">
                           <Trash2 className="w-3.5 h-3.5" />
@@ -381,7 +517,13 @@ export function SetupWizard() {
               <Check className="w-5 h-5 text-cyan-300" />
             </div>
             <div>
-              <h2 className="text-base font-semibold">{completed.primaryName}{completed.secondaryName ? ` + ${completed.secondaryName}` : ''}, you're set up</h2>
+              <h2 className="text-base font-semibold">
+                <span className={cn(NAME_COLOR_STYLE[completed.primaryColor].text, NAME_COLOR_STYLE[completed.primaryColor].glow)}>{completed.primaryName}</span>
+                {completed.secondaryName && (
+                  <> + <span className={cn(NAME_COLOR_STYLE[completed.secondaryColor].text, NAME_COLOR_STYLE[completed.secondaryColor].glow)}>{completed.secondaryName}</span></>
+                )}
+                , you're set up
+              </h2>
               <p className="text-xs text-white/40 mt-1">{completed.bank} · {completed.country === 'NZ' ? 'New Zealand' : 'Australia'} · {completed.bills.length} payment{completed.bills.length === 1 ? '' : 's'} tracked</p>
             </div>
             <div className={cn('rounded-xl border p-5', weeklyPreview < 0 ? 'border-rose-500/30 bg-rose-500/5' : 'border-white/10 bg-black/20')}>
@@ -403,6 +545,13 @@ export function SetupWizard() {
                   : 'Income minus the payments you added, spread weekly.'}
               </p>
             </div>
+            <button type="button" onClick={launchDashboard} className="w-full flex items-center justify-center gap-1.5 text-sm font-semibold rounded-lg px-4 py-2.5 bg-gradient-to-r from-cyan-400 to-purple-500 text-black">
+              <LayoutDashboard className="w-4 h-4" /> Go to Dashboard
+            </button>
+            {/* Honest, not silent — the real per-instance pay-pattern isn't built yet (see the
+                buildDemoSeed comment above), so the dashboard's income figure won't match what
+                was entered on the Pay & Income step. Bills genuinely do carry through correctly. */}
+            <p className="text-[10px] text-amber-300/70 leading-relaxed">⚠ Your {completed.bills.length} payment{completed.bills.length === 1 ? '' : 's'} will show correctly on the real dashboard — the income figure there won't match what you entered yet (per-client pay cycles are the next real piece of work, not built yet).</p>
             <button type="button" onClick={restart} className="text-xs text-white/40 hover:text-white transition-colors">
               Start over
             </button>

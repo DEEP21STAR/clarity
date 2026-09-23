@@ -70,7 +70,7 @@ function useTimeOfDayTint(): string {
   return ''
 }
 
-function AppContent() {
+export function AppContent() {
   const { state, setHouseholdView } = useStore()
   const { showToast } = useToast()
   const [tab, setTab] = useState<TabId>('upcoming')
