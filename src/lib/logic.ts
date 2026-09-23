@@ -1,7 +1,7 @@
 import type {
   TaxBracket, Debt, RecurringBill, BillFrequency, UpcomingWindow, Transaction, InstallmentPlan, PeriodicBill,
   Account, CreditCardAccount, NetWorthSnapshot, SinkingFund, OneOffEntry, SpendTracker, StreakState, HouseholdOwner, HouseholdView, Mode,
-  PaymentRecord, DeviceRepayment, SavingsGoal,
+  PaymentRecord, DeviceRepayment, SavingsGoal, IncomeAnchor,
 } from './types'
 import {
   NZ_TAX_BRACKETS, NZ_ACC_LEVY_RATE, NZ_ACC_LEVY_CAP,
@@ -541,22 +541,27 @@ export function isPayday(dateIso: string, anchorIso: string = INCOME_ANCHOR.anch
   return diffMs % MS_PER_WEEK === 0
 }
 
-/** Income landing on a given date: 0 if not a Friday-payday, $600 weekly-only, or $1,100 combined. */
-export function incomeOnDate(dateIso: string): number {
-  if (!isPayday(dateIso)) return 0
-  return isCombinedPayday(dateIso)
-    ? INCOME_ANCHOR.weeklyAmount + INCOME_ANCHOR.fortnightlyBonusAmount
-    : INCOME_ANCHOR.weeklyAmount
+/**
+ * 2026-09-23 — `anchor` param makes this genuinely per-instance (the wizard's "Go to
+ * Dashboard" needs a client's OWN pay pattern, not Deep's), while staying 100% backward
+ * compatible: every existing call site that doesn't pass one keeps getting Deep's real
+ * INCOME_ANCHOR, byte-identical to before this change.
+ */
+export function incomeOnDate(dateIso: string, anchor: IncomeAnchor = INCOME_ANCHOR): number {
+  if (!isPayday(dateIso, anchor.anchorDate)) return 0
+  return isCombinedPayday(dateIso, anchor.anchorDate)
+    ? anchor.weeklyAmount + anchor.fortnightlyBonusAmount
+    : anchor.weeklyAmount
 }
 
 /** Total income landing within [startIso, endIso] inclusive. */
-export function totalIncomeInWindow(startIso: string, endIso: string): number {
+export function totalIncomeInWindow(startIso: string, endIso: string, anchor: IncomeAnchor = INCOME_ANCHOR): number {
   const start = parseIsoDateUTC(startIso)
   const end = parseIsoDateUTC(endIso)
   let total = 0
   for (let t = start.getTime(); t <= end.getTime(); t += MS_PER_DAY) {
     const iso = new Date(t).toISOString().slice(0, 10)
-    total += incomeOnDate(iso)
+    total += incomeOnDate(iso, anchor)
   }
   return round2(total)
 }

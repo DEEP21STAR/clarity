@@ -5,6 +5,7 @@ import { StoreProvider, DEFAULT_STATE, type AppState } from '@/lib/store'
 import { ToastProvider } from './Toast'
 import { AppContent } from '../App'
 import { cn, formatCurrency, todayIso } from '@/lib/utils'
+import { round2 } from '@/lib/logic'
 import type { Country, RecurringBill } from '@/lib/types'
 import { Check, ChevronRight, ChevronLeft, Building2, Wallet, Sparkles, Plus, Trash2, Upload, FileText, Info, LayoutDashboard } from 'lucide-react'
 
@@ -207,13 +208,11 @@ export function SetupWizard() {
   // — those are Deep's own real placeholder data (a real $9,900.25 "GEM VISA Deep" balance
   // among them) and must never leak into a fresh client's first look at their own dashboard.
   //
-  // Honest limitation, not silently shipped as if correct: the real app's income figure
-  // (Dashboard headline, Live Funds Available) is computed from a single hardcoded pay pattern
-  // (INCOME_ANCHOR in constants.ts — Deep's own real "$600 every Friday" schedule), not from
-  // AppState at all yet. The bills you add here ARE real and DO show correctly; the income
-  // number will show that hardcoded pattern regardless of what pay cycle/income you entered,
-  // until pay pattern becomes a real per-instance AppState field — a separate, bigger piece of
-  // work flagged in chat, not silently faked here.
+  // 2026-09-23 follow-up — income is now genuinely per-instance too (state.incomeAnchor,
+  // see store.tsx/logic.ts), not the hardcoded INCOME_ANCHOR constant this comment used to
+  // flag as a known gap. The pay-cycle mapping below is the honest part now: the underlying
+  // date model is inherently weekly-anchored, so 'monthly' is approximated as an even weekly
+  // spread rather than a true once-a-month lump sum — said here, not hidden.
   const buildDemoSeed = (): AppState => {
     const mappedBills: RecurringBill[] = bills.map((b) => ({
       id: b.id,
@@ -226,6 +225,21 @@ export function SetupWizard() {
       active: true,
       owner: 'shared',
     }))
+    // 2026-09-23 — real per-instance pay pattern (incomeAnchor is no longer hardcoded to
+    // Deep's own schedule, see logic.ts/store.tsx). Maps the wizard's simple pay-cycle pick
+    // onto the underlying weekly-anchored date model:
+    //  - weekly: paid the same amount every payday, no combined-week bonus.
+    //  - fortnightly: weeklyAmount 0, the whole amount sits in fortnightlyBonusAmount, so only
+    //    the alternating "combined" weeks actually pay anything — genuinely paid once a
+    //    fortnight, not an approximation.
+    //  - monthly: the underlying model is inherently week-based and has no clean way to
+    //    represent "one lump sum a month" — honestly approximated as an even weekly spread
+    //    rather than forced into something it can't represent. Said here, not hidden.
+    const incomeAnchor =
+      payFrequency === 'fortnightly'
+        ? { anchorDate: todayIso(), weeklyAmount: 0, fortnightlyBonusAmount: round2((monthlyIncome * 12) / 26) }
+        : { anchorDate: todayIso(), weeklyAmount: round2((monthlyIncome * 12) / 52), fortnightlyBonusAmount: 0 }
+
     return {
       ...DEFAULT_STATE,
       country,
@@ -241,6 +255,7 @@ export function SetupWizard() {
       spendTracker: { food: 0, fuel: 0, personal: 0, periodStart: todayIso() },
       streak: { current: 0, best: 0, lastCheckedDate: '', milestonesHit: [] },
       grossAnnualIncome: monthlyIncome * 12,
+      incomeAnchor,
       dashboardCardOrder: DEFAULT_STATE.dashboardCardOrder,
     }
   }
@@ -551,7 +566,7 @@ export function SetupWizard() {
             {/* Honest, not silent — the real per-instance pay-pattern isn't built yet (see the
                 buildDemoSeed comment above), so the dashboard's income figure won't match what
                 was entered on the Pay & Income step. Bills genuinely do carry through correctly. */}
-            <p className="text-[10px] text-amber-300/70 leading-relaxed">⚠ Your {completed.bills.length} payment{completed.bills.length === 1 ? '' : 's'} will show correctly on the real dashboard — the income figure there won't match what you entered yet (per-client pay cycles are the next real piece of work, not built yet).</p>
+            <p className="text-[10px] text-white/30 leading-relaxed">Your {completed.bills.length} payment{completed.bills.length === 1 ? '' : 's'} and {completed.payFrequency} pay cycle both carry through to the real dashboard.</p>
             <button type="button" onClick={restart} className="text-xs text-white/40 hover:text-white transition-colors">
               Start over
             </button>

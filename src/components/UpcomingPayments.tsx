@@ -57,7 +57,7 @@ export function UpcomingPayments() {
   const windowEnd = useMemo(() => addDaysIso(today, windowLengthDays(window_) - 1), [today, window_])
   const view = state.householdView
 
-  const incomeInWindow = useMemo(() => (view === 'mimi' ? 0 : totalIncomeInWindow(today, windowEnd)), [today, windowEnd, view])
+  const incomeInWindow = useMemo(() => (view === 'mimi' ? 0 : totalIncomeInWindow(today, windowEnd, state.incomeAnchor)), [today, windowEnd, view, state.incomeAnchor])
   const flatBillsInWindow = useMemo(() => totalBillsInWindow(state.bills, today, windowEnd, view), [state.bills, today, windowEnd, view])
   // Gas/Electricity are periodic bills now — Deep pays them in smoothed fortnightly
   // set-asides, so that smoothed contribution (not the lump due-date amount) is
@@ -292,7 +292,14 @@ export function UpcomingPayments() {
             <CountUp value={incomeInWindow} prefix="$" />
           </div>
           <p className="text-xs text-white/45 mt-2">
-            Real alternating pay pattern: $600 every Friday, +$500 fortnightly bonus on combined-pay Fridays (this Fri 11 Sep 2026 is combined).
+            {/* 2026-09-23 — was hardcoded to Deep's own exact pattern; now describes whatever
+                state.incomeAnchor actually is, so a wizard-seeded instance with a different
+                pattern doesn't show a caption describing someone else's pay schedule. */}
+            {state.incomeAnchor.weeklyAmount > 0 && state.incomeAnchor.fortnightlyBonusAmount > 0
+              ? `Pay pattern: ${formatCurrency(state.incomeAnchor.weeklyAmount)} every payday, +${formatCurrency(state.incomeAnchor.fortnightlyBonusAmount)} on the combined fortnightly payday.`
+              : state.incomeAnchor.fortnightlyBonusAmount > 0
+                ? `Pay pattern: ${formatCurrency(state.incomeAnchor.fortnightlyBonusAmount)} every fortnight.`
+                : `Pay pattern: ${formatCurrency(state.incomeAnchor.weeklyAmount)} every payday.`}
           </p>
         </StatCard>
         <StatCard label={`Bills & Funds due — this ${window_} (estimate)`} glow="amber">

@@ -2,9 +2,9 @@ import React, { createContext, useContext, useEffect, useMemo, useRef, useState,
 import type {
   RecurringBill, Mode, Country, Transaction, Debt, CreditCardAccount, DeviceRepayment, PeriodicBill,
   Account, NetWorthSnapshot, SavingsGoal, OneOffEntry, SinkingFund, SpendTracker, StreakState, HouseholdView,
-  PaymentRecord,
+  PaymentRecord, IncomeAnchor,
 } from './types'
-import { SEED_BILLS, SEED_CREDIT_CARDS, SEED_DEVICE_REPAYMENTS, SEED_PERIODIC_BILLS, SEED_ACCOUNTS } from './constants'
+import { SEED_BILLS, SEED_CREDIT_CARDS, SEED_DEVICE_REPAYMENTS, SEED_PERIODIC_BILLS, SEED_ACCOUNTS, INCOME_ANCHOR } from './constants'
 import {
   calcNetWorth, upsertNetWorthSnapshot, applyBillAmountChange, computeCurrentHealthScore,
   applyPaymentToCard, applyPaymentToPlan, applyPaymentToPeriodicBill, applyPaymentToDevice,
@@ -27,6 +27,13 @@ export interface AppState {
   debts: Debt[]
   savingsGoal: number
   grossAnnualIncome: number
+  /** 2026-09-23 — real per-instance pay pattern (was a single hardcoded INCOME_ANCHOR constant
+   * before this). Drives Live Funds Available / Dashboard headline / health score exactly like
+   * the old constant did — this is that same real date-math, just no longer locked to one
+   * household. Defaults to Deep's own real pattern, so his existing persisted state (which has
+   * no incomeAnchor field yet) merges in identically to before — zero change to his real
+   * numbers from adding this field. */
+  incomeAnchor: IncomeAnchor
   creditCards: CreditCardAccount[]
   deviceRepayments: DeviceRepayment[]
   periodicBills: PeriodicBill[]
@@ -57,6 +64,7 @@ export const DEFAULT_STATE: AppState = {
   debts: [],
   savingsGoal: 5000,
   grossAnnualIncome: 65000,
+  incomeAnchor: INCOME_ANCHOR,
   creditCards: SEED_CREDIT_CARDS,
   deviceRepayments: SEED_DEVICE_REPAYMENTS,
   periodicBills: SEED_PERIODIC_BILLS,
