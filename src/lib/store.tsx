@@ -16,7 +16,11 @@ import { todayIso } from './utils'
 // net worth history, savings goals, one-off entries, sinking funds, household
 // view, spend tracking, streaks, and the export timestamp. A stale v4 blob
 // has no `accounts` array at all, so it's not reused.
-const STORAGE_KEY = 'clarity-dashboard-state-v5'
+// 2026-09-23 round 5 — exported so App.tsx can check, on first load, whether this browser has
+// ever had real app data at all (localStorage.getItem(STORAGE_KEY) === null means genuinely
+// first-ever visit) -- the real-onboarding gate. Deep's own account already has this key
+// populated from every prior session, so this check alone never re-triggers onboarding for him.
+export const STORAGE_KEY = 'clarity-dashboard-state-v5'
 
 export interface AppState {
   mode: Mode

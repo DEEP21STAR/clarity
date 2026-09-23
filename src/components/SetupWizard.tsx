@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { SegmentedControl } from './SegmentedControl'
 import { DateField } from './DateField'
-import { StoreProvider, DEFAULT_STATE, type AppState } from '@/lib/store'
+import { StoreProvider, DEFAULT_STATE, STORAGE_KEY, type AppState } from '@/lib/store'
 import { ToastProvider } from './Toast'
 import { AppContent } from '../App'
 import { BootSequence } from './BootSequence'
@@ -145,7 +145,10 @@ function IdentityColorPicker({ value, onChange }: { value: NameColor; onChange: 
   )
 }
 
-export function SetupWizard() {
+export function SetupWizard({ mode = 'demo' }: { mode?: 'demo' | 'onboarding' } = {}) {
+  // 2026-09-23 round 5 — "onboarding" is a real first-run: launchDashboard below writes to the
+  // REAL app's own storage key instead of the isolated demo key, so what the user builds here
+  // becomes their actual persisted dashboard, not a throwaway preview.
   const [step, setStep] = useState(0)
   const [primaryName, setPrimaryName] = useState('')
   const [secondaryName, setSecondaryName] = useState('')
@@ -351,10 +354,13 @@ export function SetupWizard() {
   const weeklyPreview = completed ? (completed.monthlyIncome - totalMonthlyBills) / 4.33 : 0
 
   if (launchedDashboard && demoSeed) {
+    // Onboarding mode already ran the real boot sequence once in App.tsx (before Welcome) —
+    // showing it again here would be a second, redundant intro. Only the standalone ?wizard=demo
+    // path (which never passes through App()'s own boot) needs its own.
     return (
-      <StoreProvider storageKey={DEMO_DASHBOARD_KEY} seedState={demoSeed}>
+      <StoreProvider storageKey={mode === 'onboarding' ? STORAGE_KEY : DEMO_DASHBOARD_KEY} seedState={demoSeed}>
         <ToastProvider>
-          {!demoBooted && <BootSequence onDone={() => setDemoBooted(true)} />}
+          {mode === 'demo' && !demoBooted && <BootSequence onDone={() => setDemoBooted(true)} />}
           <AppContent />
         </ToastProvider>
       </StoreProvider>

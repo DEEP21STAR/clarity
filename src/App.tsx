@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react'
-import { StoreProvider, useStore } from '@/lib/store'
+import { StoreProvider, useStore, STORAGE_KEY } from '@/lib/store'
 import { BootSequence } from './components/BootSequence'
 import { Dashboard } from './components/Dashboard'
 import { UpcomingPayments } from './components/UpcomingPayments'
@@ -20,6 +20,7 @@ import { NotificationBell } from './components/NotificationBell'
 import { CursorGlow } from './components/CursorGlow'
 import { MobileNavDrawer } from './components/MobileNavDrawer'
 import { SetupWizard } from './components/SetupWizard'
+import { Welcome } from './components/Welcome'
 import { WhetuFooter } from './components/WhetuFooter'
 import { computeCurrentHealthScore, calcNetWorth, dueTodayBills } from '@/lib/logic'
 import { cn, formatCurrency, todayIso } from '@/lib/utils'
@@ -405,6 +406,25 @@ function App() {
   // which testing it could read or overwrite Deep's real household data.
   const isWizardDemo = typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('wizard') === 'demo'
   if (isWizardDemo) return <SetupWizard />
+
+  // 2026-09-23 round 5 — "no introduction of why we're doing this... it's just dumped on
+  // straight away" (Deep). Real first-run detection: computed once via useState's lazy
+  // initializer (not re-evaluated on every render, which matters because the wizard itself
+  // writes to this exact key partway through onboarding — re-checking mid-flow would flip this
+  // back to false and yank the user out of their own setup). "First run" means this browser has
+  // literally never had the real STORAGE_KEY written at all — Deep's own account, and anyone
+  // who's already used the app, always has that key populated from every prior session, so this
+  // never re-triggers for existing data. Only a genuinely fresh browser sees Welcome -> Wizard
+  // before the dashboard; everyone else goes straight to the same boot -> PIN -> dashboard flow
+  // as before.
+  const [isFirstRun] = useState(() => typeof window !== 'undefined' && window.localStorage.getItem(STORAGE_KEY) === null)
+  const [onboardingStage, setOnboardingStage] = useState<'welcome' | 'wizard' | 'done'>(isFirstRun ? 'welcome' : 'done')
+
+  if (onboardingStage !== 'done') {
+    if (!booted) return <BootSequence onDone={() => setBooted(true)} />
+    if (onboardingStage === 'welcome') return <Welcome onContinue={() => setOnboardingStage('wizard')} />
+    return <SetupWizard mode="onboarding" />
+  }
 
   return (
     <StoreProvider>
