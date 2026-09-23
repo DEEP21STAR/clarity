@@ -19,6 +19,7 @@ import { ToastProvider, useToast } from './components/Toast'
 import { NotificationBell } from './components/NotificationBell'
 import { CursorGlow } from './components/CursorGlow'
 import { MobileNavDrawer } from './components/MobileNavDrawer'
+import { SetupWizard } from './components/SetupWizard'
 import { computeCurrentHealthScore, calcNetWorth, dueTodayBills } from '@/lib/logic'
 import { cn, formatCurrency, todayIso } from '@/lib/utils'
 import { captureThumbnail } from '@/lib/thumbnailCache'
@@ -395,6 +396,13 @@ function AppContent() {
 
 function App() {
   const [booted, setBooted] = useState(false)
+
+  // 2026-09-23 — ?wizard=demo entry point for testing the onboarding wizard concept in
+  // isolation. Checked BEFORE StoreProvider/PinGate on purpose: SetupWizard never touches
+  // useStore() or the real 'clarity-dashboard-state-v5' key at all, so there's no path by
+  // which testing it could read or overwrite Deep's real household data.
+  const isWizardDemo = typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('wizard') === 'demo'
+  if (isWizardDemo) return <SetupWizard />
 
   return (
     <StoreProvider>
