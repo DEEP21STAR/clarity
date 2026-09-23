@@ -13,7 +13,7 @@ import { DateField } from './DateField'
 import { Help } from './Help'
 
 export function Tools() {
-  const { state, addOneOffEntry, removeOneOffEntry, setSoundEnabled } = useStore()
+  const { state, addOneOffEntry, removeOneOffEntry, setSoundEnabled, setTextScale } = useStore()
   const withUndo = useUndoableDelete()
   const [hoursPerWeek, setHoursPerWeek] = useState(15)
   const [weeksPerYear, setWeeksPerYear] = useState(48)
@@ -65,6 +65,26 @@ export function Tools() {
       </div>
 
       <Help />
+
+      {/* 2026-09-23 round 7 — "ability to increase font sizes with 3 options" (Deep). Scales
+          every rem-based text size across the whole app — see index.css's data-text-scale
+          rules and App.tsx's effect that sets the attribute on <html>. Pinch-to-zoom itself
+          was already permitted by the viewport meta tag (never explicitly blocked); this is
+          the separate, explicit in-app control alongside it. */}
+      <StatCard label="Display" glow="cyan" tooltip="Scales all text across the app. Pinch-to-zoom also works everywhere for extra magnification.">
+        <div className="mt-4">
+          <label className="text-xs text-white/50 mb-1.5 block">Text size</label>
+          <SegmentedControl
+            value={state.textScale}
+            onChange={setTextScale}
+            options={[
+              { value: 'small', label: 'Small' },
+              { value: 'medium', label: 'Medium' },
+              { value: 'large', label: 'Large' },
+            ]}
+          />
+        </div>
+      </StatCard>
 
       <StatCard label="Home Office / WFH Deduction" glow="cyan">
         <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">

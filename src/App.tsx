@@ -102,6 +102,14 @@ export function AppContent() {
     requestAnimationFrame(() => mainRef.current?.classList.add('page-enter'))
   }, [tab])
 
+  // 2026-09-23 round 7 — "ability to increase font sizes with 3 options" (Deep). Sets a data
+  // attribute on <html> (not a class on this component's own root — text-size needs to affect
+  // every rem-based Tailwind utility across the whole page, and <html> is the one element every
+  // rem unit is actually relative to). See index.css for the 3 scale rules this drives.
+  useEffect(() => {
+    document.documentElement.dataset.textScale = state.textScale
+  }, [state.textScale])
+
   // Round 21, item #3 — caches a thumbnail of whichever tab is genuinely open, for the
   // ⌘K palette's hover preview. Waits for the entrance animation to settle (~900ms) so the
   // captured frame shows the tab at rest, not mid fly-in. See thumbnailCache.ts's doc comment

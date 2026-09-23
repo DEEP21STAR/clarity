@@ -22,6 +22,8 @@ import { todayIso } from './utils'
 // populated from every prior session, so this check alone never re-triggers onboarding for him.
 export const STORAGE_KEY = 'clarity-dashboard-state-v5'
 
+export type TextScale = 'small' | 'medium' | 'large'
+
 export interface AppState {
   mode: Mode
   country: Country
@@ -64,6 +66,9 @@ export interface AppState {
    * header's Deep/Mimi/Combined view toggle only makes sense once a second person exists. */
   primaryName: string
   secondaryName: string
+  /** 2026-09-23 round 7 — real app-wide text-size preference, default 'small' preserves every
+   * existing account's exact current appearance. */
+  textScale: TextScale
 }
 
 export const DEFAULT_STATE: AppState = {
@@ -93,6 +98,7 @@ export const DEFAULT_STATE: AppState = {
   soundEnabled: false,
   primaryName: 'Deep',
   secondaryName: 'Mimi',
+  textScale: 'small',
 }
 
 /**
@@ -171,6 +177,11 @@ interface StoreContextValue {
   removeDeviceRepayment: (id: string) => void
   setDashboardCardOrder: (order: string[]) => void
   setSoundEnabled: (enabled: boolean) => void
+  /** 2026-09-23 round 7 — "ability to increase font sizes with 3 options" (Deep). Tailwind's
+   * text-* utilities are all rem-based, so scaling the root <html> font-size (see the CSS rules
+   * this drives) scales every existing size across the whole app for free, no per-component
+   * changes needed. */
+  setTextScale: (scale: TextScale) => void
   /** #8 expanded — records a real amount+date payment AND reduces the real balance/remaining it targets. Returns the new record's id. */
   recordPayment: (input: Omit<PaymentRecord, 'id' | 'recordedAt'>) => string
   /** Reverses a payment's balance effect and removes it — the real Undo for #8's toast action. */
@@ -351,6 +362,7 @@ export function StoreProvider({ children, storageKey = STORAGE_KEY, seedState = 
       }),
     restoreState: (snapshot) => setState(snapshot),
     setSoundEnabled: (enabled) => setState((s) => ({ ...s, soundEnabled: enabled })),
+    setTextScale: (scale) => setState((s) => ({ ...s, textScale: scale })),
   }), [state])
 
   return <StoreContext.Provider value={value}>{children}</StoreContext.Provider>
