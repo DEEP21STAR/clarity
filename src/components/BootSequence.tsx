@@ -126,9 +126,21 @@ export function BootSequence({ onDone }: { onDone: () => void }) {
       // box off the viewport's SMALLER dimension (portrait width, ~420px on a phone) capped the
       // glyph to a small ~76x84px result even after raising the multiplier. Sizing off the
       // LARGER dimension instead produces a properly large, prominent glyph.
-      glyphBoxSize = Math.max(w, h) * 0.85
+      //
+      // 2026-09-24 — Deep reported the glyph overlapping the "CLARITY" wordmark/description
+      // below it. Root cause: on a tall narrow phone, max(w,h)*0.85 = h*0.85 — the glyph's own
+      // sampling box (and therefore its real ink) extended down past 80% of the screen, right
+      // into where the text sits. Capping the box's height at 58% of the viewport keeps the
+      // glyph just as bold/wide (the box is still comfortably wider than the screen on portrait
+      // phones — no regression on the "too small" fix above) while guaranteeing it never eats
+      // more than the top ~60% of the screen. Anchoring its center at a fixed 30% down (instead
+      // of a height-relative nudge that scaled unpredictably with box size) and bottom-anchoring
+      // the text block below (see the JSX) turns this into two independent screen-relative
+      // zones that can't collide on any real device, instead of two magic-number offsets that
+      // only happened to clear each other on some screens.
+      glyphBoxSize = Math.min(Math.max(w, h) * 0.85, h * 0.58)
       glyphOffsetX = w / 2 - glyphBoxSize / 2
-      glyphOffsetY = h / 2 - glyphBoxSize / 2 - h * 0.1
+      glyphOffsetY = h * 0.3 - glyphBoxSize / 2
       glyphCenterX = w / 2
       glyphCenterY = glyphOffsetY + glyphBoxSize / 2
       const targets = sampleDollarSignPoints(glyphBoxSize, glyphBoxSize, 460)
@@ -276,7 +288,11 @@ export function BootSequence({ onDone }: { onDone: () => void }) {
     // wins regardless of what PinGate's own z-index is or becomes later.
     <div ref={ref} className="fixed inset-0 z-[110] flex items-center justify-center bg-[#05060a] cursor-pointer overflow-hidden" onClick={skip}>
       <canvas ref={canvasRef} className="absolute inset-0" style={{ width: '100vw', height: '100vh' }} />
-      <div className="text-center font-mono relative z-10 mt-[26vh]">
+      {/* 2026-09-24 — bottom-anchored instead of flex-centered + margin-top: guarantees this
+          block sits in its own fixed zone near the bottom edge, clear of the glyph above
+          (capped to the top ~60% of the screen — see the sizing comment above), on any screen
+          size, rather than relying on two magic-number offsets happening to clear each other. */}
+      <div className="absolute inset-x-0 bottom-[7vh] text-center font-mono z-10">
         <div className="boot-line text-3xl font-black tracking-widest text-transparent bg-clip-text bg-gradient-to-r from-cyan-300 via-purple-300 to-pink-300">
           CLARITY
         </div>
