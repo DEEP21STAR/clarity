@@ -696,3 +696,14 @@ mark.search-hit { background: rgba(34, 211, 238, 0.35); color: #fff; border-radi
     animation: none;
   }
 }
+
+/* Wizard step transition — 2026-09-23. key={step} on the wrapping div (SetupWizard.tsx)
+   remounts on every step change, which is what actually retriggers this each time. */
+@keyframes wizard-step-in {
+  0% { opacity: 0; transform: translateX(16px); }
+  100% { opacity: 1; transform: translateX(0); }
+}
+.wizard-step-in { animation: wizard-step-in 0.35s cubic-bezier(0.22, 1, 0.36, 1); }
+@media (prefers-reduced-motion: reduce) {
+  .wizard-step-in { animation: none; }
+}

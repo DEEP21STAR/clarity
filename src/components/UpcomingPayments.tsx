@@ -18,6 +18,7 @@ import { CashFlowChart } from './CashFlowChart'
 import { HouseholdSplit } from './HouseholdSplit'
 import { BillIcon } from './BillIcons'
 import { SegmentedControl } from './SegmentedControl'
+import { TipScroller, buildTips } from './TipScroller'
 import { DueBadge } from './DueBadge'
 import { useToast } from './Toast'
 import { useUndoableDelete } from '@/lib/useUndoableDelete'
@@ -99,6 +100,22 @@ export function UpcomingPayments() {
   const fuelAmount = (liveFundsBeforeSpend * allocation.fuel) / 100
   const personalAmount = (liveFundsBeforeSpend * allocation.personal) / 100
 
+  // Feeds the mobile tip scroller — same real numbers the tiles above already show, not a
+  // second calculation that could drift from them.
+  const categoryStatus = useMemo(() => {
+    const cats = [
+      { label: 'Food', amount: foodAmount, spent: state.spendTracker.food },
+      { label: 'Fuel', amount: fuelAmount, spent: state.spendTracker.fuel },
+      { label: 'Personal', amount: personalAmount, spent: state.spendTracker.personal },
+    ]
+    const over = cats.find((c) => c.spent - c.amount > 0)
+    const close = cats.find((c) => c.amount > 0 && (c.amount - c.spent) / c.amount < 0.15 && c.spent < c.amount)
+    return {
+      over: over ? { label: over.label, amount: round2(over.spent - over.amount) } : null,
+      close: close ? { label: close.label } : null,
+    }
+  }, [foodAmount, fuelAmount, personalAmount, state.spendTracker])
+
   const commitQuickAdd = (cat: 'food' | 'fuel' | 'personal', amount: number) => {
     updateSpendTracker({ [cat]: round2(state.spendTracker[cat] + amount) } as Partial<typeof state.spendTracker>)
   }
@@ -110,16 +127,21 @@ export function UpcomingPayments() {
   // confirmed due-date field to check against (documented limitation, not an oversight).
   // Names ONE bill (the soonest due) rather than listing every bill at risk — a single
   // concrete "X is due Y" reads as useful; a list reads as an alarm wall.
-  const checkQuickAddRisk = (amount: number): string | null => {
-    const projected = round2(liveFundsAvailable - amount)
-    if (projected >= 0) return null
-    const upcoming = state.bills
+  // Shared with the tip scroller below — one soonest-bill computation, never two that could
+  // disagree.
+  const soonestUpcomingBill = useMemo(() => {
+    return state.bills
       .filter((b) => b.active)
       .map((b) => ({ bill: b, due: nextMonthlyDueDate(b.dueDay, today) }))
       .filter(({ due }) => due <= addDaysIso(today, 14))
-      .sort((a, b) => (a.due < b.due ? -1 : 1))[0]
-    if (!upcoming) return null
-    return `You may not have enough for this — ${upcoming.bill.name} (${formatCurrency(upcoming.bill.amount)}) is due ${formatShortDate(upcoming.due)}. Logging this leaves ${formatCurrency(projected)}.`
+      .sort((a, b) => (a.due < b.due ? -1 : 1))[0] ?? null
+  }, [state.bills, today])
+
+  const checkQuickAddRisk = (amount: number): string | null => {
+    const projected = round2(liveFundsAvailable - amount)
+    if (projected >= 0) return null
+    if (!soonestUpcomingBill) return null
+    return `You may not have enough for this — ${soonestUpcomingBill.bill.name} (${formatCurrency(soonestUpcomingBill.bill.amount)}) is due ${formatShortDate(soonestUpcomingBill.due)}. Logging this leaves ${formatCurrency(projected)}.`
   }
 
   const quickAdd = (cat: 'food' | 'fuel' | 'personal', amount: number): string | null => {
@@ -278,6 +300,15 @@ export function UpcomingPayments() {
           </p>
         </div>
       </div>
+
+      <TipScroller
+        tips={buildTips({
+          soonestBill: soonestUpcomingBill ? { name: soonestUpcomingBill.bill.name, amount: soonestUpcomingBill.bill.amount, due: soonestUpcomingBill.due } : null,
+          categoryOver: categoryStatus.over,
+          categoryClose: categoryStatus.close,
+          streak: state.streak.current,
+        })}
+      />
 
       {milestoneToast && (
         <div className="rounded-xl border border-amber-400/40 bg-amber-500/10 px-4 py-3 text-amber-200 text-sm streak-badge-pop">
@@ -537,7 +568,7 @@ function AllocationTile({ label, amount, spent, pct, glowFrom, glowTo, onChange,
         {over ? `${formatCurrency(-remaining)} over ` : ''}{formatCurrency(spent)} of {formatCurrency(amount)} guide spent
       </p>
       {pending && (
-        <div className="mt-2.5 rounded-lg border border-amber-400/30 bg-amber-500/10 p-2.5">
+        <div className="streak-badge-pop mt-2.5 rounded-lg border border-amber-400/30 bg-amber-500/10 p-2.5">
           <p className="text-[11px] text-amber-200 leading-relaxed">⚠ {pending.message}</p>
           <div className="mt-2 flex items-center gap-2">
             <button type="button" onClick={() => { onForceAdd(pending.amount); setPending(null) }} className="text-[11px] font-semibold text-amber-100 bg-amber-500/20 hover:bg-amber-500/30 rounded-md px-2.5 py-1 transition-colors">
@@ -627,7 +658,7 @@ function PersonalAllocationTile({
         {over ? `${formatCurrency(-remaining)} over ` : ''}{formatCurrency(spent)} of {formatCurrency(amount)} guide spent
       </p>
       {pending && (
-        <div className="mt-2.5 rounded-lg border border-amber-400/30 bg-amber-500/10 p-2.5">
+        <div className="streak-badge-pop mt-2.5 rounded-lg border border-amber-400/30 bg-amber-500/10 p-2.5">
           <p className="text-[11px] text-amber-200 leading-relaxed">⚠ {pending.message}</p>
           <div className="mt-2 flex items-center gap-2">
             <button type="button" onClick={() => { onForceAdd(pending.amount); setPending(null) }} className="text-[11px] font-semibold text-amber-100 bg-amber-500/20 hover:bg-amber-500/30 rounded-md px-2.5 py-1 transition-colors">

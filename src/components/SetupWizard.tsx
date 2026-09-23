@@ -347,6 +347,11 @@ export function SetupWizard() {
               ))}
             </div>
 
+            {/* 2026-09-23 — real step-to-step transition (was an instant swap). key={step}
+                remounts this wrapper on every step change, which is what actually retriggers
+                the CSS animation each time — a class alone wouldn't re-fire without a fresh
+                mount. */}
+            <div key={step} className="wizard-step-in">
             {step === 0 && (
               <div className="space-y-4">
                 <h2 className="text-base font-semibold">Who's this for?</h2>
@@ -500,6 +505,7 @@ export function SetupWizard() {
                 <p className="text-[11px] text-white/30">This preview writes only to its own storage — it will never touch your real Clarity data.</p>
               </div>
             )}
+            </div>
 
             <div className="flex items-center justify-between mt-6">
               <button type="button" onClick={() => setStep((s) => Math.max(0, s - 1))} disabled={step === 0} className="flex items-center gap-1 text-xs text-white/40 hover:text-white disabled:opacity-0 transition-colors">

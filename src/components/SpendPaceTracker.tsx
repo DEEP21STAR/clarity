@@ -2,7 +2,7 @@ import { useEffect, useMemo } from 'react'
 import { StatCard } from './StatCard'
 import { useStore } from '@/lib/store'
 import { calcSpendPaceAlerts, updateStreak } from '@/lib/logic'
-import { formatCurrency, todayIso } from '@/lib/utils'
+import { cn, formatCurrency, todayIso } from '@/lib/utils'
 import { AlertTriangle, Flame, Award } from 'lucide-react'
 
 const MILESTONE_LABEL: Record<number, string> = { 7: '7-day streak', 30: '30-day streak', 100: '100-day streak' }
@@ -57,11 +57,23 @@ export function SpendPaceTracker({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
+  // 2026-09-23 — "streak flame that actually grows" (from the polish table). Small and calm
+  // at a fresh streak, visibly bigger and glowing brighter the longer it runs — same real
+  // milestone bands (7/30/100) the badges already use, so the flame and the badges always
+  // agree about what counts as a "real" streak.
+  const flameSize = state.streak.current >= 30 ? 'w-7 h-7' : state.streak.current >= 7 ? 'w-6 h-6' : 'w-5 h-5'
+  const flameGlow =
+    state.streak.current >= 30
+      ? 'drop-shadow-[0_0_10px_rgba(251,191,36,0.85)]'
+      : state.streak.current >= 7
+        ? 'drop-shadow-[0_0_5px_rgba(251,191,36,0.6)]'
+        : ''
+
   return (
     <StatCard label="Spend Pace & Streak" glow={alerts.length > 0 ? 'danger' : 'success'}>
       <div className="mt-4 flex items-center justify-between flex-wrap gap-3">
         <div className="flex items-center gap-2">
-          <Flame className={`w-5 h-5 ${state.streak.current > 0 ? 'text-amber-400' : 'text-white/30'}`} />
+          <Flame className={cn(flameSize, flameGlow, 'transition-all duration-500', state.streak.current > 0 ? 'text-amber-400' : 'text-white/30')} />
           <span className="text-sm text-white/70">
             <span className="text-xl font-bold text-white tabular-nums">{state.streak.current}</span> day streak
             {state.streak.best > 0 && <span className="text-white/40"> · best {state.streak.best}</span>}
