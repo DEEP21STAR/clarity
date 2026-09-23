@@ -4,6 +4,7 @@ import { DateField } from './DateField'
 import { StoreProvider, DEFAULT_STATE, type AppState } from '@/lib/store'
 import { ToastProvider } from './Toast'
 import { AppContent } from '../App'
+import { BootSequence } from './BootSequence'
 import { cn, formatCurrency, todayIso } from '@/lib/utils'
 import { round2 } from '@/lib/logic'
 import type { Country, RecurringBill } from '@/lib/types'
@@ -109,20 +110,36 @@ const NAME_COLOR_STYLE: Record<NameColor, { text: string; glow: string; swatch: 
   neutral: { text: 'text-transparent bg-clip-text bg-gradient-to-r from-cyan-300 to-purple-300', glow: '', swatch: 'bg-gradient-to-br from-cyan-400 to-purple-400' },
 }
 
-/** Small swatch picker, not a gendered dropdown — three equal, explicit choices (including
- * neutral) rather than defaulting anyone into blue or pink. */
-function ColorSwatchPicker({ value, onChange }: { value: NameColor; onChange: (c: NameColor) => void }) {
-  const options: NameColor[] = ['neutral', 'blue', 'pink']
+/** 2026-09-23 round 3 — Deep's own read after seeing the free-choice colour swatches on his
+ * phone: "that will just get confusing" (his words). A blank set of colour dots asks the user
+ * to know something the app hasn't told them (blue = ?, pink = ?), so it replaced with named,
+ * self-explanatory options — the colour is now a consequence of the choice, not the choice
+ * itself. "Prefer not to say" (Deep said "don't prefer sharing") maps to the same neutral
+ * cyan/purple gradient neither gendered colour was defaulted to before. */
+const IDENTITY_OPTIONS: { value: NameColor; label: string }[] = [
+  { value: 'blue', label: 'Male' },
+  { value: 'pink', label: 'Female' },
+  { value: 'neutral', label: 'Prefer not to say' },
+]
+
+function IdentityColorPicker({ value, onChange }: { value: NameColor; onChange: (c: NameColor) => void }) {
   return (
-    <div className="flex items-center gap-1 shrink-0">
-      {options.map((c) => (
+    <div className="mt-1.5 flex items-center gap-1.5">
+      {IDENTITY_OPTIONS.map((opt) => (
         <button
-          key={c}
+          key={opt.value}
           type="button"
-          onClick={() => onChange(c)}
-          aria-label={`${c} name colour`}
-          className={cn('w-6 h-6 rounded-full border-2 transition-transform', NAME_COLOR_STYLE[c].swatch, value === c ? 'border-white scale-110' : 'border-white/20')}
-        />
+          onClick={() => onChange(opt.value)}
+          className={cn(
+            'flex-1 flex items-center justify-center gap-1.5 text-[11px] font-medium rounded-lg px-2 py-1.5 border transition-colors',
+            value === opt.value
+              ? cn('border-white/40 bg-white/10', NAME_COLOR_STYLE[opt.value].text)
+              : 'border-white/10 text-white/40 hover:border-white/20 hover:text-white/60'
+          )}
+        >
+          <span className={cn('w-2 h-2 rounded-full shrink-0', NAME_COLOR_STYLE[opt.value].swatch)} />
+          {opt.label}
+        </button>
       ))}
     </div>
   )
@@ -140,7 +157,17 @@ export function SetupWizard() {
   const [country, setCountry] = useState<Country>('NZ')
   const [bank, setBank] = useState('')
   const [payFrequency, setPayFrequency] = useState<Frequency>('weekly')
-  const [monthlyIncome, setMonthlyIncome] = useState(0)
+  // 2026-09-23 round 3 — "if user selects weekly or fortnightly puts that amount in, it should
+  // calculate automatically what the monthly amount would be" (Deep). payAmount is genuinely
+  // whatever cycle the user picked (a weekly figure stays a weekly figure); monthlyIncome below
+  // is now always DERIVED, never something the user is asked to already know or work out.
+  const [payAmount, setPayAmount] = useState(0)
+  const monthlyIncome = useMemo(() => {
+    if (payAmount <= 0) return 0
+    if (payFrequency === 'weekly') return round2((payAmount * 52) / 12)
+    if (payFrequency === 'fortnightly') return round2((payAmount * 26) / 12)
+    return payAmount
+  }, [payAmount, payFrequency])
   const [bills, setBills] = useState<WizardBill[]>([])
   const [billName, setBillName] = useState('')
   const [billAmount, setBillAmount] = useState(0)
@@ -281,6 +308,13 @@ export function SetupWizard() {
 
   const [launchedDashboard, setLaunchedDashboard] = useState(false)
   const [demoSeed, setDemoSeed] = useState<AppState | null>(null)
+  // 2026-09-23 round 3 — "there's no cinematic intro" (Deep). Real root cause, found by reading
+  // this file: the wizard's own "Go to Dashboard" handoff mounted AppContent directly and never
+  // rendered BootSequence at all — it's a genuinely separate code path from App()'s own real
+  // boot (App() checks isWizardDemo BEFORE ever mounting BootSequence, so the wizard's whole
+  // flow, wizard steps included, never passed through it). Not a caching/device issue — the
+  // component was simply never in this tree. Fixed at the actual entry point.
+  const [demoBooted, setDemoBooted] = useState(false)
   const launchDashboard = () => {
     // First-load fallback only — if this key already has something saved (a returning visit
     // to the demo dashboard), the real saved state wins, same as the app's normal load rules.
@@ -299,7 +333,7 @@ export function SetupWizard() {
     setCountry('NZ')
     setBank('')
     setPayFrequency('weekly')
-    setMonthlyIncome(0)
+    setPayAmount(0)
     setBills([])
     setBillDueUnknown(false)
     setCsvFileName(null)
@@ -307,6 +341,7 @@ export function SetupWizard() {
     setCsvError(null)
     setLaunchedDashboard(false)
     setDemoSeed(null)
+    setDemoBooted(false)
   }
 
   const totalMonthlyBills = useMemo(
@@ -319,6 +354,7 @@ export function SetupWizard() {
     return (
       <StoreProvider storageKey={DEMO_DASHBOARD_KEY} seedState={demoSeed}>
         <ToastProvider>
+          {!demoBooted && <BootSequence onDone={() => setDemoBooted(true)} />}
           <AppContent />
         </ToastProvider>
       </StoreProvider>
@@ -358,17 +394,13 @@ export function SetupWizard() {
                 <p className="text-xs text-white/40">Just a name — add a second person for a shared household, or leave it blank for a single view.</p>
                 <div>
                   <label className="text-xs text-white/50">Your name</label>
-                  <div className="mt-1 flex items-center gap-2">
-                    <input value={primaryName} onChange={(e) => setPrimaryName(e.target.value)} placeholder="e.g. Deep" className="w-full bg-black/30 border border-white/10 rounded-lg px-3 py-2 text-sm outline-none focus:border-cyan-400/50" />
-                    <ColorSwatchPicker value={primaryColor} onChange={setPrimaryColor} />
-                  </div>
+                  <input value={primaryName} onChange={(e) => setPrimaryName(e.target.value)} placeholder="e.g. Deep" className="mt-1 w-full bg-black/30 border border-white/10 rounded-lg px-3 py-2 text-sm outline-none focus:border-cyan-400/50" />
+                  <IdentityColorPicker value={primaryColor} onChange={setPrimaryColor} />
                 </div>
                 <div>
                   <label className="text-xs text-white/50">Add a second person (optional)</label>
-                  <div className="mt-1 flex items-center gap-2">
-                    <input value={secondaryName} onChange={(e) => setSecondaryName(e.target.value)} placeholder="e.g. Mimi" className="w-full bg-black/30 border border-white/10 rounded-lg px-3 py-2 text-sm outline-none focus:border-cyan-400/50" />
-                    <ColorSwatchPicker value={secondaryColor} onChange={setSecondaryColor} />
-                  </div>
+                  <input value={secondaryName} onChange={(e) => setSecondaryName(e.target.value)} placeholder="e.g. Mimi" className="mt-1 w-full bg-black/30 border border-white/10 rounded-lg px-3 py-2 text-sm outline-none focus:border-cyan-400/50" />
+                  <IdentityColorPicker value={secondaryColor} onChange={setSecondaryColor} />
                 </div>
               </div>
             )}
@@ -391,18 +423,29 @@ export function SetupWizard() {
 
             {step === 2 && (
               <div className="space-y-4">
-                <h2 className="text-base font-semibold">How and what do you get paid?</h2>
+                <h2 className="text-base font-semibold">How often are you paid, and how much?</h2>
                 <div>
                   <label className="text-xs text-white/50 mb-1.5 block">Pay cycle</label>
                   <SegmentedControl value={payFrequency} onChange={setPayFrequency} options={FREQ_OPTIONS} />
                 </div>
                 <div>
-                  <label className="text-xs text-white/50">Income, per month (rough total)</label>
+                  <label className="text-xs text-white/50">
+                    Income, {payFrequency === 'weekly' ? 'per week' : payFrequency === 'fortnightly' ? 'per fortnight' : 'per month'}
+                  </label>
                   <div className="mt-1 flex items-center gap-2 bg-black/30 border border-white/10 rounded-lg px-3 py-2.5 focus-within:border-cyan-400/50">
                     <span className="text-white/40">$</span>
-                    <input type="number" value={monthlyIncome || ''} onChange={(e) => setMonthlyIncome(parseFloat(e.target.value) || 0)} placeholder="Monthly income" className="w-full bg-transparent outline-none tabular-nums text-sm" />
-                    <span className="text-white/30 text-xs">/month</span>
+                    <input
+                      type="number"
+                      value={payAmount || ''}
+                      onChange={(e) => setPayAmount(parseFloat(e.target.value) || 0)}
+                      placeholder={payFrequency === 'weekly' ? 'Weekly income' : payFrequency === 'fortnightly' ? 'Fortnightly income' : 'Monthly income'}
+                      className="w-full bg-transparent outline-none tabular-nums text-sm"
+                    />
+                    <span className="text-white/30 text-xs">/{payFrequency === 'weekly' ? 'week' : payFrequency === 'fortnightly' ? 'fortnight' : 'month'}</span>
                   </div>
+                  {payFrequency !== 'monthly' && payAmount > 0 && (
+                    <p className="text-[11px] text-cyan-300/70 mt-1.5">≈ {formatCurrency(monthlyIncome)}/month — worked out automatically</p>
+                  )}
                 </div>
               </div>
             )}

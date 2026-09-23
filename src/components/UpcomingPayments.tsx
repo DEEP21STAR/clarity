@@ -544,14 +544,26 @@ function QuickAddButton({ onSubmit, accent }: { onSubmit: (amount: number) => vo
   }
 
   if (!open) {
+    // 2026-09-23 round 3 — "you can't even see if that's even an option there... needs to be
+    // illuminated" (Deep, re-watching his own phone use). The old button was a 28px ghost
+    // circle — a border barely lighter than the card it sat on, no label, same colour whether
+    // it did anything or not. Swapped for a filled, glowing, labeled pill using the tile's own
+    // accent gradient (already threaded in as `accent`) so it reads as a real lit-up control,
+    // not a stray dot next to the balance.
     return (
       <button
         type="button"
         onClick={() => setOpen(true)}
-        aria-label="Log a spend"
-        className="w-7 h-7 rounded-full flex items-center justify-center border border-white/15 text-white/50 hover:text-white hover:border-white/40 transition-colors shrink-0"
+        aria-label="Add a manual spend"
+        className={cn(
+          'flex items-center gap-1 rounded-full pl-1.5 pr-2.5 py-1.5 text-[11px] font-bold text-black shrink-0 shadow-[0_0_14px_rgba(255,255,255,0.22)] hover:scale-105 hover:shadow-[0_0_18px_rgba(255,255,255,0.35)] active:scale-95 transition-all',
+          accent
+        )}
       >
-        <Plus className="w-3.5 h-3.5" />
+        <span className="w-4 h-4 rounded-full bg-black/15 flex items-center justify-center">
+          <Plus className="w-3 h-3" strokeWidth={3} />
+        </span>
+        Add
       </button>
     )
   }
