@@ -7,13 +7,14 @@ import { PaymentHistoryPanel } from './PaymentHistoryPanel'
 import { SegmentedControl } from './SegmentedControl'
 import { calcWfhFixedRate, gstOnExclusive, gstFromInclusive, NZ_WFH_FIXED_RATE_PER_HOUR, AU_WFH_FIXED_RATE_PER_HOUR, calcRoundUpSavings, runDataHealthCheck, projectBalanceSeries } from '@/lib/logic'
 import { cn, formatCurrency, formatShortDate, todayIso } from '@/lib/utils'
-import { Plus, Trash2, Volume2, VolumeX, AlertTriangle, Info, ShieldCheck, Coffee, TrendingUp, Award, Flame, PiggyBank, Lock } from 'lucide-react'
+import { Plus, Trash2, Volume2, VolumeX, AlertTriangle, Info, ShieldCheck, Coffee, TrendingUp, Award, Flame, PiggyBank, Lock, BellRing } from 'lucide-react'
 import { useUndoableDelete } from '@/lib/useUndoableDelete'
 import { DateField } from './DateField'
 import { Help } from './Help'
+import { isNotificationSupported, getNotificationPermission, requestNotificationPermission } from '@/lib/notifications'
 
 export function Tools() {
-  const { state, addOneOffEntry, removeOneOffEntry, setSoundEnabled, setTextScale } = useStore()
+  const { state, addOneOffEntry, removeOneOffEntry, setSoundEnabled, setTextScale, setBillAlertsEnabled } = useStore()
   const withUndo = useUndoableDelete()
   const [hoursPerWeek, setHoursPerWeek] = useState(15)
   const [weeksPerYear, setWeeksPerYear] = useState(48)
@@ -27,6 +28,13 @@ export function Tools() {
   const [extraUsageAmount, setExtraUsageAmount] = useState(0)
   const [extraUsageDate, setExtraUsageDate] = useState(todayIso())
   const [whatIfExtraPerWeek, setWhatIfExtraPerWeek] = useState(0)
+  const [notifPermission, setNotifPermission] = useState(getNotificationPermission())
+
+  const handleEnableAlerts = async () => {
+    const result = await requestNotificationPermission()
+    setNotifPermission(result)
+    if (result === 'granted') setBillAlertsEnabled(true)
+  }
 
   const roundUpSavings = useMemo(() => calcRoundUpSavings(state.transactions, roundTo), [state.transactions, roundTo])
 
@@ -113,6 +121,30 @@ export function Tools() {
             ]}
           />
         </div>
+      </StatCard>
+
+      {/* "proceed with all" — Bill-due push notifications, honestly scoped: real browser
+          Notification API, fires while this tab/PWA is open (checked on load + every 30 min).
+          No push server behind it — cannot wake a fully-closed app. Copy below says exactly
+          that instead of overselling "even when closed" push. */}
+      <StatCard label="Bill Alerts" glow="danger" tooltip="Real browser notifications for bills due today or tomorrow — but only while Clarity is open in a tab or as an installed app. There's no server behind this, so it can't wake a fully-closed browser or notify while your phone is asleep.">
+        {!isNotificationSupported() ? (
+          <p className="mt-4 text-sm text-white/40">Notifications aren't supported in this browser.</p>
+        ) : notifPermission === 'denied' ? (
+          <p className="mt-4 text-sm text-amber-300/80 flex items-start gap-2"><AlertTriangle className="w-4 h-4 mt-0.5 shrink-0" /> Blocked in your browser settings. Enable notifications for this site to turn alerts back on.</p>
+        ) : notifPermission === 'granted' && state.billAlertsEnabled ? (
+          <div className="mt-4 flex items-center justify-between">
+            <span className="text-sm text-emerald-300 flex items-center gap-1.5"><BellRing className="w-4 h-4" /> On — bills due today/tomorrow will alert you while the app is open.</span>
+            <button onClick={() => setBillAlertsEnabled(false)} className="text-xs text-white/40 hover:text-white/70 underline">Turn off</button>
+          </div>
+        ) : (
+          <button
+            onClick={handleEnableAlerts}
+            className="mt-4 flex items-center gap-2 rounded-lg border border-rose-400/30 bg-rose-500/10 px-4 py-2 text-sm text-rose-200 hover:bg-rose-500/20 transition-colors"
+          >
+            <BellRing className="w-4 h-4" /> Enable bill alerts
+          </button>
+        )}
       </StatCard>
 
       <StatCard label="Achievements" glow="amber" tooltip="Real milestones this account has actually hit — no fabricated criteria.">

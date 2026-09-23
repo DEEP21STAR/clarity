@@ -80,6 +80,10 @@ export interface AppState {
   /** 2026-09-23 round 7 — real app-wide text-size preference, default 'small' preserves every
    * existing account's exact current appearance. */
   textScale: TextScale
+  /** Real browser Notification permission has been granted AND Deep opted in via Tools —
+   * gates whether App.tsx's bill-due check actually fires a notification. Defaults false:
+   * never surprise a user with a permission prompt or a notification they didn't ask for. */
+  billAlertsEnabled: boolean
 }
 
 export const DEFAULT_STATE: AppState = {
@@ -112,6 +116,7 @@ export const DEFAULT_STATE: AppState = {
   primaryColor: 'neutral',
   secondaryColor: 'neutral',
   textScale: 'small',
+  billAlertsEnabled: false,
 }
 
 /**
@@ -195,6 +200,7 @@ interface StoreContextValue {
    * this drives) scales every existing size across the whole app for free, no per-component
    * changes needed. */
   setTextScale: (scale: TextScale) => void
+  setBillAlertsEnabled: (enabled: boolean) => void
   /** #8 expanded — records a real amount+date payment AND reduces the real balance/remaining it targets. Returns the new record's id. */
   recordPayment: (input: Omit<PaymentRecord, 'id' | 'recordedAt'>) => string
   /** Reverses a payment's balance effect and removes it — the real Undo for #8's toast action. */
@@ -376,6 +382,7 @@ export function StoreProvider({ children, storageKey = STORAGE_KEY, seedState = 
     restoreState: (snapshot) => setState(snapshot),
     setSoundEnabled: (enabled) => setState((s) => ({ ...s, soundEnabled: enabled })),
     setTextScale: (scale) => setState((s) => ({ ...s, textScale: scale })),
+    setBillAlertsEnabled: (enabled) => setState((s) => ({ ...s, billAlertsEnabled: enabled })),
   }), [state])
 
   return <StoreContext.Provider value={value}>{children}</StoreContext.Provider>

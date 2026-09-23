@@ -24,6 +24,7 @@ import { Welcome } from './components/Welcome'
 import { WhetuFooter } from './components/WhetuFooter'
 import { computeCurrentHealthScore, calcNetWorth, dueTodayBills } from '@/lib/logic'
 import { cn, formatCurrency, todayIso } from '@/lib/utils'
+import { billsDueForAlert, sendDueBillNotifications } from '@/lib/notifications'
 import { captureThumbnail } from '@/lib/thumbnailCache'
 import {
   LayoutDashboard, CalendarClock, Receipt, PieChart, CreditCard, ShoppingCart, Wrench, TrendingUp, CalendarDays, Command, WifiOff, Check, Menu,
@@ -186,6 +187,22 @@ export function AppContent() {
       window.removeEventListener('offline', goOffline)
     }
   }, [])
+
+  // "proceed with all" — Bill-due push notifications, honestly scoped: real browser
+  // Notification API firing while this tab/PWA is open, with no push server behind it, so it
+  // cannot wake a fully-closed app. Checks on load, then every 30 min the tab stays open, so a
+  // bill that becomes due-today mid-session still gets caught. sendDueBillNotifications itself
+  // dedupes per bill+date via localStorage, so re-mounts/re-checks never double-fire.
+  useEffect(() => {
+    if (!state.billAlertsEnabled) return
+    const check = () => {
+      const items = billsDueForAlert(state.bills, state.periodicBills, todayIso())
+      sendDueBillNotifications(items)
+    }
+    check()
+    const interval = window.setInterval(check, 30 * 60 * 1000)
+    return () => window.clearInterval(interval)
+  }, [state.billAlertsEnabled, state.bills, state.periodicBills])
 
   // Round 21, item #21 — a real, honest "Saved" pulse: store.tsx already writes every state
   // change to localStorage synchronously on the same render; this just surfaces that real
