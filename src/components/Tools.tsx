@@ -7,7 +7,7 @@ import { PaymentHistoryPanel } from './PaymentHistoryPanel'
 import { SegmentedControl } from './SegmentedControl'
 import { calcWfhFixedRate, gstOnExclusive, gstFromInclusive, NZ_WFH_FIXED_RATE_PER_HOUR, AU_WFH_FIXED_RATE_PER_HOUR, calcRoundUpSavings, runDataHealthCheck } from '@/lib/logic'
 import { formatCurrency, formatShortDate, todayIso } from '@/lib/utils'
-import { Plus, Trash2, Volume2, VolumeX, AlertTriangle, Info, ShieldCheck } from 'lucide-react'
+import { Plus, Trash2, Volume2, VolumeX, AlertTriangle, Info, ShieldCheck, Coffee } from 'lucide-react'
 import { useUndoableDelete } from '@/lib/useUndoableDelete'
 import { DateField } from './DateField'
 
@@ -228,6 +228,29 @@ export function Tools() {
       </StatCard>
 
       <DataExportPanel />
+
+      {/* 2026-09-23 — Clarity is free, donation-supported (same honor-system model as NUTRYOS),
+          separate Buy Me a Coffee page so support/interest for each product stays distinct. */}
+      <StatCard
+        label="Support Clarity"
+        glow="purple"
+        tooltip="Clarity stays free — this is entirely optional, honor-system support."
+      >
+        <p className="mt-4 text-xs text-white/40">
+          Clarity is free to use — building and hosting it isn't. If it's saving you real time or
+          stress, a coffee genuinely helps keep it running. Completely optional, no strings attached.
+        </p>
+        <a
+          href="https://buymeacoffee.com/clarity"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="donation-pulse mt-4 block rounded-xl border border-purple-400/30 bg-purple-400/10 py-3 text-center text-sm font-semibold text-purple-200"
+        >
+          <span className="inline-flex items-center gap-2 justify-center">
+            <Coffee className="w-4 h-4" /> Buy me a coffee
+          </span>
+        </a>
+      </StatCard>
     </div>
   )
 }

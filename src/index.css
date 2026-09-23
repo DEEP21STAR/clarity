@@ -641,3 +641,58 @@ mark.search-hit { background: rgba(34, 211, 238, 0.35); color: #fff; border-radi
 @media (prefers-reduced-motion: reduce) {
   .command-preview-pop { animation: none; }
 }
+
+/* Support Clarity (Buy Me a Coffee) — same real pulse+shimmer technique as NUTRYOS's
+   .donation-pulse, tuned to Clarity's own cyan/purple aurora instead of NUTRYOS's donation amber.
+   Needs position:relative+overflow:hidden on the element itself to contain the sweep (added at
+   the JSX call site in Tools.tsx). */
+.donation-pulse {
+  position: relative;
+  overflow: hidden;
+  animation: donationPulse 2.2s ease-in-out infinite;
+}
+.donation-pulse::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  width: 60px;
+  background: linear-gradient(100deg, transparent, rgb(34 211 238 / 0.55), rgb(168 85 247 / 0.55), transparent);
+  animation: donationShimmerSweep 2.8s ease-in-out infinite;
+  pointer-events: none;
+}
+@keyframes donationPulse {
+  0%,
+  100% {
+    box-shadow: 0 0 6px 0 rgb(34 211 238 / 0.3);
+    border-color: rgb(34 211 238 / 0.35);
+  }
+  50% {
+    box-shadow: 0 0 20px 3px rgb(168 85 247 / 0.55);
+    border-color: rgb(168 85 247 / 0.8);
+  }
+}
+@keyframes donationShimmerSweep {
+  0% {
+    transform: translateX(-80px);
+    opacity: 0;
+  }
+  15% {
+    opacity: 1;
+  }
+  45% {
+    opacity: 1;
+  }
+  65% {
+    opacity: 0;
+  }
+  100% {
+    transform: translateX(340px);
+    opacity: 0;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .donation-pulse,
+  .donation-pulse::after {
+    animation: none;
+  }
+}
