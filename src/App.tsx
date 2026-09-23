@@ -121,6 +121,13 @@ export function AppContent() {
     document.documentElement.dataset.textScale = state.textScale
   }, [state.textScale])
 
+  // "proceed with all" — Settings > Themes. Same data-attribute pattern as textScale above:
+  // index.css's html[data-accent-theme='...'] rules override the --theme-1/2/3 tokens that
+  // drive the app's shared brand gradient (logo, headings, nav, cards, wizard frame).
+  useEffect(() => {
+    document.documentElement.dataset.accentTheme = state.accentTheme
+  }, [state.accentTheme])
+
   // Round 21, item #3 — caches a thumbnail of whichever tab is genuinely open, for the
   // ⌘K palette's hover preview. Waits for the entrance animation to settle (~900ms) so the
   // captured frame shows the tab at rest, not mid fly-in. See thumbnailCache.ts's doc comment

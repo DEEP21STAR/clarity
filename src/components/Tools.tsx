@@ -14,7 +14,7 @@ import { Help } from './Help'
 import { isNotificationSupported, getNotificationPermission, requestNotificationPermission } from '@/lib/notifications'
 
 export function Tools() {
-  const { state, addOneOffEntry, removeOneOffEntry, setSoundEnabled, setTextScale, setBillAlertsEnabled } = useStore()
+  const { state, addOneOffEntry, removeOneOffEntry, setSoundEnabled, setTextScale, setBillAlertsEnabled, setAccentTheme } = useStore()
   const withUndo = useUndoableDelete()
   const [hoursPerWeek, setHoursPerWeek] = useState(15)
   const [weeksPerYear, setWeeksPerYear] = useState(48)
@@ -120,6 +120,38 @@ export function Tools() {
               { value: 'large', label: 'Large' },
             ]}
           />
+        </div>
+      </StatCard>
+
+      {/* "proceed with all" — Settings > Themes, contained scope (see index.css's --theme-1/2/3
+          comment): swaps the app's shared brand gradient only. Semantic StatCard colors
+          (danger/success/amber) and a couple of one-off hardcoded hero-number gradients
+          elsewhere are unaffected — that's a much bigger refactor, out of scope here. */}
+      <StatCard label="Theme" glow="purple" tooltip="Changes the app's brand gradient — logo, headings, nav glow, card hover border, wizard frame. Warning/success/danger colors elsewhere stay the same on purpose, since those carry real meaning.">
+        <div className="mt-4 grid grid-cols-4 gap-2">
+          {(
+            [
+              { value: 'aurora', label: 'Aurora', from: '#22d3ee', to: '#a855f7' },
+              { value: 'sunset', label: 'Sunset', from: '#fb923c', to: '#f43f5e' },
+              { value: 'emerald', label: 'Emerald', from: '#34d399', to: '#06b6d4' },
+              { value: 'violet', label: 'Violet', from: '#a855f7', to: '#ec4899' },
+            ] as const
+          ).map((t) => (
+            <button
+              key={t.value}
+              onClick={() => setAccentTheme(t.value)}
+              className={cn(
+                'flex flex-col items-center gap-1.5 rounded-lg border p-2 transition-colors',
+                state.accentTheme === t.value ? 'border-white/40 bg-white/5' : 'border-white/10 hover:border-white/20'
+              )}
+            >
+              <span
+                className="w-full h-6 rounded-md"
+                style={{ background: `linear-gradient(90deg, ${t.from}, ${t.to})` }}
+              />
+              <span className={cn('text-[11px]', state.accentTheme === t.value ? 'text-white' : 'text-white/50')}>{t.label}</span>
+            </button>
+          ))}
         </div>
       </StatCard>
 

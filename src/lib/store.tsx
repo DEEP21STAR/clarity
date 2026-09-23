@@ -23,6 +23,7 @@ import { todayIso } from './utils'
 export const STORAGE_KEY = 'clarity-dashboard-state-v5'
 
 export type TextScale = 'small' | 'medium' | 'large'
+export type AccentTheme = 'aurora' | 'sunset' | 'emerald' | 'violet'
 
 /** 2026-09-23 round 10 — the wizard's own Identity step already collects this (Male -> light
  * blue neon, Female -> pink neon, Prefer not to say -> neutral cyan/purple), but it was only
@@ -84,6 +85,10 @@ export interface AppState {
    * gates whether App.tsx's bill-due check actually fires a notification. Defaults false:
    * never surprise a user with a permission prompt or a notification they didn't ask for. */
   billAlertsEnabled: boolean
+  /** "proceed with all" — Settings > Themes. Only swaps the app's shared brand gradient tokens
+   * (index.css's --theme-1/2/3) — semantic StatCard colors (danger/success/amber) stay fixed.
+   * Default 'aurora' matches every existing account's current cyan/purple/pink look exactly. */
+  accentTheme: AccentTheme
 }
 
 export const DEFAULT_STATE: AppState = {
@@ -117,6 +122,7 @@ export const DEFAULT_STATE: AppState = {
   secondaryColor: 'neutral',
   textScale: 'small',
   billAlertsEnabled: false,
+  accentTheme: 'aurora',
 }
 
 /**
@@ -201,6 +207,7 @@ interface StoreContextValue {
    * changes needed. */
   setTextScale: (scale: TextScale) => void
   setBillAlertsEnabled: (enabled: boolean) => void
+  setAccentTheme: (theme: AccentTheme) => void
   /** #8 expanded — records a real amount+date payment AND reduces the real balance/remaining it targets. Returns the new record's id. */
   recordPayment: (input: Omit<PaymentRecord, 'id' | 'recordedAt'>) => string
   /** Reverses a payment's balance effect and removes it — the real Undo for #8's toast action. */
@@ -383,6 +390,7 @@ export function StoreProvider({ children, storageKey = STORAGE_KEY, seedState = 
     setSoundEnabled: (enabled) => setState((s) => ({ ...s, soundEnabled: enabled })),
     setTextScale: (scale) => setState((s) => ({ ...s, textScale: scale })),
     setBillAlertsEnabled: (enabled) => setState((s) => ({ ...s, billAlertsEnabled: enabled })),
+    setAccentTheme: (theme) => setState((s) => ({ ...s, accentTheme: theme })),
   }), [state])
 
   return <StoreContext.Provider value={value}>{children}</StoreContext.Provider>

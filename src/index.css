@@ -9,7 +9,23 @@
   --amber: #f59e0b;
   --danger: #ff2d55;
   --success: #34d399;
+
+  /* "proceed with all" — Settings > Themes, contained scope: these 3 tokens drive the app's
+     BRAND gradient (logo, page headings, nav underline/glow, card hover border, segmented
+     control, wizard frame) — the handful of rules that repeat the same cyan/purple/pink motif
+     everywhere. Semantic colors (StatCard's danger/success/amber, the Debts red or Net Worth
+     green) stay fixed regardless of theme — those mean something (debt, growth, warning) and
+     re-skinning them would make the app harder to read, not more personal. A few one-off
+     hardcoded gradients on individual hero numbers (e.g. the Live Funds figure) are outside
+     this pass too — reskinning every such literal across the whole component tree is a much
+     bigger job than "add a theme picker" and isn't part of this scope. */
+  --theme-1: #22d3ee;
+  --theme-2: #a855f7;
+  --theme-3: #ec4899;
 }
+html[data-accent-theme='sunset'] { --theme-1: #fb923c; --theme-2: #f43f5e; --theme-3: #f59e0b; }
+html[data-accent-theme='emerald'] { --theme-1: #34d399; --theme-2: #06b6d4; --theme-3: #2dd4bf; }
+html[data-accent-theme='violet'] { --theme-1: #a855f7; --theme-2: #ec4899; --theme-3: #6366f1; }
 
 /* 2026-09-23 round 7 — "ability to increase font sizes with 3 options" (Deep). Tailwind's
    text-* utilities are all defined in rem, so scaling the root <html> font-size scales every
@@ -51,8 +67,8 @@ html {
 }
 
 body {
-  background: radial-gradient(1200px 800px at 20% -10%, rgba(34, 211, 238, 0.08), transparent),
-    radial-gradient(1200px 800px at 90% 10%, rgba(168, 85, 247, 0.10), transparent),
+  background: radial-gradient(1200px 800px at 20% -10%, color-mix(in oklab, var(--theme-1) 8%, transparent), transparent),
+    radial-gradient(1200px 800px at 90% 10%, color-mix(in oklab, var(--theme-2) 10%, transparent), transparent),
     var(--bg-void);
   color: #e6e8ee;
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
@@ -63,7 +79,7 @@ body {
 ::-webkit-scrollbar { width: 10px; height: 10px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb {
-  background: linear-gradient(180deg, var(--cyan), var(--purple));
+  background: linear-gradient(180deg, var(--theme-1), var(--theme-2));
   border-radius: 8px;
 }
 
@@ -237,7 +253,7 @@ body {
 
 /* ===================== Gradient headings — same treatment as the Live Funds hero number and the Clarity wordmark, applied everywhere else too ===================== */
 .gradient-heading {
-  background-image: linear-gradient(90deg, #67e8f9, #a855f7);
+  background-image: linear-gradient(90deg, var(--theme-1), var(--theme-2));
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
@@ -271,7 +287,7 @@ button:not(:disabled):active {
   bottom: -0.35rem;
   height: 2px;
   border-radius: 2px;
-  background: linear-gradient(90deg, #22d3ee, #a855f7);
+  background: linear-gradient(90deg, var(--theme-1), var(--theme-2));
   transform: scaleX(0);
   transition: transform 0.25s ease-out;
   transform-origin: center;
@@ -280,8 +296,8 @@ button:not(:disabled):active {
   transform: scaleX(1);
 }
 @keyframes nav-tab-glow-pulse {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(34, 211, 238, 0); }
-  50% { box-shadow: 0 0 16px 1px rgba(34, 211, 238, 0.35); }
+  0%, 100% { box-shadow: 0 0 0 0 color-mix(in oklab, var(--theme-1) 0%, transparent); }
+  50% { box-shadow: 0 0 16px 1px color-mix(in oklab, var(--theme-1) 35%, transparent); }
 }
 .nav-tab-active {
   animation: nav-tab-glow-pulse 2.6s ease-in-out infinite;
@@ -337,8 +353,8 @@ button:not(:disabled):active {
   transform: scale(1.08);
 }
 @keyframes nav-icon-active-glow {
-  0%, 100% { filter: drop-shadow(0 0 2px rgba(34, 211, 238, 0.5)); }
-  50% { filter: drop-shadow(0 0 6px rgba(168, 85, 247, 0.7)); }
+  0%, 100% { filter: drop-shadow(0 0 2px color-mix(in oklab, var(--theme-1) 50%, transparent)); }
+  50% { filter: drop-shadow(0 0 6px color-mix(in oklab, var(--theme-2) 70%, transparent)); }
 }
 .nav-tab-active .nav-icon {
   animation: nav-icon-active-glow 2.6s ease-in-out infinite;
@@ -454,9 +470,9 @@ button:not(:disabled):active {
    * saturated glow below is kept for the cinematic look — it's a drop
    * shadow behind the pill, not the text-bearing surface.
    */
-  background: linear-gradient(90deg, #a5f3fc, #d8b4fe);
+  background: linear-gradient(90deg, color-mix(in oklab, var(--theme-1) 45%, white), color-mix(in oklab, var(--theme-2) 45%, white));
   transition: left 0.28s cubic-bezier(0.22, 1, 0.36, 1), width 0.28s cubic-bezier(0.22, 1, 0.36, 1);
-  box-shadow: 0 0 16px -2px rgba(34, 211, 238, 0.6);
+  box-shadow: 0 0 16px -2px color-mix(in oklab, var(--theme-1) 60%, transparent);
 }
 @media (prefers-reduced-motion: reduce) {
   .segmented-thumb { transition: none; }
@@ -474,7 +490,7 @@ button:not(:disabled):active {
    tween itself, alongside the existing tilt rotation, so they never fight
    over the transform property — this just adds the shadow half). ---- */
 .card-lift { transition: box-shadow 0.3s ease-out; }
-.card-lift:hover { box-shadow: 0 18px 40px -12px rgba(0, 0, 0, 0.55), 0 0 30px -8px rgba(34, 211, 238, 0.35); }
+.card-lift:hover { box-shadow: 0 18px 40px -12px rgba(0, 0, 0, 0.55), 0 0 30px -8px color-mix(in oklab, var(--theme-1) 35%, transparent); }
 @media (prefers-reduced-motion: reduce) {
   .card-lift { transition: none; }
 }
@@ -489,7 +505,7 @@ button:not(:disabled):active {
   inset: -1.5px;
   border-radius: inherit;
   padding: 1.5px;
-  background: conic-gradient(from var(--chase-angle), transparent 0%, #22d3ee 12%, #a855f7 24%, transparent 38%);
+  background: conic-gradient(from var(--chase-angle), transparent 0%, var(--theme-1) 12%, var(--theme-2) 24%, transparent 38%);
   -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
   -webkit-mask-composite: xor;
   mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
@@ -771,15 +787,15 @@ mark.search-hit { background: rgba(34, 211, 238, 0.35); color: #fff; border-radi
    panel in the app — this is the one moment that should feel like its own thing, not another
    StatCard. */
 @keyframes wizard-neon-cycle {
-  0%, 100% { border-color: rgba(34,211,238,0.55); box-shadow: 0 0 50px -5px rgba(34,211,238,0.35), 0 0 100px -20px rgba(34,211,238,0.25), inset 0 0 40px -20px rgba(34,211,238,0.15); }
-  33% { border-color: rgba(168,85,247,0.55); box-shadow: 0 0 50px -5px rgba(168,85,247,0.35), 0 0 100px -20px rgba(168,85,247,0.25), inset 0 0 40px -20px rgba(168,85,247,0.15); }
-  66% { border-color: rgba(236,72,153,0.55); box-shadow: 0 0 50px -5px rgba(236,72,153,0.35), 0 0 100px -20px rgba(236,72,153,0.25), inset 0 0 40px -20px rgba(236,72,153,0.15); }
+  0%, 100% { border-color: color-mix(in oklab, var(--theme-1) 55%, transparent); box-shadow: 0 0 50px -5px color-mix(in oklab, var(--theme-1) 35%, transparent), 0 0 100px -20px color-mix(in oklab, var(--theme-1) 25%, transparent), inset 0 0 40px -20px color-mix(in oklab, var(--theme-1) 15%, transparent); }
+  33% { border-color: color-mix(in oklab, var(--theme-2) 55%, transparent); box-shadow: 0 0 50px -5px color-mix(in oklab, var(--theme-2) 35%, transparent), 0 0 100px -20px color-mix(in oklab, var(--theme-2) 25%, transparent), inset 0 0 40px -20px color-mix(in oklab, var(--theme-2) 15%, transparent); }
+  66% { border-color: color-mix(in oklab, var(--theme-3) 55%, transparent); box-shadow: 0 0 50px -5px color-mix(in oklab, var(--theme-3) 35%, transparent), 0 0 100px -20px color-mix(in oklab, var(--theme-3) 25%, transparent), inset 0 0 40px -20px color-mix(in oklab, var(--theme-3) 15%, transparent); }
 }
 .wizard-neon-frame {
   animation: wizard-neon-cycle 6s ease-in-out infinite;
 }
 @media (prefers-reduced-motion: reduce) {
-  .wizard-neon-frame { animation: none; border-color: rgba(34,211,238,0.5); box-shadow: 0 0 50px -5px rgba(34,211,238,0.3); }
+  .wizard-neon-frame { animation: none; border-color: color-mix(in oklab, var(--theme-1) 50%, transparent); box-shadow: 0 0 50px -5px color-mix(in oklab, var(--theme-1) 30%, transparent); }
 }
 
 /* Header name badge — 2026-09-23 round 10: "the font colour and style needs a huge uplift as
