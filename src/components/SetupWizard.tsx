@@ -354,15 +354,25 @@ export function SetupWizard() {
               <button type="button" onClick={() => setStep((s) => Math.max(0, s - 1))} disabled={step === 0} className="flex items-center gap-1 text-xs text-white/40 hover:text-white disabled:opacity-0 transition-colors">
                 <ChevronLeft className="w-3.5 h-3.5" /> Back
               </button>
-              {step < 5 ? (
-                <button type="button" onClick={() => canAdvance && setStep((s) => s + 1)} disabled={!canAdvance} className={cn('flex items-center gap-1 text-sm font-semibold rounded-lg px-4 py-2 transition-colors', canAdvance ? 'bg-gradient-to-r from-cyan-400 to-purple-500 text-black' : 'bg-white/5 text-white/20 cursor-not-allowed')}>
-                  Next <ChevronRight className="w-3.5 h-3.5" />
-                </button>
-              ) : (
-                <button type="button" onClick={finish} className="flex items-center gap-1.5 text-sm font-semibold rounded-lg px-4 py-2 bg-gradient-to-r from-cyan-400 to-purple-500 text-black">
-                  <Sparkles className="w-3.5 h-3.5" /> Finish setup
-                </button>
-              )}
+              <div className="flex items-center gap-4">
+                {/* Bills and Statement are genuinely optional (canAdvance is already true for
+                    both) — an explicit "Skip" makes that obvious instead of making someone
+                    guess whether Next with nothing filled in is allowed. */}
+                {(step === 3 || step === 4) && (
+                  <button type="button" onClick={() => setStep((s) => s + 1)} className="text-xs text-white/35 hover:text-white/60 transition-colors">
+                    Skip{step === 3 ? ' — add payments later' : ' — import later'}
+                  </button>
+                )}
+                {step < 5 ? (
+                  <button type="button" onClick={() => canAdvance && setStep((s) => s + 1)} disabled={!canAdvance} className={cn('flex items-center gap-1 text-sm font-semibold rounded-lg px-4 py-2 transition-colors', canAdvance ? 'bg-gradient-to-r from-cyan-400 to-purple-500 text-black' : 'bg-white/5 text-white/20 cursor-not-allowed')}>
+                    Next <ChevronRight className="w-3.5 h-3.5" />
+                  </button>
+                ) : (
+                  <button type="button" onClick={finish} className="flex items-center gap-1.5 text-sm font-semibold rounded-lg px-4 py-2 bg-gradient-to-r from-cyan-400 to-purple-500 text-black">
+                    <Sparkles className="w-3.5 h-3.5" /> Finish setup
+                  </button>
+                )}
+              </div>
             </div>
           </div>
         ) : (

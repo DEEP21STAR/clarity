@@ -99,9 +99,35 @@ export function UpcomingPayments() {
   const fuelAmount = (liveFundsBeforeSpend * allocation.fuel) / 100
   const personalAmount = (liveFundsBeforeSpend * allocation.personal) / 100
 
-  const quickAdd = (cat: 'food' | 'fuel' | 'personal', amount: number) => {
-    if (amount <= 0) return
+  const commitQuickAdd = (cat: 'food' | 'fuel' | 'personal', amount: number) => {
     updateSpendTracker({ [cat]: round2(state.spendTracker[cat] + amount) } as Partial<typeof state.spendTracker>)
+  }
+
+  // 2026-09-23 — "would love Live Funds to be aware of upcoming payments" (Deep). Checked
+  // BEFORE committing a quick-log, not after — a warning shown after the money's already
+  // "spent" only tells you what you already did. Scoped to monthly bills specifically, same
+  // as DueBadge elsewhere in this file — weekly/fortnightly bills don't carry a single
+  // confirmed due-date field to check against (documented limitation, not an oversight).
+  // Names ONE bill (the soonest due) rather than listing every bill at risk — a single
+  // concrete "X is due Y" reads as useful; a list reads as an alarm wall.
+  const checkQuickAddRisk = (amount: number): string | null => {
+    const projected = round2(liveFundsAvailable - amount)
+    if (projected >= 0) return null
+    const upcoming = state.bills
+      .filter((b) => b.active)
+      .map((b) => ({ bill: b, due: nextMonthlyDueDate(b.dueDay, today) }))
+      .filter(({ due }) => due <= addDaysIso(today, 14))
+      .sort((a, b) => (a.due < b.due ? -1 : 1))[0]
+    if (!upcoming) return null
+    return `You may not have enough for this — ${upcoming.bill.name} (${formatCurrency(upcoming.bill.amount)}) is due ${formatShortDate(upcoming.due)}. Logging this leaves ${formatCurrency(projected)}.`
+  }
+
+  const quickAdd = (cat: 'food' | 'fuel' | 'personal', amount: number): string | null => {
+    if (amount <= 0) return null
+    const warning = checkQuickAddRisk(amount)
+    if (warning) return warning
+    commitQuickAdd(cat, amount)
+    return null
   }
 
   // GSAP entrance for the hero card, a "shockwave" burst on going negative,
@@ -232,14 +258,15 @@ export function UpcomingPayments() {
 
           {/* Food / Fuel / Personal breakdown — the whole point of this feature */}
           <div className="mt-8 grid grid-cols-1 md:grid-cols-3 gap-4 text-left">
-            <AllocationTile label="Food Shopping" amount={foodAmount} spent={state.spendTracker.food} pct={allocation.food} glowFrom="from-emerald-400" glowTo="to-cyan-400" onChange={(v) => setAllocation((a) => ({ ...a, food: v }))} onQuickAdd={(v) => quickAdd('food', v)} />
-            <AllocationTile label="Fuel" amount={fuelAmount} spent={state.spendTracker.fuel} pct={allocation.fuel} glowFrom="from-amber-400" glowTo="to-orange-500" onChange={(v) => setAllocation((a) => ({ ...a, fuel: v }))} onQuickAdd={(v) => quickAdd('fuel', v)} />
+            <AllocationTile label="Food Shopping" amount={foodAmount} spent={state.spendTracker.food} pct={allocation.food} glowFrom="from-emerald-400" glowTo="to-cyan-400" onChange={(v) => setAllocation((a) => ({ ...a, food: v }))} onQuickAdd={(v) => quickAdd('food', v)} onForceAdd={(v) => commitQuickAdd('food', v)} />
+            <AllocationTile label="Fuel" amount={fuelAmount} spent={state.spendTracker.fuel} pct={allocation.fuel} glowFrom="from-amber-400" glowTo="to-orange-500" onChange={(v) => setAllocation((a) => ({ ...a, fuel: v }))} onQuickAdd={(v) => quickAdd('fuel', v)} onForceAdd={(v) => commitQuickAdd('fuel', v)} />
             <PersonalAllocationTile
               amount={personalAmount}
               spent={state.spendTracker.personal}
               pct={allocation.personal}
               onChange={(v) => setAllocation((a) => ({ ...a, personal: v }))}
               onQuickAdd={(v) => quickAdd('personal', v)}
+              onForceAdd={(v) => commitQuickAdd('personal', v)}
               open={personalOpen}
               onToggleOpen={() => setPersonalOpen((o) => !o)}
               split={personalSplit}
@@ -426,7 +453,7 @@ function toPeriodicBill(values: PeriodicBillFormValues, existing?: PeriodicBill)
  * existing typed field is for, when Deep wants to set an exact total or correct a mistake) —
  * this is purely for "I just spent $12, log it" in as few taps as possible.
  */
-function QuickAddButton({ onAdd, accent }: { onAdd: (amount: number) => void; accent: string }) {
+function QuickAddButton({ onSubmit, accent }: { onSubmit: (amount: number) => void; accent: string }) {
   const [open, setOpen] = useState(false)
   const [value, setValue] = useState('')
   const inputRef = useRef<HTMLInputElement>(null)
@@ -437,7 +464,7 @@ function QuickAddButton({ onAdd, accent }: { onAdd: (amount: number) => void; ac
 
   const confirm = () => {
     const amount = parseFloat(value)
-    if (amount > 0) onAdd(amount)
+    if (amount > 0) onSubmit(amount)
     setValue('')
     setOpen(false)
   }
@@ -480,9 +507,10 @@ function QuickAddButton({ onAdd, accent }: { onAdd: (amount: number) => void; ac
   )
 }
 
-function AllocationTile({ label, amount, spent, pct, glowFrom, glowTo, onChange, onQuickAdd }: { label: string; amount: number; spent: number; pct: number; glowFrom: string; glowTo: string; onChange: (v: number) => void; onQuickAdd: (v: number) => void }) {
+function AllocationTile({ label, amount, spent, pct, glowFrom, glowTo, onChange, onQuickAdd, onForceAdd }: { label: string; amount: number; spent: number; pct: number; glowFrom: string; glowTo: string; onChange: (v: number) => void; onQuickAdd: (v: number) => string | null; onForceAdd: (v: number) => void }) {
   const remaining = round2(amount - spent)
   const over = remaining < 0
+  const [pending, setPending] = useState<{ amount: number; message: string } | null>(null)
   return (
     <div className="rounded-xl border border-white/10 bg-black/30 p-4">
       <div className="flex items-center justify-between">
@@ -493,11 +521,27 @@ function AllocationTile({ label, amount, spent, pct, glowFrom, glowTo, onChange,
         <div className={cn('text-2xl font-bold tabular-nums text-transparent bg-clip-text bg-gradient-to-r', over ? 'from-rose-400 to-rose-500' : glowFrom, over ? '' : glowTo)}>
           {formatCurrency(remaining)}
         </div>
-        <QuickAddButton onAdd={onQuickAdd} accent={cn('bg-gradient-to-r', glowFrom, glowTo)} />
+        <QuickAddButton
+          onSubmit={(v) => { const warning = onQuickAdd(v); if (warning) setPending({ amount: v, message: warning }) }}
+          accent={cn('bg-gradient-to-r', glowFrom, glowTo)}
+        />
       </div>
       <p className={cn('text-[10px] mt-0.5', over ? 'text-rose-300' : 'text-white/35')}>
         {over ? `${formatCurrency(-remaining)} over ` : ''}{formatCurrency(spent)} of {formatCurrency(amount)} guide spent
       </p>
+      {pending && (
+        <div className="mt-2.5 rounded-lg border border-amber-400/30 bg-amber-500/10 p-2.5">
+          <p className="text-[11px] text-amber-200 leading-relaxed">⚠ {pending.message}</p>
+          <div className="mt-2 flex items-center gap-2">
+            <button type="button" onClick={() => { onForceAdd(pending.amount); setPending(null) }} className="text-[11px] font-semibold text-amber-100 bg-amber-500/20 hover:bg-amber-500/30 rounded-md px-2.5 py-1 transition-colors">
+              Log it anyway
+            </button>
+            <button type="button" onClick={() => setPending(null)} className="text-[11px] text-white/40 hover:text-white/70">
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
       <input
         type="range"
         min={0}
@@ -534,6 +578,7 @@ function PersonalAllocationTile({
   pct,
   onChange,
   onQuickAdd,
+  onForceAdd,
   open,
   onToggleOpen,
   split,
@@ -543,7 +588,8 @@ function PersonalAllocationTile({
   spent: number
   pct: number
   onChange: (v: number) => void
-  onQuickAdd: (v: number) => void
+  onQuickAdd: (v: number) => string | null
+  onForceAdd: (v: number) => void
   open: boolean
   onToggleOpen: () => void
   split: PersonalSplit
@@ -551,6 +597,7 @@ function PersonalAllocationTile({
 }) {
   const remaining = round2(amount - spent)
   const over = remaining < 0
+  const [pending, setPending] = useState<{ amount: number; message: string } | null>(null)
   return (
     <div className="rounded-xl border border-white/10 bg-black/30 p-4">
       <button type="button" onClick={onToggleOpen} className="w-full flex items-center justify-between text-left" aria-expanded={open}>
@@ -564,11 +611,27 @@ function PersonalAllocationTile({
         <div className={cn('text-2xl font-bold tabular-nums text-transparent bg-clip-text bg-gradient-to-r', over ? 'from-rose-400 to-rose-500' : 'from-purple-400 to-pink-500')}>
           {formatCurrency(remaining)}
         </div>
-        <QuickAddButton onAdd={onQuickAdd} accent="bg-gradient-to-r from-purple-400 to-pink-500" />
+        <QuickAddButton
+          onSubmit={(v) => { const warning = onQuickAdd(v); if (warning) setPending({ amount: v, message: warning }) }}
+          accent="bg-gradient-to-r from-purple-400 to-pink-500"
+        />
       </div>
       <p className={cn('text-[10px] mt-0.5', over ? 'text-rose-300' : 'text-white/35')}>
         {over ? `${formatCurrency(-remaining)} over ` : ''}{formatCurrency(spent)} of {formatCurrency(amount)} guide spent
       </p>
+      {pending && (
+        <div className="mt-2.5 rounded-lg border border-amber-400/30 bg-amber-500/10 p-2.5">
+          <p className="text-[11px] text-amber-200 leading-relaxed">⚠ {pending.message}</p>
+          <div className="mt-2 flex items-center gap-2">
+            <button type="button" onClick={() => { onForceAdd(pending.amount); setPending(null) }} className="text-[11px] font-semibold text-amber-100 bg-amber-500/20 hover:bg-amber-500/30 rounded-md px-2.5 py-1 transition-colors">
+              Log it anyway
+            </button>
+            <button type="button" onClick={() => setPending(null)} className="text-[11px] text-white/40 hover:text-white/70">
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
       <input
         type="range"
         min={0}
