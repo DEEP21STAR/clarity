@@ -798,6 +798,13 @@ mark.search-hit { background: rgba(34, 211, 238, 0.35); color: #fff; border-radi
   .wizard-neon-frame { animation: none; border-color: color-mix(in oklab, var(--theme-1) 50%, transparent); box-shadow: 0 0 50px -5px color-mix(in oklab, var(--theme-1) 30%, transparent); }
 }
 
+/* PIN gate numpad — 2026-09-24 "AI GURU visual pass" (Deep's broader ask, extending the
+   wizard's neon-frame pattern to this screen too). Theme-aware hover border, was a hardcoded
+   cyan literal regardless of the chosen accent theme. */
+.pin-numbtn:hover {
+  border-color: color-mix(in oklab, var(--theme-1) 40%, transparent);
+}
+
 /* Header name badge — 2026-09-23 round 10: "the font colour and style needs a huge uplift as
    it looks very dull and boring" (Deep). Was plain grey text-white/50, no identity color at
    all even though the wizard already collects one. Real shimmering gradient text (same

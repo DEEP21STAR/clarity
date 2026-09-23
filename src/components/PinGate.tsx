@@ -2,6 +2,8 @@ import { useEffect, useRef, useState } from 'react'
 import gsap from 'gsap'
 import { CLARITY_PIN } from '@/lib/constants'
 import { Lock } from 'lucide-react'
+import { useStore } from '@/lib/store'
+import { AmbientBackground } from './AmbientBackground'
 
 // ALWAYS sessionStorage, NEVER localStorage — iOS Safari kills localStorage
 // in private browsing, per the same rule every other Whetū Digital dashboard
@@ -19,6 +21,7 @@ function isUnlocked(): boolean {
 
 /** iOS-safe 4-digit PIN gate — dot indicators + numpad, matching the Whetū Digital dashboard standard. */
 export function PinGate({ children }: { children: React.ReactNode }) {
+  const { state } = useStore()
   const [unlocked, setUnlocked] = useState(isUnlocked)
   const [digits, setDigits] = useState('')
   const [error, setError] = useState(false)
@@ -28,6 +31,15 @@ export function PinGate({ children }: { children: React.ReactNode }) {
     if (!gateRef.current) return
     gsap.fromTo(gateRef.current, { opacity: 0 }, { opacity: 1, duration: 0.5 })
   }, [])
+
+  // "proceed with all" — AI GURU-inspired visual pass: extends the wizard's own neon-frame +
+  // ambient-background treatment to this screen (the other full-screen moment every returning
+  // session sees), instead of leaving it flat while the wizard got the uplift. Sets the theme
+  // attribute here too — PinGate renders BEFORE AppContent (which normally owns this effect),
+  // so without this, a chosen accent theme wouldn't take effect until AFTER unlocking.
+  useEffect(() => {
+    document.documentElement.dataset.accentTheme = state.accentTheme
+  }, [state.accentTheme])
 
   const pressKey = (d: string) => {
     if (digits.length >= 4) return
@@ -52,23 +64,26 @@ export function PinGate({ children }: { children: React.ReactNode }) {
   if (unlocked) return <>{children}</>
 
   return (
-    <div ref={gateRef} className="fixed inset-0 z-[100] flex items-center justify-center bg-[#05060a]">
-      <div className="text-center px-6">
-        <div className="w-14 h-14 mx-auto rounded-2xl bg-gradient-to-br from-cyan-400/20 to-purple-500/20 border border-cyan-400/30 flex items-center justify-center mb-6">
-          <Lock className="w-6 h-6 text-cyan-300" />
+    <div ref={gateRef} className="fixed inset-0 z-[100] flex items-center justify-center bg-[#05060a] overflow-hidden">
+      <div className="fixed inset-0 -z-10">
+        <AmbientBackground />
+      </div>
+      <div className="wizard-neon-frame text-center px-6 py-8 rounded-3xl border-2 bg-[#0b0d14]/90">
+        <div
+          className="w-14 h-14 mx-auto rounded-2xl border flex items-center justify-center mb-6"
+          style={{ background: 'linear-gradient(135deg, color-mix(in oklab, var(--theme-1) 20%, transparent), color-mix(in oklab, var(--theme-2) 20%, transparent))', borderColor: 'color-mix(in oklab, var(--theme-1) 30%, transparent)' }}
+        >
+          <Lock className="w-6 h-6" style={{ color: 'var(--theme-1)' }} />
         </div>
-        <h1 className="text-xl font-bold text-white tracking-tight mb-1">Clarity</h1>
+        <h1 className="gradient-heading text-xl font-bold tracking-tight mb-1">Clarity</h1>
         <p className="text-xs text-white/40 mb-6">Enter your PIN</p>
 
         <div className={`pin-dots flex justify-center gap-3 mb-8 ${error ? 'text-rose-400' : ''}`}>
           {[0, 1, 2, 3].map((i) => (
             <div
               key={i}
-              className={`w-3.5 h-3.5 rounded-full border-2 transition-all ${
-                i < digits.length
-                  ? error ? 'bg-rose-400 border-rose-400' : 'bg-cyan-400 border-cyan-400'
-                  : 'border-white/20'
-              }`}
+              className={`w-3.5 h-3.5 rounded-full border-2 transition-all ${error ? 'bg-rose-400 border-rose-400' : i < digits.length ? 'border-transparent' : 'border-white/20'}`}
+              style={!error && i < digits.length ? { background: 'var(--theme-1)', borderColor: 'var(--theme-1)' } : undefined}
             />
           ))}
         </div>
@@ -96,7 +111,7 @@ function NumButton({ label, onClick }: { label: string; onClick: () => void }) {
   return (
     <button
       onClick={onClick}
-      className="w-16 h-16 rounded-2xl border border-white/10 text-xl font-semibold text-white hover:bg-white/5 hover:border-cyan-400/40"
+      className="pin-numbtn w-16 h-16 rounded-2xl border border-white/10 text-xl font-semibold text-white hover:bg-white/5"
       style={{ fontSize: 20 }} // >=16px avoids iOS Safari auto-zoom-on-focus
     >
       {label}
