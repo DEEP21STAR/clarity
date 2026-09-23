@@ -153,8 +153,8 @@ export interface OneOffEntry {
   date: string // ISO
   description: string
   amount: number // negative = expense, positive = income
-  /** 'extraUsage' = logged via the dedicated "Extra Usage Purchase" field (Claude API overage etc, Round 20) — still feeds the same Cash-Flow Forecast as a general one-off, just shown in its own list. Undefined = general one-off. */
-  category?: 'general' | 'extraUsage'
+  /** 'extraUsage' = logged via the dedicated "Extra Usage Purchase" field (Claude API overage etc, Round 20) — still feeds the same Cash-Flow Forecast as a general one-off, just shown in its own list. 'food'/'fuel'/'personal' = logged via the quick-log +buttons on Upcoming Payments (2026-09-23) — these three additionally subtract live from Live Funds Available (see totalQuickLogSpendInWindow in logic.ts), not just the Cash-Flow Forecast. Undefined = general one-off. */
+  category?: 'general' | 'extraUsage' | 'food' | 'fuel' | 'personal'
 }
 
 /**

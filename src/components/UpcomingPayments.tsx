@@ -3,10 +3,10 @@ import gsap from 'gsap'
 import { useStore } from '@/lib/store'
 import { StatCard } from './StatCard'
 import { CountUp } from './CountUp'
-import { addDaysIso, totalBillsInWindow, totalIncomeInWindow, totalPeriodicSmoothedInWindow, totalSinkingFundsSmoothedInWindow, windowLengthDays, isBillAmountChanged, nextMonthlyDueDate, resolvePaymentMethod, dueTodayBills } from '@/lib/logic'
+import { addDaysIso, totalBillsInWindow, totalIncomeInWindow, totalPeriodicSmoothedInWindow, totalSinkingFundsSmoothedInWindow, windowLengthDays, isBillAmountChanged, nextMonthlyDueDate, resolvePaymentMethod, dueTodayBills, round2 } from '@/lib/logic'
 import { cn, formatCurrency, todayIso, formatShortDate } from '@/lib/utils'
 import type { UpcomingWindow, RecurringBill, BillFrequency, PeriodicBill } from '@/lib/types'
-import { Plus, Trash2, Info, AlertTriangle, ChevronDown, Wallet, PiggyBank, RefreshCw, HandCoins } from 'lucide-react'
+import { Plus, Trash2, Info, AlertTriangle, ChevronDown, Wallet, PiggyBank, RefreshCw, HandCoins, Check } from 'lucide-react'
 import { CreditCardAccountPanel, DeviceRepaymentCard } from './InstallmentPlanTracker'
 import { PeriodicBillGauge } from './PeriodicBillGauge'
 import { PeriodicBillForm, type PeriodicBillFormValues } from './PeriodicBillForm'
@@ -40,7 +40,7 @@ interface PersonalSplit { takeaways: number; entertainment: number; clothing: nu
 const DEFAULT_PERSONAL_SPLIT: PersonalSplit = { takeaways: 30, entertainment: 25, clothing: 20, personalItems: 25 }
 
 export function UpcomingPayments() {
-  const { state, updateBill, addBill, removeBill, addPeriodicBill, updatePeriodicBill, removePeriodicBill, addDeviceRepayment, updateDeviceRepayment, removeDeviceRepayment } = useStore()
+  const { state, updateBill, addBill, removeBill, addPeriodicBill, updatePeriodicBill, removePeriodicBill, addDeviceRepayment, updateDeviceRepayment, removeDeviceRepayment, updateSpendTracker } = useStore()
   const withUndo = useUndoableDelete()
   const [window_, setWindow] = useState<UpcomingWindow>('week')
   const [allocation, setAllocation] = useState<Allocation>(DEFAULT_ALLOCATION)
@@ -78,15 +78,31 @@ export function UpcomingPayments() {
   const hsbc = state.accounts.find((a) => a.id === 'hsbc')?.value ?? 0
   const overdraft = state.accounts.find((a) => a.id === 'overdraft')?.value ?? 0
 
-  const liveFundsAvailable = useMemo(
+  // 2026-09-23 — real quick-log spend now actually deducts here. Guides (foodAmount etc, just
+  // below) are still computed from THIS pre-spend figure, deliberately — if the guide itself
+  // shrank every time Deep logged a spend, "remaining vs guide" would never make sense (the
+  // target would race away from the thing eating it). liveFundsAvailable (the hero number,
+  // and the OVERSPENT banner below) is the one place spend actually bites — already-existing
+  // machinery, just fed a real input for the first time.
+  const liveFundsBeforeSpend = useMemo(
     () => Math.round((hsbc + overdraft + incomeInWindow - billsInWindow) * 100) / 100,
     [hsbc, overdraft, incomeInWindow, billsInWindow]
   )
+  const spentTracked = state.spendTracker.food + state.spendTracker.fuel + state.spendTracker.personal
+  const liveFundsAvailable = useMemo(
+    () => Math.round((liveFundsBeforeSpend - spentTracked) * 100) / 100,
+    [liveFundsBeforeSpend, spentTracked]
+  )
   const isOverspent = liveFundsAvailable < 0
 
-  const foodAmount = (liveFundsAvailable * allocation.food) / 100
-  const fuelAmount = (liveFundsAvailable * allocation.fuel) / 100
-  const personalAmount = (liveFundsAvailable * allocation.personal) / 100
+  const foodAmount = (liveFundsBeforeSpend * allocation.food) / 100
+  const fuelAmount = (liveFundsBeforeSpend * allocation.fuel) / 100
+  const personalAmount = (liveFundsBeforeSpend * allocation.personal) / 100
+
+  const quickAdd = (cat: 'food' | 'fuel' | 'personal', amount: number) => {
+    if (amount <= 0) return
+    updateSpendTracker({ [cat]: round2(state.spendTracker[cat] + amount) } as Partial<typeof state.spendTracker>)
+  }
 
   // GSAP entrance for the hero card, a "shockwave" burst on going negative,
   // and a real confetti celebration the moment it crosses BACK to positive.
@@ -216,12 +232,14 @@ export function UpcomingPayments() {
 
           {/* Food / Fuel / Personal breakdown — the whole point of this feature */}
           <div className="mt-8 grid grid-cols-1 md:grid-cols-3 gap-4 text-left">
-            <AllocationTile label="Food Shopping" amount={foodAmount} pct={allocation.food} glowFrom="from-emerald-400" glowTo="to-cyan-400" onChange={(v) => setAllocation((a) => ({ ...a, food: v }))} />
-            <AllocationTile label="Fuel" amount={fuelAmount} pct={allocation.fuel} glowFrom="from-amber-400" glowTo="to-orange-500" onChange={(v) => setAllocation((a) => ({ ...a, fuel: v }))} />
+            <AllocationTile label="Food Shopping" amount={foodAmount} spent={state.spendTracker.food} pct={allocation.food} glowFrom="from-emerald-400" glowTo="to-cyan-400" onChange={(v) => setAllocation((a) => ({ ...a, food: v }))} onQuickAdd={(v) => quickAdd('food', v)} />
+            <AllocationTile label="Fuel" amount={fuelAmount} spent={state.spendTracker.fuel} pct={allocation.fuel} glowFrom="from-amber-400" glowTo="to-orange-500" onChange={(v) => setAllocation((a) => ({ ...a, fuel: v }))} onQuickAdd={(v) => quickAdd('fuel', v)} />
             <PersonalAllocationTile
               amount={personalAmount}
+              spent={state.spendTracker.personal}
               pct={allocation.personal}
               onChange={(v) => setAllocation((a) => ({ ...a, personal: v }))}
+              onQuickAdd={(v) => quickAdd('personal', v)}
               open={personalOpen}
               onToggleOpen={() => setPersonalOpen((o) => !o)}
               split={personalSplit}
@@ -401,16 +419,85 @@ function toPeriodicBill(values: PeriodicBillFormValues, existing?: PeriodicBill)
   }
 }
 
-function AllocationTile({ label, amount, pct, glowFrom, glowTo, onChange }: { label: string; amount: number; pct: number; glowFrom: string; glowTo: string; onChange: (v: number) => void }) {
+/**
+ * 2026-09-23 — tap +, an inline amount field appears autofocused, Enter/check confirms and
+ * closes — no modal, no navigating away from the tile you're already looking at. Deliberately
+ * NOT a number input you have to clear-and-retype (that's what the Spend Pace & Streak card's
+ * existing typed field is for, when Deep wants to set an exact total or correct a mistake) —
+ * this is purely for "I just spent $12, log it" in as few taps as possible.
+ */
+function QuickAddButton({ onAdd, accent }: { onAdd: (amount: number) => void; accent: string }) {
+  const [open, setOpen] = useState(false)
+  const [value, setValue] = useState('')
+  const inputRef = useRef<HTMLInputElement>(null)
+
+  useEffect(() => {
+    if (open) inputRef.current?.focus()
+  }, [open])
+
+  const confirm = () => {
+    const amount = parseFloat(value)
+    if (amount > 0) onAdd(amount)
+    setValue('')
+    setOpen(false)
+  }
+
+  if (!open) {
+    return (
+      <button
+        type="button"
+        onClick={() => setOpen(true)}
+        aria-label="Log a spend"
+        className="w-7 h-7 rounded-full flex items-center justify-center border border-white/15 text-white/50 hover:text-white hover:border-white/40 transition-colors shrink-0"
+      >
+        <Plus className="w-3.5 h-3.5" />
+      </button>
+    )
+  }
+
+  return (
+    <div className="flex items-center gap-1 shrink-0">
+      <span className="text-white/40 text-xs">$</span>
+      <input
+        ref={inputRef}
+        type="number"
+        inputMode="decimal"
+        step="0.01"
+        value={value}
+        onChange={(e) => setValue(e.target.value)}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter') confirm()
+          if (e.key === 'Escape') { setValue(''); setOpen(false) }
+        }}
+        onBlur={() => { if (!value) setOpen(false) }}
+        placeholder="0.00"
+        className="w-16 bg-black/40 border border-white/15 rounded-md px-1.5 py-0.5 text-xs tabular-nums outline-none focus:border-cyan-400/60"
+      />
+      <button type="button" onClick={confirm} className={cn('w-6 h-6 rounded-full flex items-center justify-center text-black shrink-0', accent)}>
+        <Check className="w-3 h-3" />
+      </button>
+    </div>
+  )
+}
+
+function AllocationTile({ label, amount, spent, pct, glowFrom, glowTo, onChange, onQuickAdd }: { label: string; amount: number; spent: number; pct: number; glowFrom: string; glowTo: string; onChange: (v: number) => void; onQuickAdd: (v: number) => void }) {
+  const remaining = round2(amount - spent)
+  const over = remaining < 0
   return (
     <div className="rounded-xl border border-white/10 bg-black/30 p-4">
       <div className="flex items-center justify-between">
         <span className="text-xs font-semibold uppercase tracking-wide text-white/60">{label}</span>
-        <span className="text-[10px] text-white/35">{pct}%</span>
+        <span className="text-[10px] text-white/35">{pct}% guide</span>
       </div>
-      <div className={cn('mt-2 text-2xl font-bold tabular-nums text-transparent bg-clip-text bg-gradient-to-r', glowFrom, glowTo)}>
-        {formatCurrency(amount)}
+      <div className="mt-2 flex items-center justify-between gap-2">
+        <div className={cn('text-2xl font-bold tabular-nums text-transparent bg-clip-text bg-gradient-to-r', over ? 'from-rose-400 to-rose-500' : glowFrom, over ? '' : glowTo)}>
+          {formatCurrency(remaining)}
+        </div>
+        <QuickAddButton onAdd={onQuickAdd} accent={cn('bg-gradient-to-r', glowFrom, glowTo)} />
       </div>
+      <p className={cn('text-[10px] mt-0.5', over ? 'text-rose-300' : 'text-white/35')}>
+        {over ? `${formatCurrency(-remaining)} over ` : ''}{formatCurrency(spent)} of {formatCurrency(amount)} guide spent
+      </p>
       <input
         type="range"
         min={0}
@@ -443,21 +530,27 @@ const PERSONAL_SUB_ITEMS: { key: keyof PersonalSplit; label: string }[] = [
  */
 function PersonalAllocationTile({
   amount,
+  spent,
   pct,
   onChange,
+  onQuickAdd,
   open,
   onToggleOpen,
   split,
   onSplitChange,
 }: {
   amount: number
+  spent: number
   pct: number
   onChange: (v: number) => void
+  onQuickAdd: (v: number) => void
   open: boolean
   onToggleOpen: () => void
   split: PersonalSplit
   onSplitChange: (s: PersonalSplit) => void
 }) {
+  const remaining = round2(amount - spent)
+  const over = remaining < 0
   return (
     <div className="rounded-xl border border-white/10 bg-black/30 p-4">
       <button type="button" onClick={onToggleOpen} className="w-full flex items-center justify-between text-left" aria-expanded={open}>
@@ -465,11 +558,17 @@ function PersonalAllocationTile({
           Personal
           <ChevronDown className={cn('w-3 h-3 transition-transform text-white/35', open && 'rotate-180')} />
         </span>
-        <span className="text-[10px] text-white/35">{pct}%</span>
+        <span className="text-[10px] text-white/35">{pct}% guide</span>
       </button>
-      <div className="mt-2 text-2xl font-bold tabular-nums text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-500">
-        {formatCurrency(amount)}
+      <div className="mt-2 flex items-center justify-between gap-2">
+        <div className={cn('text-2xl font-bold tabular-nums text-transparent bg-clip-text bg-gradient-to-r', over ? 'from-rose-400 to-rose-500' : 'from-purple-400 to-pink-500')}>
+          {formatCurrency(remaining)}
+        </div>
+        <QuickAddButton onAdd={onQuickAdd} accent="bg-gradient-to-r from-purple-400 to-pink-500" />
       </div>
+      <p className={cn('text-[10px] mt-0.5', over ? 'text-rose-300' : 'text-white/35')}>
+        {over ? `${formatCurrency(-remaining)} over ` : ''}{formatCurrency(spent)} of {formatCurrency(amount)} guide spent
+      </p>
       <input
         type="range"
         min={0}

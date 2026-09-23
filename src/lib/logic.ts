@@ -611,6 +611,31 @@ export function round2(n: number): number {
   return Math.round((n + Number.EPSILON) * 100) / 100
 }
 
+/**
+ * 2026-09-23 — real quick-log spend, dated today, for the given category, within the current
+ * window (same [startIso, endIso] convention as totalBillsInWindow/totalIncomeInWindow above).
+ * Sums the absolute value of negative-amount entries only — a category quick-log is always an
+ * expense; a stray positive entry in one of these categories (shouldn't happen via the UI, but
+ * cheap to guard) is ignored rather than silently reducing the total spend.
+ */
+export function totalQuickLogSpendInWindow(
+  entries: OneOffEntry[],
+  category: 'food' | 'fuel' | 'personal',
+  startIso: string,
+  endIso: string
+): number {
+  const start = parseIsoDateUTC(startIso)
+  const end = parseIsoDateUTC(endIso)
+  let total = 0
+  for (const e of entries) {
+    if (e.category !== category || e.amount >= 0) continue
+    const d = parseIsoDateUTC(e.date)
+    if (d.getTime() < start.getTime() || d.getTime() > end.getTime()) continue
+    total += -e.amount
+  }
+  return round2(total)
+}
+
 // ---------------------------------------------------------------------------
 // #1, Round 20 — deterministic colour-from-category-string for Transactions
 // (CSV-imported categories are free text, not the fixed RecurringBill
