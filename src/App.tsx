@@ -18,11 +18,12 @@ import { SegmentedControl } from './components/SegmentedControl'
 import { ToastProvider, useToast } from './components/Toast'
 import { NotificationBell } from './components/NotificationBell'
 import { CursorGlow } from './components/CursorGlow'
+import { MobileNavDrawer } from './components/MobileNavDrawer'
 import { computeCurrentHealthScore, calcNetWorth, dueTodayBills } from '@/lib/logic'
 import { cn, formatCurrency, todayIso } from '@/lib/utils'
 import { captureThumbnail } from '@/lib/thumbnailCache'
 import {
-  LayoutDashboard, CalendarClock, Receipt, PieChart, CreditCard, ShoppingCart, Wrench, TrendingUp, CalendarDays, Command, WifiOff, Check,
+  LayoutDashboard, CalendarClock, Receipt, PieChart, CreditCard, ShoppingCart, Wrench, TrendingUp, CalendarDays, Command, WifiOff, Check, Menu,
 } from 'lucide-react'
 
 type TabId = 'dashboard' | 'upcoming' | 'transactions' | 'budgets' | 'debts' | 'networth' | 'calendar' | 'shopping' | 'tools'
@@ -76,6 +77,10 @@ function AppContent() {
   const tint = useTimeOfDayTint()
   const [isOnline, setIsOnline] = useState(() => (typeof navigator === 'undefined' ? true : navigator.onLine))
   const [justSaved, setJustSaved] = useState(false)
+  // 2026-09-23 — mobile nav drawer. The desktop tab bar (9 tabs, scroll-to-discover) is a real
+  // usability gap on a phone: too many targets to fit, and horizontal scroll-to-find is a poor
+  // primary nav pattern for touch. Upcoming Payments stays the default landing tab either way.
+  const [mobileNavOpen, setMobileNavOpen] = useState(false)
 
   // #22 — feeds the ambient particle background's calm/troubled reaction; same shared
   // formula the Dashboard headline and daily snapshot use (computeCurrentHealthScore).
@@ -237,6 +242,16 @@ function AppContent() {
         <header className="border-b border-white/10 sticky top-0 z-40 backdrop-blur-md bg-[#05060a]/80">
           <div className="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
             <div className="flex items-center gap-2">
+              {/* Mobile-only hamburger — opens MobileNavDrawer. Desktop keeps the horizontal
+                  tab row below, this button is invisible there (md:hidden). */}
+              <button
+                type="button"
+                onClick={() => setMobileNavOpen(true)}
+                aria-label="Open menu"
+                className="md:hidden w-8 h-8 -ml-1 flex items-center justify-center rounded-lg text-white/60 hover:text-white hover:bg-white/5 transition-colors"
+              >
+                <Menu className="w-4.5 h-4.5" />
+              </button>
               <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-cyan-400 to-purple-500" />
               <span className="gradient-heading font-bold text-lg tracking-tight">Clarity</span>
             </div>
@@ -294,7 +309,22 @@ function AppContent() {
               <NotificationBell />
             </div>
           </div>
-          <nav className="max-w-6xl mx-auto px-4 pb-3 flex gap-1 overflow-x-auto">
+          {/* Mobile-only current-tab strip — the hamburger replaces the tab row entirely on
+              mobile, so without this there's no visible "where am I" once the header's collapsed. */}
+          <div className="md:hidden max-w-6xl mx-auto px-4 pb-3 flex items-center gap-1.5 text-xs text-white/50">
+            {(() => {
+              const current = TABS.find((t) => t.id === tab)
+              if (!current) return null
+              const Icon = current.icon
+              return (
+                <>
+                  <Icon className="w-3.5 h-3.5" style={{ color: TAB_ACCENTS[tab] }} />
+                  <span className="font-medium" style={{ color: TAB_ACCENTS[tab] }}>{current.label}</span>
+                </>
+              )
+            })()}
+          </div>
+          <nav className="max-w-6xl mx-auto px-4 pb-3 hidden md:flex gap-1 overflow-x-auto">
             {TABS.map((t) => {
               const Icon = t.icon
               const isActive = tab === t.id
@@ -351,6 +381,14 @@ function AppContent() {
           showed "No preview yet" on a genuine first use. Pre-warms every NOT-YET-CACHED tab
           off-screen, one at a time, staggered — see ThumbnailPrecacher.tsx's doc comment. */}
       <ThumbnailPrecacher tabIds={TABS.map((t) => t.id)} skipId={tab} renderTab={renderTabContent} />
+      <MobileNavDrawer
+        open={mobileNavOpen}
+        onClose={() => setMobileNavOpen(false)}
+        tabs={TABS}
+        activeTab={tab}
+        accents={TAB_ACCENTS}
+        onSelect={(id) => handleTabClick(id as TabId)}
+      />
     </div>
   )
 }
