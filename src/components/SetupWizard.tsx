@@ -384,14 +384,24 @@ export function SetupWizard() {
               <h2 className="text-base font-semibold">{completed.primaryName}{completed.secondaryName ? ` + ${completed.secondaryName}` : ''}, you're set up</h2>
               <p className="text-xs text-white/40 mt-1">{completed.bank} · {completed.country === 'NZ' ? 'New Zealand' : 'Australia'} · {completed.bills.length} payment{completed.bills.length === 1 ? '' : 's'} tracked</p>
             </div>
-            <div className="rounded-xl border border-white/10 bg-black/20 p-5">
+            <div className={cn('rounded-xl border p-5', weeklyPreview < 0 ? 'border-rose-500/30 bg-rose-500/5' : 'border-white/10 bg-black/20')}>
               <div className="text-[10px] uppercase tracking-wider text-white/40 flex items-center justify-center gap-1.5">
                 <Wallet className="w-3 h-3" /> Rough weekly safe-to-spend
               </div>
-              <div className="text-3xl font-bold tabular-nums mt-1 bg-gradient-to-r from-cyan-300 to-purple-300 bg-clip-text text-transparent">
+              {/* 2026-09-23 — real bug caught reviewing Deep's own walkthrough: a real household
+                  (his test data: $6,800/mo income against 10 real bills including $1,955 rent)
+                  landed at -$524.24/week, and it was rendering in the SAME celebratory
+                  cyan-purple gradient as a healthy positive number — reads as good news when
+                  it's the opposite. Negative gets the same rose/warning treatment the real app
+                  already uses for isOverspent elsewhere, not a new invented style. */}
+              <div className={cn('text-3xl font-bold tabular-nums mt-1', weeklyPreview < 0 ? 'text-rose-300' : 'bg-gradient-to-r from-cyan-300 to-purple-300 bg-clip-text text-transparent')}>
                 {formatCurrency(weeklyPreview)}
               </div>
-              <p className="text-[10px] text-white/30 mt-1">Income minus the payments you added, spread weekly.</p>
+              <p className={cn('text-[10px] mt-1', weeklyPreview < 0 ? 'text-rose-300/70' : 'text-white/30')}>
+                {weeklyPreview < 0
+                  ? 'Your bills currently add up to more than your income — exactly the kind of thing Clarity is built to catch early.'
+                  : 'Income minus the payments you added, spread weekly.'}
+              </p>
             </div>
             <button type="button" onClick={restart} className="text-xs text-white/40 hover:text-white transition-colors">
               Start over
