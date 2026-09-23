@@ -6,8 +6,8 @@ import { DataExportPanel } from './DataExportPanel'
 import { PaymentHistoryPanel } from './PaymentHistoryPanel'
 import { SegmentedControl } from './SegmentedControl'
 import { calcWfhFixedRate, gstOnExclusive, gstFromInclusive, NZ_WFH_FIXED_RATE_PER_HOUR, AU_WFH_FIXED_RATE_PER_HOUR, calcRoundUpSavings, runDataHealthCheck, projectBalanceSeries } from '@/lib/logic'
-import { formatCurrency, formatShortDate, todayIso } from '@/lib/utils'
-import { Plus, Trash2, Volume2, VolumeX, AlertTriangle, Info, ShieldCheck, Coffee, TrendingUp } from 'lucide-react'
+import { cn, formatCurrency, formatShortDate, todayIso } from '@/lib/utils'
+import { Plus, Trash2, Volume2, VolumeX, AlertTriangle, Info, ShieldCheck, Coffee, TrendingUp, Award, Flame, PiggyBank, Lock } from 'lucide-react'
 import { useUndoableDelete } from '@/lib/useUndoableDelete'
 import { DateField } from './DateField'
 import { Help } from './Help'
@@ -65,6 +65,16 @@ export function Tools() {
     return { realEnd: real[real.length - 1].balance, hypotheticalEnd: hypothetical[hypothetical.length - 1].balance }
   }, [whatIfStartBalance, state.bills, state.periodicBills, state.oneOffEntries, state.incomeAnchor, whatIfExtraPerWeek])
 
+  // 2026-09-23 round 10 — "Achievements/badges gallery" (Deep, via the ideation table).
+  // Deliberately built only from data the app already genuinely tracks -- no invented
+  // criteria. Streak milestones already exist as tiny inline pills on Upcoming Payments
+  // (SpendPaceTracker.tsx); this is the real dedicated showcase, showing locked AND unlocked
+  // badges (not just the ones already hit) so it reads as a real collection.
+  const goalsCompleted = useMemo(
+    () => state.savingsGoals.filter((g) => g.targetAmount > 0 && g.contributedAmount >= g.targetAmount).length,
+    [state.savingsGoals]
+  )
+
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-4">
@@ -102,6 +112,36 @@ export function Tools() {
               { value: 'large', label: 'Large' },
             ]}
           />
+        </div>
+      </StatCard>
+
+      <StatCard label="Achievements" glow="amber" tooltip="Real milestones this account has actually hit — no fabricated criteria.">
+        <div className="mt-4 grid grid-cols-3 gap-3">
+          {[7, 30, 100].map((m) => {
+            const unlocked = state.streak.milestonesHit.includes(m)
+            return (
+              <div
+                key={m}
+                className={cn(
+                  'rounded-xl border p-3 flex flex-col items-center text-center gap-1.5',
+                  unlocked ? 'border-amber-400/40 bg-amber-500/10' : 'border-white/10 bg-black/20 opacity-50'
+                )}
+              >
+                {unlocked ? <Award className="w-6 h-6 text-amber-300" /> : <Lock className="w-5 h-5 text-white/30" />}
+                <span className={cn('text-xs font-semibold', unlocked ? 'text-amber-200' : 'text-white/40')}>{m}-day streak</span>
+              </div>
+            )
+          })}
+        </div>
+        <div className="mt-4 flex items-center gap-6">
+          <div className="flex items-center gap-1.5">
+            <Flame className="w-4 h-4 text-orange-400" />
+            <span className="text-sm text-white/60">Best streak: <span className="font-bold text-white">{state.streak.best}</span> days</span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <PiggyBank className="w-4 h-4 text-purple-300" />
+            <span className="text-sm text-white/60">Goals completed: <span className="font-bold text-white">{goalsCompleted}</span></span>
+          </div>
         </div>
       </StatCard>
 
