@@ -3,13 +3,14 @@ import { LineChart, Line, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer, Ca
 import { useStore } from '@/lib/store'
 import { StatCard } from './StatCard'
 import { CountUp } from './CountUp'
-import { avalanchePlan, avalanchePayoffTimeline, categoryColor, addDaysIso, creditCardsAsDebts, round2 } from '@/lib/logic'
+import { avalanchePlan, avalanchePayoffTimeline, categoryColor, addDaysIso, creditCardsAsDebts, round2, sortForStrategy, type PayoffStrategy } from '@/lib/logic'
 import { cn, formatCurrency, formatLongDate, todayIso } from '@/lib/utils'
 import { fireBigConfetti } from '@/lib/confetti'
 import { Plus, Trash2, CheckCircle2, PartyPopper, Link2 } from 'lucide-react'
 import type { Debt } from '@/lib/types'
 import { useUndoableDelete } from '@/lib/useUndoableDelete'
 import { RadialProgress } from './RadialProgress'
+import { SegmentedControl } from './SegmentedControl'
 
 /** Round 21, item #12 — months-to-debt-free is abstract on its own; this turns it into a real calendar date with a year, so a multi-year payoff plan doesn't silently lose track of which year it lands in. */
 function monthsToCalendarDate(months: number, fromIso: string): string {
@@ -21,6 +22,7 @@ export function Debts() {
   const { state, addDebt, removeDebt, updateDebt, markDebtPaidOff } = useStore()
   const withUndo = useUndoableDelete()
   const [extraBudget, setExtraBudget] = useState(100)
+  const [strategy, setStrategy] = useState<PayoffStrategy>('avalanche')
 
   // Coordinator follow-up, real architectural gap Deep found: this tab's Total Debt/avalanche
   // math only ever knew about state.debts (manually-entered debts) — GEM VISA card balances,
@@ -32,8 +34,13 @@ export function Debts() {
   const cardDebtIds = useMemo(() => new Set(cardDebts.map((d) => d.id)), [cardDebts])
   const combinedDebts = useMemo(() => [...cardDebts, ...state.debts], [cardDebts, state.debts])
 
-  const plan = useMemo(() => avalanchePlan(combinedDebts, extraBudget), [combinedDebts, extraBudget])
-  const timeline = useMemo(() => avalanchePayoffTimeline(combinedDebts, extraBudget), [combinedDebts, extraBudget])
+  const plan = useMemo(() => avalanchePlan(combinedDebts, extraBudget, strategy), [combinedDebts, extraBudget, strategy])
+  const timeline = useMemo(() => avalanchePayoffTimeline(combinedDebts, extraBudget, strategy), [combinedDebts, extraBudget, strategy])
+  // Strategy comparison — the real tradeoff Deep asked to see: same debts, same extra budget,
+  // both strategies simulated side by side so avalanche's lower total interest vs. snowball's
+  // faster first payoff isn't just asserted, it's shown with real numbers from each.
+  const otherStrategy: PayoffStrategy = strategy === 'avalanche' ? 'snowball' : 'avalanche'
+  const otherPlan = useMemo(() => avalanchePlan(combinedDebts, extraBudget, otherStrategy), [combinedDebts, extraBudget, otherStrategy])
   const totalBalance = combinedDebts.reduce((s, d) => s + d.balance, 0)
   const activeDebts = combinedDebts.filter((d) => d.balance > 0)
 
@@ -61,8 +68,35 @@ export function Debts() {
     <div className="space-y-6">
       <div>
         <h2 className="gradient-heading text-2xl font-bold tracking-tight">Debts</h2>
-        <p className="text-sm text-white/50 mt-1">Avalanche payoff order — highest APR cleared first.</p>
+        <p className="text-sm text-white/50 mt-1">
+          {strategy === 'avalanche' ? 'Avalanche payoff order — highest APR cleared first.' : 'Snowball payoff order — smallest balance cleared first.'}
+        </p>
       </div>
+
+      <StatCard label="Payoff Strategy" glow="purple" tooltip="Avalanche clears the highest-APR debt first — mathematically the least total interest. Snowball clears the smallest balance first — slower on interest, but each payoff comes faster, which some people find easier to stick with.">
+        <div className="mt-4">
+          <SegmentedControl
+            value={strategy}
+            onChange={setStrategy}
+            options={[
+              { value: 'avalanche', label: 'Avalanche' },
+              { value: 'snowball', label: 'Snowball' },
+            ]}
+          />
+        </div>
+        {activeDebts.length > 1 && (
+          <div className="mt-4 grid grid-cols-2 gap-3 text-sm">
+            <div className="rounded-lg border border-white/10 bg-black/20 p-3">
+              <p className="text-xs text-white/40 uppercase tracking-wide">{strategy === 'avalanche' ? 'Avalanche (current)' : 'Snowball (current)'}</p>
+              <p className="mt-1 font-bold tabular-nums text-white">{plan.totalMonths} mo · {formatCurrency(plan.totalInterest)} interest</p>
+            </div>
+            <div className="rounded-lg border border-white/10 bg-black/20 p-3">
+              <p className="text-xs text-white/40 uppercase tracking-wide">{otherStrategy === 'avalanche' ? 'Avalanche' : 'Snowball'}</p>
+              <p className="mt-1 font-bold tabular-nums text-white/70">{otherPlan.totalMonths} mo · {formatCurrency(otherPlan.totalInterest)} interest</p>
+            </div>
+          </div>
+        )}
+      </StatCard>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <StatCard label="Total Debt" glow="danger">
@@ -153,13 +187,13 @@ export function Debts() {
 
       {/* tilt off: dense per-row editable inputs — kept from the app-wide mouse-tilt audit. */}
       <StatCard
-        label="Avalanche Order"
+        label={strategy === 'avalanche' ? 'Avalanche Order' : 'Snowball Order'}
         glow="purple"
         tilt={false}
         tooltip="GEM VISA card balances (with a Link icon) are synced automatically from their real balance/APR on Upcoming Payments — edit them there, not here. Everything else is a manually-entered debt."
       >
         <div className="mt-4 space-y-3">
-          {[...combinedDebts].sort((a, b) => b.apr - a.apr).map((debt, i) => {
+          {sortForStrategy(combinedDebts, strategy).map((debt, i) => {
             const entry = plan.entries.find((e) => e.debtId === debt.id)
             const isCardDebt = cardDebtIds.has(debt.id)
             return (

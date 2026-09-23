@@ -343,16 +343,24 @@ export interface AvalanchePlanEntry {
   totalInterestPaid: number
 }
 
+export type PayoffStrategy = 'avalanche' | 'snowball'
+
+/** Shared ordering for both avalanchePlan and avalanchePayoffTimeline — avalanche targets the
+ * highest APR first (mathematically minimizes total interest paid); snowball targets the
+ * smallest balance first (clears individual debts faster, a real behavioral-motivation
+ * tradeoff over the mathematically optimal choice). Default preserves every existing call
+ * site's exact prior behavior. */
+export function sortForStrategy<T extends Debt>(debts: T[], strategy: PayoffStrategy): T[] {
+  return strategy === 'snowball' ? [...debts].sort((a, b) => a.balance - b.balance) : [...debts].sort((a, b) => b.apr - a.apr)
+}
+
 /**
- * Simulates paying off debts in avalanche order: minimums on everything, all
- * extra budget thrown at the highest-APR debt until it's cleared, then rolled
- * onto the next highest, etc.
+ * Simulates paying off debts in avalanche (default) or snowball order: minimums on everything,
+ * all extra budget thrown at the current target debt until it's cleared, then rolled onto the
+ * next one, etc.
  */
-export function avalanchePlan(debts: Debt[], extraMonthlyBudget: number): { entries: AvalanchePlanEntry[]; totalMonths: number; totalInterest: number } {
-  const working = debts
-    .filter((d) => d.balance > 0)
-    .map((d) => ({ ...d }))
-    .sort((a, b) => b.apr - a.apr)
+export function avalanchePlan(debts: Debt[], extraMonthlyBudget: number, strategy: PayoffStrategy = 'avalanche'): { entries: AvalanchePlanEntry[]; totalMonths: number; totalInterest: number } {
+  const working = sortForStrategy(debts.filter((d) => d.balance > 0).map((d) => ({ ...d })), strategy)
 
   const entries: AvalanchePlanEntry[] = working.map((d) => ({ debtId: d.id, name: d.name, monthsToPayoff: 0, totalInterestPaid: 0 }))
   let month = 0
@@ -405,8 +413,8 @@ export interface AvalancheTimelinePoint {
  * separate function rather than refactoring avalanchePlan() itself, so the
  * existing tested behaviour there can't regress.
  */
-export function avalanchePayoffTimeline(debts: Debt[], extraMonthlyBudget: number): AvalancheTimelinePoint[] {
-  const working = debts.filter((d) => d.balance > 0).map((d) => ({ ...d })).sort((a, b) => b.apr - a.apr)
+export function avalanchePayoffTimeline(debts: Debt[], extraMonthlyBudget: number, strategy: PayoffStrategy = 'avalanche'): AvalancheTimelinePoint[] {
+  const working = sortForStrategy(debts.filter((d) => d.balance > 0).map((d) => ({ ...d })), strategy)
   if (working.length === 0) return []
 
   const snapshot = (m: number): AvalancheTimelinePoint => ({
