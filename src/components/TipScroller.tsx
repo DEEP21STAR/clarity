@@ -49,8 +49,16 @@ export function TipScroller({ tips }: { tips: Tip[] }) {
       <div
         ref={trackRef}
         onScroll={(e) => {
+          // Self-review catch: the original version divided by card offsetWidth alone, which
+          // silently drifts after a couple of cards — each scroll-snap step actually advances
+          // by offsetWidth + the 8px flex gap, not offsetWidth alone. Also guards divide-by-
+          // zero explicitly (0 or Infinity) rather than relying on `|| 0` to catch it, which
+          // it wouldn't have for Infinity (a truthy value).
           const track = e.currentTarget
-          const idx = Math.round(track.scrollLeft / (track.firstElementChild as HTMLElement)?.offsetWidth || 0)
+          const firstCard = track.firstElementChild as HTMLElement | null
+          if (!firstCard || firstCard.offsetWidth === 0) return
+          const step = firstCard.offsetWidth + 8
+          const idx = Math.round(track.scrollLeft / step)
           if (idx !== active && idx >= 0 && idx < tips.length) setActive(idx)
         }}
         className="flex gap-2 overflow-x-auto snap-x snap-mandatory pb-1"
