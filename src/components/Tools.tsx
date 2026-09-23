@@ -7,11 +7,12 @@ import { PaymentHistoryPanel } from './PaymentHistoryPanel'
 import { SegmentedControl } from './SegmentedControl'
 import { calcWfhFixedRate, gstOnExclusive, gstFromInclusive, NZ_WFH_FIXED_RATE_PER_HOUR, AU_WFH_FIXED_RATE_PER_HOUR, calcRoundUpSavings, runDataHealthCheck, projectBalanceSeries } from '@/lib/logic'
 import { cn, formatCurrency, formatShortDate, todayIso } from '@/lib/utils'
-import { Plus, Trash2, Volume2, VolumeX, AlertTriangle, Info, ShieldCheck, Coffee, TrendingUp, Award, Flame, PiggyBank, Lock, BellRing } from 'lucide-react'
+import { Plus, Trash2, Volume2, VolumeX, AlertTriangle, Info, ShieldCheck, Coffee, TrendingUp, Award, Flame, PiggyBank, Lock, BellRing, Mic } from 'lucide-react'
 import { useUndoableDelete } from '@/lib/useUndoableDelete'
 import { DateField } from './DateField'
 import { Help } from './Help'
 import { isNotificationSupported, getNotificationPermission, requestNotificationPermission } from '@/lib/notifications'
+import { isSpeechRecognitionSupported, startListening, parseVoiceTranscript } from '@/lib/voiceInput'
 
 export function Tools() {
   const { state, addOneOffEntry, removeOneOffEntry, setSoundEnabled, setTextScale, setBillAlertsEnabled, setAccentTheme } = useStore()
@@ -29,11 +30,32 @@ export function Tools() {
   const [extraUsageDate, setExtraUsageDate] = useState(todayIso())
   const [whatIfExtraPerWeek, setWhatIfExtraPerWeek] = useState(0)
   const [notifPermission, setNotifPermission] = useState(getNotificationPermission())
+  const [listening, setListening] = useState(false)
+  const [voiceHeard, setVoiceHeard] = useState('')
 
   const handleEnableAlerts = async () => {
     const result = await requestNotificationPermission()
     setNotifPermission(result)
     if (result === 'granted') setBillAlertsEnabled(true)
+  }
+
+  // "proceed with all" — Voice quick-log. Fills the existing one-off entry form rather than
+  // committing directly: parseVoiceTranscript never guesses a sign or category, so the amount
+  // lands as a plain positive number and Deep still reviews/edits before hitting "Add entry" —
+  // same confirm-before-commit as typing it manually.
+  const startVoiceQuickLog = () => {
+    setVoiceHeard('')
+    const listener = startListening(
+      (transcript) => {
+        setListening(false)
+        setVoiceHeard(transcript)
+        const { description, amount } = parseVoiceTranscript(transcript)
+        if (description) setOneOffDesc(description)
+        if (amount !== null) setOneOffAmount(amount)
+      },
+      () => setListening(false)
+    )
+    if (listener) setListening(true)
   }
 
   const roundUpSavings = useMemo(() => calcRoundUpSavings(state.transactions, roundTo), [state.transactions, roundTo])
@@ -299,8 +321,23 @@ export function Tools() {
         </div>
       </StatCard>
 
-      <StatCard label="One-Off Entries" glow="cyan">
+      <StatCard label="One-Off Entries" glow="cyan" tooltip={isSpeechRecognitionSupported() ? 'Tap the mic to fill this form by voice — it never guesses income vs. expense, so review the amount before adding.' : 'Voice fill needs Chrome, Edge, or Safari — not supported in this browser.'}>
         <p className="mt-4 text-xs text-white/40">One-off income/expenses feed the Cash-Flow Forecast chart on Upcoming Payments — a bonus, a big purchase, anything outside the regular bill/pay cycle.</p>
+        {isSpeechRecognitionSupported() && (
+          <div className="mt-3 flex items-center gap-2">
+            <button
+              onClick={startVoiceQuickLog}
+              disabled={listening}
+              className={cn(
+                'flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs transition-colors',
+                listening ? 'border-rose-400/50 bg-rose-500/10 text-rose-200' : 'border-cyan-400/30 bg-cyan-500/10 text-cyan-200 hover:bg-cyan-500/20'
+              )}
+            >
+              <Mic className={cn('w-3.5 h-3.5', listening && 'animate-pulse')} /> {listening ? 'Listening…' : 'Voice quick-log'}
+            </button>
+            {voiceHeard && !listening && <span className="text-xs text-white/40">Heard: "{voiceHeard}"</span>}
+          </div>
+        )}
         <div className="mt-3 grid grid-cols-1 md:grid-cols-4 gap-2">
           <input value={oneOffDesc} onChange={(e) => setOneOffDesc(e.target.value)} placeholder="Description" className="bg-black/30 border border-white/10 rounded-lg px-3 py-2 text-sm outline-none focus:border-cyan-400/50 md:col-span-2" />
           <DateField

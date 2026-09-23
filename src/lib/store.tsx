@@ -78,8 +78,11 @@ export interface AppState {
    * 'neutral' matches the wizard's own default and every existing account's current display. */
   primaryColor: NameColor
   secondaryColor: NameColor
-  /** 2026-09-23 round 7 — real app-wide text-size preference, default 'small' preserves every
-   * existing account's exact current appearance. */
+  /** 2026-09-23 round 7 — real app-wide text-size preference. 2026-09-24: default changed to
+   * 'large' at Deep's explicit request ("basically all screens have the large display size as
+   * that is readable") — also set statically on <html> in index.html so boot/welcome/wizard/
+   * PIN-gate screens (which render before any state loads) start large too, not just the
+   * dashboard. An account that has explicitly saved a different choice via Tools keeps it. */
   textScale: TextScale
   /** Real browser Notification permission has been granted AND Deep opted in via Tools —
    * gates whether App.tsx's bill-due check actually fires a notification. Defaults false:
@@ -120,7 +123,7 @@ export const DEFAULT_STATE: AppState = {
   secondaryName: 'Mimi',
   primaryColor: 'neutral',
   secondaryColor: 'neutral',
-  textScale: 'small',
+  textScale: 'large',
   billAlertsEnabled: false,
   accentTheme: 'aurora',
 }

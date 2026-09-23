@@ -41,6 +41,13 @@ export function PinGate({ children }: { children: React.ReactNode }) {
     document.documentElement.dataset.accentTheme = state.accentTheme
   }, [state.accentTheme])
 
+  // Same reasoning as accentTheme above — PinGate renders before AppContent, so without this
+  // a saved text-scale preference wouldn't apply until after unlocking. index.html's static
+  // data-text-scale="large" default covers the very first paint before this effect can even run.
+  useEffect(() => {
+    document.documentElement.dataset.textScale = state.textScale
+  }, [state.textScale])
+
   const pressKey = (d: string) => {
     if (digits.length >= 4) return
     const next = digits + d
