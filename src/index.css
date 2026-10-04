@@ -67,14 +67,70 @@ html {
 }
 
 body {
-  background: radial-gradient(1200px 800px at 20% -10%, color-mix(in oklab, var(--theme-1) 8%, transparent), transparent),
-    radial-gradient(1200px 800px at 90% 10%, color-mix(in oklab, var(--theme-2) 10%, transparent), transparent),
-    var(--bg-void);
+  background: var(--ux-bg-mesh), var(--bg-void);
   color: #e6e8ee;
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
   overflow-x: hidden;
   max-width: 100vw;
 }
+
+
+/* ===================== Shared visual language (design uplift 2026-10-04) ===================== */
+:root {
+  --ux-accent-a: var(--theme-1);
+  --ux-accent-b: var(--theme-2);
+  --ux-bg-mesh:
+    radial-gradient(1100px 700px at 15% -5%, color-mix(in oklab, var(--ux-accent-a) 14%, transparent), transparent),
+    radial-gradient(1000px 700px at 90% 15%, color-mix(in oklab, var(--ux-accent-b) 12%, transparent), transparent),
+    radial-gradient(1200px 600px at 50% 110%, color-mix(in oklab, var(--ux-accent-a) 6%, transparent), transparent);
+  --ux-noise: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+  --ux-glass-bg: linear-gradient(155deg, rgb(255 255 255 / .07), rgb(255 255 255 / .02) 45%, rgb(11 13 20 / .80));
+  --ux-glass-edge: inset 0 1px 0 rgb(255 255 255 / .10), inset 0 0 0 1px rgb(255 255 255 / .06);
+  --ux-glow-sm: 0 0 24px -8px color-mix(in oklab, var(--ux-accent-a) 55%, transparent);
+  --ux-glow-lg: 0 0 60px -12px color-mix(in oklab, var(--ux-accent-a) 45%, transparent);
+  --ux-radius-card: 20px;
+  --ux-ease: cubic-bezier(.22, 1, .36, 1);
+}
+/* Noise sits at z-index 0, pointer-events none: below header (z-40), PinGate and modals (z-50). */
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background-image: var(--ux-noise);
+  opacity: .035;
+}
+.ux-glass {
+  background: var(--ux-glass-bg);
+  box-shadow: var(--ux-glass-edge);
+  border-radius: var(--ux-radius-card);
+  backdrop-filter: blur(18px) saturate(1.35);
+  -webkit-backdrop-filter: blur(18px) saturate(1.35);
+}
+.ux-hero-number {
+  background-image: linear-gradient(90deg, var(--ux-accent-a), var(--ux-accent-b));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  filter: drop-shadow(0 0 18px color-mix(in oklab, var(--ux-accent-a) 35%, transparent));
+}
+.ux-icon-chip {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 40px; height: 40px; flex-shrink: 0;
+  border-radius: 0.75rem;
+  color: var(--chip-color, var(--ux-accent-a));
+  background: color-mix(in oklab, var(--chip-color, var(--ux-accent-a)) 14%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--chip-color, var(--ux-accent-a)) 30%, transparent);
+}
+@keyframes ux-shimmer-move { to { background-position: -200% 0; } }
+.ux-shimmer {
+  background: linear-gradient(90deg, rgb(255 255 255 / .04) 25%, rgb(255 255 255 / .12) 50%, rgb(255 255 255 / .04) 75%);
+  background-size: 200% 100%;
+  animation: ux-shimmer-move 1.6s linear infinite;
+}
+.ux-empty { display: flex; flex-direction: column; align-items: center; gap: .5rem; padding: 1rem; text-align: center; color: rgb(255 255 255 / .55); font-size: .875rem; }
+@media (prefers-reduced-motion: reduce) { .ux-shimmer { animation: none; } }
 
 ::-webkit-scrollbar { width: 10px; height: 10px; }
 ::-webkit-scrollbar-track { background: transparent; }
@@ -387,6 +443,7 @@ button:not(:disabled):active {
   background: linear-gradient(155deg, rgba(255,255,255,0.07), rgba(255,255,255,0.02) 45%, rgba(11,13,20,0.78) 100%);
   backdrop-filter: blur(18px) saturate(1.35);
   -webkit-backdrop-filter: blur(18px) saturate(1.35);
+  box-shadow: var(--ux-glass-edge);
 }
 .glass-sheen {
   position: absolute;

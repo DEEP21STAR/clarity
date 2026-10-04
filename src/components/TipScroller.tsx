@@ -39,7 +39,10 @@ export function TipScroller({ tips }: { tips: Tip[] }) {
     const track = trackRef.current
     if (!track) return
     const card = track.children[active] as HTMLElement | undefined
-    card?.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' })
+    if (card) {
+      // Scroll the track itself, never the page: scrollIntoView also moved the whole page down.
+      track.scrollTo({ left: card.offsetLeft - (track.clientWidth - card.clientWidth) / 2, behavior: 'smooth' })
+    }
   }, [active])
 
   if (tips.length === 0) return null

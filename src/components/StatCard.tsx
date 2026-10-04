@@ -64,8 +64,9 @@ export function StatCard({ label, glow = 'cyan', tilt = true, className, childre
         onclone: (clonedDoc: Document) => {
           clonedDoc.querySelectorAll('.page-enter').forEach((n) => n.classList.remove('page-enter'))
           // Same gradient-text gap as thumbnailCache.ts — flat cyan fallback on the clone only.
-          clonedDoc.querySelectorAll<HTMLElement>('.gradient-heading').forEach((n) => {
+          clonedDoc.querySelectorAll<HTMLElement>('.gradient-heading, .ux-hero-number').forEach((n) => {
             n.style.background = 'none'
+            n.style.filter = 'none'
             n.style.setProperty('-webkit-text-fill-color', '#67e8f9')
             n.style.color = '#67e8f9'
           })

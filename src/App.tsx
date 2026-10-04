@@ -19,6 +19,7 @@ import { ToastProvider, useToast } from './components/Toast'
 import { NotificationBell } from './components/NotificationBell'
 import { CursorGlow } from './components/CursorGlow'
 import { MobileNavDrawer } from './components/MobileNavDrawer'
+import { MobileHome } from './components/MobileHome'
 import { SetupWizard } from './components/SetupWizard'
 import { Welcome } from './components/Welcome'
 import { WhetuFooter } from './components/WhetuFooter'
@@ -27,12 +28,12 @@ import { cn, formatCurrency, todayIso } from '@/lib/utils'
 import { billsDueForAlert, sendDueBillNotifications } from '@/lib/notifications'
 import { captureThumbnail } from '@/lib/thumbnailCache'
 import {
-  LayoutDashboard, CalendarClock, Receipt, PieChart, CreditCard, ShoppingCart, Wrench, TrendingUp, CalendarDays, Command, WifiOff, Check, Menu,
+  LayoutDashboard, CalendarClock, Receipt, PieChart, CreditCard, ShoppingCart, Wrench, TrendingUp, CalendarDays, Command, WifiOff, Check, Menu, Home,
 } from 'lucide-react'
 
-type TabId = 'dashboard' | 'upcoming' | 'transactions' | 'budgets' | 'debts' | 'networth' | 'calendar' | 'shopping' | 'tools'
+type TabId = 'home' | 'dashboard' | 'upcoming' | 'transactions' | 'budgets' | 'debts' | 'networth' | 'calendar' | 'shopping' | 'tools'
 
-const TABS: { id: TabId; label: string; icon: typeof LayoutDashboard }[] = [
+const TABS: { id: Exclude<TabId, 'home'>; label: string; icon: typeof LayoutDashboard }[] = [
   { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { id: 'upcoming', label: 'Upcoming Payments', icon: CalendarClock },
   { id: 'networth', label: 'Net Worth', icon: TrendingUp },
@@ -54,6 +55,7 @@ const TABS: { id: TabId; label: string; icon: typeof LayoutDashboard }[] = [
  * adjacent tabs in the bar share a hue family.
  */
 const TAB_ACCENTS: Record<TabId, string> = {
+  home: '#22d3ee',
   dashboard: '#22d3ee',
   upcoming: '#f59e0b',
   networth: '#34d399',
@@ -84,6 +86,8 @@ export function AppContent() {
     if (typeof window === 'undefined') return 'upcoming'
     const requested = new URLSearchParams(window.location.search).get('tab')
     const valid = TABS.some((t) => t.id === requested)
+    // Phones (< 768px, below Tailwind's md breakpoint) land on the new Home screen; desktop keeps 'upcoming'.
+    if (!valid && window.matchMedia?.('(max-width: 767px)').matches) return 'home'
     return valid ? (requested as TabId) : 'upcoming'
   }
   const [tab, setTab] = useState<TabId>(initialTab)
@@ -265,6 +269,7 @@ export function AppContent() {
   // ThumbnailPrecacher can render any tab's real content off-screen too.
   const renderTabContent = (id: string) => {
     switch (id as TabId) {
+      case 'home': return <MobileHome onOpenMenu={() => setMobileNavOpen(true)} onNavigate={(id) => goTo(id as TabId)} />
       case 'dashboard': return <Dashboard />
       case 'upcoming': return <UpcomingPayments />
       case 'networth': return <NetWorth />
@@ -285,8 +290,8 @@ export function AppContent() {
       <CommandPalette tabCommands={tabCommands} />
       <div className="relative z-10 page-enter-3d">
         <header className="border-b border-white/10 sticky top-0 z-40 backdrop-blur-md bg-[#05060a]/80">
-          <div className="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
-            <div className="flex items-center gap-2">
+          <div className="max-w-6xl mx-auto px-3 sm:px-4 py-4 flex items-center justify-between">
+            <div className="flex items-center gap-1.5 sm:gap-2 min-w-0">
               {/* Mobile-only hamburger — opens MobileNavDrawer. Desktop keeps the horizontal
                   tab row below, this button is invisible there (md:hidden). */}
               <button
@@ -298,9 +303,9 @@ export function AppContent() {
                 <Menu className="w-4.5 h-4.5" />
               </button>
               <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-cyan-400 to-purple-500" />
-              <span className="gradient-heading font-bold text-lg tracking-tight">Clarity</span>
+              <span className="gradient-heading font-bold text-lg tracking-tight hidden min-[430px]:inline">Clarity</span>
             </div>
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2 sm:gap-3 shrink-0">
               {/* Round 21, item #21 — real debounced "Saved" pulse, not permanent chrome. */}
               <span
                 className={cn(
@@ -437,6 +442,7 @@ export function AppContent() {
         </header>
         <main ref={mainRef} className="max-w-6xl mx-auto px-4 py-8 page-enter">
           {tab === 'dashboard' && <Dashboard />}
+          {tab === 'home' && renderTabContent('home')}
           {tab === 'upcoming' && <UpcomingPayments />}
           {tab === 'networth' && <NetWorth />}
           {tab === 'calendar' && <BillCalendar />}
@@ -456,7 +462,7 @@ export function AppContent() {
       <MobileNavDrawer
         open={mobileNavOpen}
         onClose={() => setMobileNavOpen(false)}
-        tabs={TABS}
+        tabs={[{ id: 'home', label: 'Home', icon: Home }, ...TABS]}
         activeTab={tab}
         accents={TAB_ACCENTS}
         onSelect={(id) => handleTabClick(id as TabId)}

@@ -14,6 +14,8 @@ import { cn, formatCurrency, formatShortDate, todayIso } from '@/lib/utils'
 import { isInsightSnoozed, snoozeInsight } from '@/lib/insightSnooze'
 import { AlertTriangle, CheckCircle2, Info, GripVertical, ChevronUp, ChevronDown, Clock, Flame } from 'lucide-react'
 import { fireHealthScoreConfetti } from '@/lib/confetti'
+import { Sparkline } from './Sparkline'
+import { BillIcon } from './BillIcons'
 import { YearInReview } from './YearInReview'
 import { DashboardForecastCard } from './DashboardForecastCard'
 import { FinancialTipOfDay } from './FinancialTipOfDay'
@@ -179,16 +181,33 @@ export function Dashboard() {
           <p className="text-xs text-white/40 mt-2">Editable — drives tax/net calculations below.</p>
         </StatCard>
         <StatCard label="Net Monthly Income" glow="success" delay={0.05}>
-          <div className="mt-4 text-3xl font-bold text-emerald-300 tabular-nums">
+          <div className="mt-4 text-3xl font-bold tabular-nums ux-hero-number">
             <CountUp value={monthlyNet} prefix="$" />
           </div>
+          {monthlyNet > 0 && (
+            <div className="mt-3" role="img" aria-label={`Bills ${formatCurrency(monthlyBills)} of ${formatCurrency(monthlyNet)} net monthly income; ${formatCurrency(leftover)} left`}>
+              <div className="h-2.5 rounded-full bg-white/10 overflow-hidden flex">
+                <div className="h-full bg-gradient-to-r from-amber-400 to-orange-500" style={{ width: `${Math.min(100, (monthlyBills / monthlyNet) * 100)}%` }} />
+                {leftover > 0 && <div className="h-full bg-gradient-to-r from-emerald-400 to-cyan-400 flex-1" />}
+              </div>
+              <div className="mt-1.5 flex justify-between gap-2 text-xs text-white/70">
+                <span>Bills {formatCurrency(monthlyBills)}</span>
+                <span>{leftover >= 0 ? 'Left' : 'Short'} {formatCurrency(Math.abs(leftover))}</span>
+              </div>
+            </div>
+          )}
           <p className="text-xs text-white/40 mt-2">
             After {country} tax {country === 'NZ' ? '+ ACC levy' : '+ Medicare levy − LITO'}.
           </p>
         </StatCard>
         <StatCard label="Fixed Bills / Month" glow="amber" delay={0.1}>
-          <div className="mt-4 text-3xl font-bold text-amber-300 tabular-nums">
-            <CountUp value={monthlyBills} prefix="$" />
+          <div className="mt-4 flex items-center gap-3">
+            <span className="ux-icon-chip" style={{ ['--chip-color' as string]: '#fbbf24' }}>
+              <BillIcon name={bills.find((b) => b.active)?.name ?? ''} className="w-5 h-5" />
+            </span>
+            <div className="text-3xl font-bold tabular-nums ux-hero-number" style={{ ['--ux-accent-a' as string]: '#fbbf24', ['--ux-accent-b' as string]: '#fb923c' }}>
+              <CountUp value={monthlyBills} prefix="$" />
+            </div>
           </div>
           <p className="text-xs text-white/40 mt-2">{bills.filter((b) => b.active).length} active recurring bills.</p>
         </StatCard>
@@ -198,9 +217,16 @@ export function Dashboard() {
     health: (
       <StatCard label="Financial Health Score" glow={healthScore.score >= 75 ? 'success' : healthScore.score >= 40 ? 'amber' : 'danger'} copyable>
         <div className="mt-4 flex items-center gap-6">
-          <MoodIcon score={healthScore.score} size={64} />
-          <div>
-            <div className="text-5xl font-black tabular-nums text-white"><CountUp value={healthScore.score} decimals={0} />/100</div>
+          <HealthRings breakdown={healthScore.breakdown}>
+            <MoodIcon score={healthScore.score} size={44} />
+          </HealthRings>
+          <div className="min-w-0">
+            <div className="text-5xl font-black tabular-nums ux-hero-number"><CountUp value={healthScore.score} decimals={0} />/100</div>
+            {state.healthScoreHistory.length >= 2 ? (
+              <div className="mt-2"><Sparkline values={state.healthScoreHistory.slice(-30).map((h) => h.score)} label={`Health score trend over ${Math.min(30, state.healthScoreHistory.length)} days`} /></div>
+            ) : (
+              <p className="mt-1 text-xs text-white/60">Trend appears after 2 days of data</p>
+            )}
             <p className="text-xs text-white/40 mt-1">
               Savings rate {healthScore.breakdown.savingsRate.toFixed(0)} · Debt-to-income {healthScore.breakdown.debtToIncome.toFixed(0)} · Bill coverage {healthScore.breakdown.billCoverage.toFixed(0)} · Emergency fund {healthScore.breakdown.emergencyFund.toFixed(0)}
               <span className="block mt-1 text-white/30">Weighted 30/25/25/20 — see calcFinancialHealthScore() for the exact documented formula.</span>
@@ -216,6 +242,7 @@ export function Dashboard() {
     ),
     tax: (
       <StatCard label="Tax Breakdown" glow="purple">
+        <TaxBar net={net.net} tax={net.tax} levy={country === 'NZ' ? (net as any).accLevy : (net as any).medicareLevy} levyLabel={country === 'NZ' ? 'ACC' : 'Medicare'} />
         <div className="mt-4 grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
           <Metric label="Gross" value={net.gross} />
           <Metric label="Income Tax" value={net.tax} tone="danger" />
@@ -248,11 +275,12 @@ export function Dashboard() {
         )}
         <div className="mt-4 space-y-2">
           {insights.map((insight) => (
-            <div key={insight.id} className="group flex items-start gap-2 text-sm">
-              {insight.severity === 'critical' && <AlertTriangle className="w-4 h-4 text-rose-400 mt-0.5 shrink-0" />}
-              {insight.severity === 'warning' && <AlertTriangle className="w-4 h-4 text-amber-400 mt-0.5 shrink-0" />}
-              {insight.severity === 'info' && <CheckCircle2 className="w-4 h-4 text-emerald-400 mt-0.5 shrink-0" />}
-              <span className="text-white/70 flex-1">{insight.message}</span>
+            <div key={insight.id} className="group relative flex items-start gap-3 text-sm rounded-xl border border-white/10 bg-white/[0.03] pl-4 pr-3 py-2.5 overflow-hidden">
+              <span aria-hidden="true" className="absolute left-0 inset-y-0 w-1" style={{ background: SEV[insight.severity].color, boxShadow: `0 0 12px ${SEV[insight.severity].color}` }} />
+              <span className="ux-icon-chip" style={{ ['--chip-color' as string]: SEV[insight.severity].color }}>
+                {insight.severity === 'info' ? <CheckCircle2 className="w-5 h-5" /> : <AlertTriangle className="w-5 h-5" />}
+              </span>
+              <span className="text-white/80 flex-1 min-w-0 self-center">{insight.message}</span>
               {/* Round 21, item #7 — real 7-day snooze, only offered for warning/info (never
                   "critical" — overspending shouldn't be silenceable for a week). */}
               {insight.severity !== 'critical' && (
@@ -272,8 +300,12 @@ export function Dashboard() {
             </div>
           )}
           {allInsights.length === 0 && (
-            <div className="flex items-center gap-2 text-sm text-white/50">
-              <Info className="w-4 h-4" /> No insights yet — add bills, debts and balances to generate real ones.
+            <div className="ux-empty">
+              <svg width="72" height="40" viewBox="0 0 72 40" aria-hidden="true">
+                <path d="M12 28 L36 10 L60 24" fill="none" stroke="var(--ux-accent-a)" strokeOpacity=".5" strokeWidth="1.5" strokeLinecap="round" />
+                <circle cx="12" cy="28" r="4" fill="var(--ux-accent-a)" /><circle cx="36" cy="10" r="5" fill="var(--ux-accent-b)" /><circle cx="60" cy="24" r="3.5" fill="var(--ux-accent-a)" />
+              </svg>
+              <span className="flex items-center gap-1.5"><Info className="w-4 h-4" /> No insights yet — add bills, debts and balances to generate real ones.</span>
             </div>
           )}
         </div>
@@ -363,6 +395,62 @@ export function Dashboard() {
           {blocks[id]}
         </div>
       ))}
+    </div>
+  )
+}
+
+const SEV = {
+  critical: { color: '#fb7185' },
+  warning: { color: '#fbbf24' },
+  info: { color: '#34d399' },
+} as const
+
+/** Four sub-score arcs (savings rate, debt-to-income, bill coverage, emergency fund) around the mood icon. Display only; values come straight from healthScore.breakdown. */
+function HealthRings({ breakdown, children }: { breakdown: { savingsRate: number; debtToIncome: number; billCoverage: number; emergencyFund: number }; children: ReactNode }) {
+  const rings = [
+    { v: breakdown.savingsRate, c: '#22d3ee', n: 'Savings rate' },
+    { v: breakdown.debtToIncome, c: '#a855f7', n: 'Debt-to-income' },
+    { v: breakdown.billCoverage, c: '#fbbf24', n: 'Bill coverage' },
+    { v: breakdown.emergencyFund, c: '#34d399', n: 'Emergency fund' },
+  ]
+  const size = 96
+  return (
+    <div className="relative shrink-0" style={{ width: size, height: size }} role="img" aria-label={rings.map((r) => `${r.n} ${r.v.toFixed(0)}`).join(', ')}>
+      <svg width={size} height={size} viewBox="0 0 96 96" className="-rotate-90">
+        {rings.map((r, i) => {
+          const rad = 45 - i * 7
+          const C = 2 * Math.PI * rad
+          const pct = Math.min(100, Math.max(0, r.v)) / 100
+          return (
+            <g key={r.n}>
+              <circle cx="48" cy="48" r={rad} fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth="4.5" />
+              <circle cx="48" cy="48" r={rad} fill="none" stroke={r.c} strokeWidth="4.5" strokeLinecap="round" strokeDasharray={C} strokeDashoffset={C * (1 - pct)} />
+            </g>
+          )
+        })}
+      </svg>
+      <div className="absolute inset-0 flex items-center justify-center">{children}</div>
+    </div>
+  )
+}
+
+/** One 100% stacked bar of the figures the grid below already shows. Normalised for display only; nothing is recomputed. */
+function TaxBar({ net, tax, levy, levyLabel }: { net: number; tax: number; levy: number; levyLabel: string }) {
+  const parts = [
+    { l: 'Net', v: Math.max(0, net), c: 'bg-emerald-400' },
+    { l: 'Income Tax', v: Math.max(0, tax), c: 'bg-rose-400' },
+    { l: levyLabel, v: Math.max(0, levy), c: 'bg-amber-400' },
+  ]
+  const sum = parts.reduce((a, p) => a + p.v, 0)
+  if (sum <= 0) return null
+  return (
+    <div className="mt-4" role="img" aria-label={parts.map((p) => `${p.l} ${((p.v / sum) * 100).toFixed(0)}%`).join(', ')}>
+      <div className="h-3 rounded-full overflow-hidden flex bg-white/10">
+        {parts.map((p) => <div key={p.l} className={p.c} style={{ width: `${(p.v / sum) * 100}%` }} />)}
+      </div>
+      <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-white/70">
+        {parts.map((p) => <span key={p.l}>{p.l} {((p.v / sum) * 100).toFixed(0)}%</span>)}
+      </div>
     </div>
   )
 }

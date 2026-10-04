@@ -3,7 +3,8 @@ import gsap from 'gsap'
 import { useStore } from '@/lib/store'
 import { StatCard } from './StatCard'
 import { CountUp } from './CountUp'
-import { addDaysIso, totalBillsInWindow, totalIncomeInWindow, totalPeriodicSmoothedInWindow, totalSinkingFundsSmoothedInWindow, windowLengthDays, isBillAmountChanged, nextMonthlyDueDate, resolvePaymentMethod, dueTodayBills, round2, isPayday, incomeOnDate } from '@/lib/logic'
+import { computeLiveFunds } from '@/lib/liveFunds'
+import { addDaysIso, isBillAmountChanged, nextMonthlyDueDate, resolvePaymentMethod, dueTodayBills, round2, isPayday, incomeOnDate } from '@/lib/logic'
 import { cn, formatCurrency, todayIso, formatShortDate } from '@/lib/utils'
 import type { UpcomingWindow, RecurringBill, BillFrequency, PeriodicBill } from '@/lib/types'
 import { Plus, Trash2, Info, AlertTriangle, ChevronDown, Wallet, PiggyBank, RefreshCw, HandCoins, Check, Pencil } from 'lucide-react'
@@ -63,44 +64,11 @@ export function UpcomingPayments() {
   const [showBalanceEdit, setShowBalanceEdit] = useState(false)
 
   const today = todayIso()
-  const windowEnd = useMemo(() => addDaysIso(today, windowLengthDays(window_) - 1), [today, window_])
   const view = state.householdView
-
-  const incomeInWindow = useMemo(() => (view === 'mimi' ? 0 : totalIncomeInWindow(today, windowEnd, state.incomeAnchor)), [today, windowEnd, view, state.incomeAnchor])
-  const flatBillsInWindow = useMemo(() => totalBillsInWindow(state.bills, today, windowEnd, view), [state.bills, today, windowEnd, view])
-  // Gas/Electricity are periodic bills now — Deep pays them in smoothed fortnightly
-  // set-asides, so that smoothed contribution (not the lump due-date amount) is
-  // what counts toward Live Funds Available here, to avoid double-counting.
-  const periodicSmoothedInWindow = useMemo(
-    () => totalPeriodicSmoothedInWindow(state.periodicBills, today, windowEnd, today, view),
-    [state.periodicBills, today, windowEnd, view]
-  )
-  const sinkingFundsInWindow = useMemo(
-    () => totalSinkingFundsSmoothedInWindow(state.sinkingFunds, today, windowEnd, today),
-    [state.sinkingFunds, today, windowEnd]
-  )
-  const goalsFundedInWindow = useMemo(() => state.savingsGoals.reduce((s, g) => s + g.fundedThisPeriod, 0), [state.savingsGoals])
-  const billsInWindow = useMemo(
-    () => Math.round((flatBillsInWindow + periodicSmoothedInWindow + sinkingFundsInWindow + goalsFundedInWindow) * 100) / 100,
-    [flatBillsInWindow, periodicSmoothedInWindow, sinkingFundsInWindow, goalsFundedInWindow]
-  )
-  const hsbc = state.accounts.find((a) => a.id === 'hsbc')?.value ?? 0
-  const overdraft = state.accounts.find((a) => a.id === 'overdraft')?.value ?? 0
-
-  // 2026-09-23 — real quick-log spend now actually deducts here. Guides (foodAmount etc, just
-  // below) are still computed from THIS pre-spend figure, deliberately — if the guide itself
-  // shrank every time Deep logged a spend, "remaining vs guide" would never make sense (the
-  // target would race away from the thing eating it). liveFundsAvailable (the hero number,
-  // and the OVERSPENT banner below) is the one place spend actually bites — already-existing
-  // machinery, just fed a real input for the first time.
-  const liveFundsBeforeSpend = useMemo(
-    () => Math.round((hsbc + overdraft + incomeInWindow - billsInWindow) * 100) / 100,
-    [hsbc, overdraft, incomeInWindow, billsInWindow]
-  )
-  const spentTracked = state.spendTracker.food + state.spendTracker.fuel + state.spendTracker.personal
-  const liveFundsAvailable = useMemo(
-    () => Math.round((liveFundsBeforeSpend - spentTracked) * 100) / 100,
-    [liveFundsBeforeSpend, spentTracked]
+  // Shared with the mobile Home screen (src/lib/liveFunds.ts) so both always show the same number.
+  const { windowEnd, incomeInWindow, billsInWindow, liveFundsBeforeSpend, liveFundsAvailable } = useMemo(
+    () => computeLiveFunds(state, today, window_, view),
+    [state, today, window_, view]
   )
   const isOverspent = liveFundsAvailable < 0
 
