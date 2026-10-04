@@ -1,11 +1,14 @@
 import { useEffect, useMemo, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { Menu, Plus, X, ArrowDownLeft, ArrowUpRight, Wallet, ChevronRight, AlertTriangle, CheckCircle2, Info } from 'lucide-react'
 import { useStore } from '@/lib/store'
 import { CountUp } from './CountUp'
 import { BillIcon } from './BillIcons'
-import { computeLiveFunds, applyQuickEntry } from '@/lib/liveFunds'
-import { addDaysIso, incomeOnDate, nextMonthlyDueDate, nzNetIncome, auNetIncome, monthlyEquivalent, generateInsights } from '@/lib/logic'
+import { computeLiveFunds, applyQuickEntry, undoQuickEntry, type QuickEntry, type QuickCategory } from '@/lib/liveFunds'
+import { addDaysIso, daysBetweenIso, incomeOnDate, nextMonthlyDueDate, nzNetIncome, auNetIncome, monthlyEquivalent, generateInsights } from '@/lib/logic'
 import { cn, formatCurrency, formatShortDate, todayIso } from '@/lib/utils'
+
+const INSIGHT_TAB: Record<string, string> = { overspend: 'budgets', 'low-savings-rate': 'networth', 'healthy-savings-rate': 'networth', 'high-fixed-costs': 'upcoming', 'high-interest-debt': 'debts', 'no-savings-buffer': 'networth' }
 
 /**
  * Phone landing screen (< 768px). Every number comes from existing logic: Live Funds from the
@@ -15,6 +18,12 @@ import { cn, formatCurrency, formatShortDate, todayIso } from '@/lib/utils'
 export function MobileHome({ onOpenMenu, onNavigate }: { onOpenMenu: () => void; onNavigate: (id: string) => void }) {
   const { state, setState } = useStore()
   const [sheetOpen, setSheetOpen] = useState(false)
+  const [undo, setUndo] = useState<{ entry: QuickEntry; id: string; msg: string } | null>(null)
+  useEffect(() => {
+    if (!undo) return
+    const t = setTimeout(() => setUndo(null), 4000)
+    return () => clearTimeout(t)
+  }, [undo])
   const today = todayIso()
   const view = state.householdView
 
@@ -38,6 +47,12 @@ export function MobileHome({ onOpenMenu, onNavigate }: { onOpenMenu: () => void;
     }
     return out.sort((a, b) => a.date.localeCompare(b.date))
   }, [state.bills, state.incomeAnchor, today, view])
+
+  const nextBills = useMemo(() => state.bills
+    .filter((b) => b.active && b.frequency === 'monthly')
+    .map((b) => { const d = nextMonthlyDueDate(b.dueDay, today); return { id: b.id, name: b.name, amount: b.amount, date: d, days: daysBetweenIso(today, d) } })
+    .sort((a, b) => a.date.localeCompare(b.date))
+    .slice(0, 3), [state.bills, today])
 
   const chips = useMemo(() => {
     const net = state.country === 'NZ' ? nzNetIncome(state.grossAnnualIncome) : auNetIncome(state.grossAnnualIncome)
@@ -107,20 +122,48 @@ export function MobileHome({ onOpenMenu, onNavigate }: { onOpenMenu: () => void;
         )}
       </section>
 
+      <section aria-label="Next bills">
+        <h3 className="text-base font-bold text-white mb-2">Next bills</h3>
+        {nextBills.length === 0 ? (
+          <div className="ux-empty ux-glass border border-white/10">No active monthly bills yet. Add one under Upcoming.</div>
+        ) : (
+          <ul className="space-y-2">
+            {nextBills.map((b) => (
+              <li key={b.id}>
+                <button type="button" onClick={() => onNavigate('upcoming')} className="w-full flex items-center gap-3 rounded-2xl border border-white/10 bg-white/[0.04] px-3 py-2.5 min-h-14 text-left">
+                  <span className="ux-icon-chip" style={{ ['--chip-color' as string]: '#fbbf24' }}><BillIcon name={b.name} className="w-5 h-5" /></span>
+                  <span className="min-w-0 flex-1">
+                    <span className="block text-base font-semibold text-white truncate">{b.name}</span>
+                    <span className="block text-sm text-white/65">{b.days === 0 ? 'Due today' : b.days === 1 ? 'Due in 1 day' : `Due in ${b.days} days`} · {formatShortDate(b.date)}</span>
+                  </span>
+                  <span className="text-base font-bold tabular-nums text-amber-200">{formatCurrency(b.amount)}</span>
+                  <ChevronRight className="w-4 h-4 text-white/40 shrink-0" />
+                </button>
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
+
       <section aria-label="Insights">
         <h3 className="text-base font-bold text-white mb-2">Worth knowing</h3>
-        <div className="flex flex-col gap-2">
-          {chips.map((c) => (
-            <div key={c.id} className="flex items-start gap-2 rounded-2xl border border-white/10 bg-white/[0.04] px-3 py-2.5 text-sm text-white/85">
-              {c.severity === 'info' ? <CheckCircle2 className="w-4 h-4 mt-0.5 text-emerald-300 shrink-0" /> : <AlertTriangle className={cn('w-4 h-4 mt-0.5 shrink-0', c.severity === 'critical' ? 'text-rose-300' : 'text-amber-300')} />}
-              <span className="min-w-0">{c.message}</span>
-            </div>
-          ))}
-          {chips.length === 0 && <div className="ux-empty ux-glass border border-white/10"><Info className="w-4 h-4" />No insights yet — add bills, debts and balances.</div>}
+        <div className="-mx-4 px-4 flex gap-2 overflow-x-auto snap-x snap-mandatory pb-1" style={{ scrollPaddingLeft: '1rem' }}>
+          {chips.map((c, i) => {
+            const hot = i === 0 && c.severity !== 'info'
+            const Icon = hot ? AlertTriangle : c.severity === 'info' ? CheckCircle2 : Info
+            return (
+              <button key={c.id} type="button" onClick={() => onNavigate(INSIGHT_TAB[c.id] ?? 'dashboard')}
+                className={cn('snap-start shrink-0 w-[15rem] flex items-start gap-2 rounded-2xl border px-3 py-2.5 min-h-14 text-left text-sm', hot ? (c.severity === 'critical' ? 'border-rose-300/50 bg-rose-400/10 text-rose-100' : 'border-amber-300/50 bg-amber-400/10 text-amber-100') : 'border-white/10 bg-white/[0.04] text-white/85')}>
+                <Icon className={cn('w-4 h-4 mt-0.5 shrink-0', hot ? (c.severity === 'critical' ? 'text-rose-300' : 'text-amber-300') : c.severity === 'info' ? 'text-emerald-300' : 'text-white/50')} />
+                <span className="min-w-0 line-clamp-2">{c.message}</span>
+              </button>
+            )
+          })}
+          {chips.length === 0 && <div className="w-full ux-empty ux-glass border border-white/10"><Info className="w-4 h-4" />No insights yet — add bills, debts and balances.</div>}
         </div>
       </section>
 
-      <button
+      {createPortal(<button
         type="button"
         onClick={() => setSheetOpen(true)}
         aria-label="Add an expense or income"
@@ -128,18 +171,29 @@ export function MobileHome({ onOpenMenu, onNavigate }: { onOpenMenu: () => void;
         style={{ bottom: 'calc(1rem + env(safe-area-inset-bottom))' }}
       >
         <Plus className="w-5 h-5" strokeWidth={3} /> Add
-      </button>
+      </button>, document.body)}
 
-      {sheetOpen && <AddSheet today={today} onClose={() => setSheetOpen(false)} onSave={(e) => { setState((s) => applyQuickEntry(s, e, today, `quick-${Date.now()}`)); setSheetOpen(false) }} />}
+      {sheetOpen && createPortal(<AddSheet today={today} onClose={() => setSheetOpen(false)} onSave={(e) => {
+        const id = `quick-${Date.now()}`
+        setState((s) => applyQuickEntry(s, e, today, id))
+        setSheetOpen(false)
+        setUndo({ entry: e, id, msg: `Added ${e.kind === 'expense' ? '-' : '+'}$${e.amount} ${e.description || (e.kind === 'expense' ? 'Quick expense' : 'Quick income')}` })
+      }} />, document.body)}
+      {undo && createPortal(
+        <div role="status" aria-live="polite" className="fixed inset-x-4 z-[75] flex items-center justify-between gap-3 rounded-2xl border border-emerald-300/30 bg-[#0b0d14] px-4 min-h-14 text-base text-white shadow-[0_10px_30px_-10px_rgba(0,0,0,0.8)]" style={{ bottom: 'calc(5.5rem + env(safe-area-inset-bottom))' }}>
+          <span className="min-w-0 truncate">{undo.msg}</span>
+          <button type="button" onClick={() => { setState((s) => undoQuickEntry(s, undo.entry, today, undo.id)); setUndo(null) }} className="shrink-0 min-h-11 px-2 font-bold text-cyan-300">Undo</button>
+        </div>, document.body)}
     </div>
   )
 }
 
-function AddSheet({ today, onClose, onSave }: { today: string; onClose: () => void; onSave: (e: { kind: 'expense' | 'income'; amount: number; description: string; date: string }) => void }) {
+function AddSheet({ today, onClose, onSave }: { today: string; onClose: () => void; onSave: (e: QuickEntry) => void }) {
   const [kind, setKind] = useState<'expense' | 'income'>('expense')
   const [amount, setAmount] = useState('')
   const [desc, setDesc] = useState('')
   const [date, setDate] = useState(today)
+  const [cat, setCat] = useState<QuickCategory>('personal')
   useEffect(() => {
     const prev = document.body.style.overflow
     document.body.style.overflow = 'hidden'
@@ -164,6 +218,14 @@ function AddSheet({ today, onClose, onSave }: { today: string; onClose: () => vo
             </button>
           ))}
         </div>
+        {kind === 'expense' && (
+          <div role="group" aria-label="Category" className="flex gap-2 overflow-x-auto -mx-1 px-1 pb-1">
+            {([['food', 'Food'], ['fuel', 'Fuel'], ['personal', 'Personal'], ['general', 'General'], ['extraUsage', 'Extra usage']] as const).map(([k, l]) => (
+              <button key={k} type="button" aria-pressed={cat === k} onClick={() => setCat(k)}
+                className={cn('shrink-0 rounded-full border px-4 min-h-11 text-sm font-semibold', cat === k ? 'bg-cyan-400/20 border-cyan-300 text-cyan-100' : 'border-white/15 text-white/70')}>{l}</button>
+            ))}
+          </div>
+        )}
         <label className="block text-sm font-semibold text-white/80">Amount ($)
           <input className={cn(field, 'mt-1 text-2xl font-bold tabular-nums')} type="number" inputMode="decimal" step="0.01" placeholder="0.00" value={amount} onChange={(e) => setAmount(e.target.value)} autoFocus />
         </label>
@@ -174,7 +236,7 @@ function AddSheet({ today, onClose, onSave }: { today: string; onClose: () => vo
           <input className={cn(field, 'mt-1')} type="date" value={date} onChange={(e) => setDate(e.target.value || today)} />
         </label>
         {date > today && <p className="text-sm text-white/60">Future date: goes into the forecast only; Live Funds changes when the day arrives.</p>}
-        <button type="button" disabled={!valid} onClick={() => onSave({ kind, amount: amt, description: desc.trim(), date })}
+        <button type="button" disabled={!valid} onClick={() => onSave({ kind, amount: amt, description: desc.trim(), date, category: kind === 'expense' ? cat : undefined })}
           className="w-full rounded-xl min-h-14 text-base font-extrabold text-black bg-gradient-to-r from-cyan-400 to-purple-500 disabled:opacity-40">
           Save {kind}
         </button>

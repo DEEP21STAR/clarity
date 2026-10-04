@@ -452,7 +452,7 @@ export function AppContent() {
           {tab === 'shopping' && <ShoppingExpenses />}
           {tab === 'tools' && <Tools />}
         </main>
-        <WhetuFooter name={state.primaryName} />
+        {tab !== 'home' && <WhetuFooter name={state.primaryName} />}
       </div>
       {/* Coordinator follow-up fix, verified live — the ⌘K hover-preview mechanism itself
           worked, but only cached a thumbnail AFTER a real visit, so most tabs legitimately

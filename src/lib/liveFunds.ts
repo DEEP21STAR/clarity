@@ -39,9 +39,14 @@ export function computeLiveFunds(
  *   one-off record, because the forecast starts from that balance and would count it twice.
  * - future-dated: one-off entry only (forecast), Live Funds is unchanged until the day arrives.
  */
+export type QuickCategory = 'food' | 'fuel' | 'personal' | 'general' | 'extraUsage'
+export interface QuickEntry { kind: 'expense' | 'income'; amount: number; description: string; date: string; category?: QuickCategory }
+/** Live Funds spend bucket for a category: food/fuel/personal have their own; general/extraUsage count in 'personal' (as before this change, every quick expense did). */
+const bucketOf = (c?: QuickCategory): 'food' | 'fuel' | 'personal' => (c === 'food' || c === 'fuel' ? c : 'personal')
+
 export function applyQuickEntry(
   s: AppState,
-  e: { kind: 'expense' | 'income'; amount: number; description: string; date: string },
+  e: QuickEntry,
   today: string,
   id: string
 ): AppState {
@@ -51,13 +56,28 @@ export function applyQuickEntry(
   if (e.kind === 'expense') {
     const next: AppState = {
       ...s,
-      oneOffEntries: [{ id, date: e.date, description: e.description || 'Quick expense', amount: -amt, category: 'personal' }, ...s.oneOffEntries],
+      oneOffEntries: [{ id, date: e.date, description: e.description || 'Quick expense', amount: -amt, category: e.category ?? 'personal' }, ...s.oneOffEntries],
     }
-    if (!isFuture) next.spendTracker = { ...s.spendTracker, personal: Math.round((s.spendTracker.personal + amt) * 100) / 100 }
+    if (!isFuture) { const b = bucketOf(e.category); next.spendTracker = { ...s.spendTracker, [b]: Math.round((s.spendTracker[b] + amt) * 100) / 100 } }
     return next
   }
   if (isFuture) {
     return { ...s, oneOffEntries: [{ id, date: e.date, description: e.description || 'Quick income', amount: amt }, ...s.oneOffEntries] }
   }
   return { ...s, accounts: s.accounts.map((a) => (a.id === 'hsbc' ? { ...a, value: Math.round((a.value + amt) * 100) / 100 } : a)) }
+}
+
+/** Exact inverse of applyQuickEntry for the same (entry, today, id): removes the one-off record and reverses the spendTracker / HSBC change it made. */
+export function undoQuickEntry(s: AppState, e: QuickEntry, today: string, id: string): AppState {
+  const amt = Math.round(Math.abs(e.amount) * 100) / 100
+  if (!(amt > 0)) return s
+  const isFuture = e.date > today
+  const oneOffEntries = s.oneOffEntries.filter((o) => o.id !== id)
+  if (e.kind === 'expense') {
+    const next: AppState = { ...s, oneOffEntries }
+    if (!isFuture) { const b = bucketOf(e.category); next.spendTracker = { ...s.spendTracker, [b]: Math.round((s.spendTracker[b] - amt) * 100) / 100 } }
+    return next
+  }
+  if (isFuture) return { ...s, oneOffEntries }
+  return { ...s, accounts: s.accounts.map((a) => (a.id === 'hsbc' ? { ...a, value: Math.round((a.value - amt) * 100) / 100 } : a)) }
 }
