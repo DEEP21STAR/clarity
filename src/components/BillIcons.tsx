@@ -1,4 +1,4 @@
-import { Flame, Zap, ShieldCheck, Cloud, Droplet, Home, CreditCard, Smartphone } from 'lucide-react'
+import { Flame, Zap, ShieldCheck, Cloud, Droplet, Home, CreditCard, Smartphone, Sparkles } from 'lucide-react'
 
 /**
  * Small animated per-bill-category icons (CSS keyframes in index.css, not a
@@ -15,6 +15,7 @@ export function BillIcon({ name, className = 'w-4 h-4' }: { name: string; classN
   if (n.includes('gem visa') || n.includes('visa')) return <CreditCard className={`${className} icon-card-tilt text-purple-300`} />
   if (n.includes('hsbc')) return <ShieldCheck className={`${className} icon-shield text-cyan-300`} />
   if (n.includes('spotify')) return <EqBars className={className} />
+  if (n.includes('claude') || n.includes('anthropic')) return <Sparkles className={`${className} icon-cloud text-orange-300`} />
   if (n.includes('google')) return <Cloud className={`${className} icon-cloud text-blue-300`} />
   if (n.includes('water')) return (
     <span className="icon-water-wrap">

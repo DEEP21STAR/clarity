@@ -17,6 +17,15 @@ interface MobileNavDrawerProps {
   onSelect: (id: string) => void
 }
 
+/** Section order + membership. Ids not listed here fall into a trailing "More" section so a new tab can never vanish from the drawer. */
+const NAV_GROUPS: { label: string; ids: string[] }[] = [
+  { label: 'Today', ids: ['home', 'upcoming'] },
+  { label: 'Money', ids: ['transactions', 'budgets', 'shopping'] },
+  { label: 'Plan', ids: ['calendar', 'debts'] },
+  { label: 'Insights', ids: ['dashboard', 'networth'] },
+  { label: 'Settings', ids: ['tools'] },
+]
+
 /**
  * Mobile-only slide-out nav — replaces the desktop horizontal tab bar (which relies on
  * scroll-to-discover, fine with a mouse/trackpad but a poor fit for a phone: 9 tabs don't fit,
@@ -68,29 +77,43 @@ export function MobileNavDrawer({ open, onClose, tabs, activeTab, accents, onSel
             <X className="w-4 h-4" />
           </button>
         </div>
-        <nav className="flex-1 overflow-y-auto py-2 px-2">
-          {tabs.map((t) => {
-            const Icon = t.icon
-            const isActive = activeTab === t.id
-            return (
-              <button
-                key={t.id}
-                onClick={() => { onSelect(t.id); onClose() }}
-                style={{ '--tab-accent': accents[t.id] } as CSSProperties}
-                className={cn(
-                  'w-full flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-medium transition-colors text-left',
-                  isActive ? 'bg-gradient-to-r from-cyan-400/15 to-purple-500/15 text-[color:var(--tab-accent)]' : 'text-white/60 hover:bg-white/5 hover:text-white/90'
-                )}
-              >
-                <span
-                  className="w-1.5 h-1.5 rounded-full shrink-0"
-                  style={{ background: isActive ? 'var(--tab-accent)' : 'rgba(255,255,255,0.25)', boxShadow: isActive ? '0 0 8px var(--tab-accent)' : 'none' }}
-                />
-                <Icon className="w-4 h-4 shrink-0" />
-                <span>{t.label}</span>
-              </button>
-            )
-          })}
+        <nav className="flex-1 overflow-y-auto py-2 px-2" aria-label="Sections">
+          {(() => {
+            const listed = new Set(NAV_GROUPS.flatMap((g) => g.ids))
+            const groups = [...NAV_GROUPS, { label: 'More', ids: tabs.filter((t) => !listed.has(t.id)).map((t) => t.id) }]
+            return groups.map((g) => {
+              const items = g.ids.map((id) => tabs.find((t) => t.id === id)).filter((t): t is NavTab => !!t)
+              if (items.length === 0) return null
+              return (
+                <div key={g.label} role="group" aria-label={g.label} className="mb-1">
+                  <div className="px-3 pt-3 pb-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-white/35">{g.label}</div>
+                  {items.map((t) => {
+                    const Icon = t.icon
+                    const isActive = activeTab === t.id
+                    return (
+                      <button
+                        key={t.id}
+                        onClick={() => { onSelect(t.id); onClose() }}
+                        style={{ '--tab-accent': accents[t.id] } as CSSProperties}
+                        aria-current={isActive ? 'page' : undefined}
+                        className={cn(
+                          'w-full flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-medium transition-colors text-left',
+                          isActive ? 'bg-gradient-to-r from-cyan-400/15 to-purple-500/15 text-[color:var(--tab-accent)]' : 'text-white/60 hover:bg-white/5 hover:text-white/90'
+                        )}
+                      >
+                        <span
+                          className="w-1.5 h-1.5 rounded-full shrink-0"
+                          style={{ background: isActive ? 'var(--tab-accent)' : 'rgba(255,255,255,0.25)', boxShadow: isActive ? '0 0 8px var(--tab-accent)' : 'none' }}
+                        />
+                        <Icon className="w-4 h-4 shrink-0" />
+                        <span>{t.label}</span>
+                      </button>
+                    )
+                  })}
+                </div>
+              )
+            })
+          })()}
         </nav>
         <div className="px-4 py-3 border-t border-white/10 text-[10px] text-white/30">
           Deep + Mimi · Clarity

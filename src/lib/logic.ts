@@ -1053,21 +1053,22 @@ function isMonday(dateIso: string): boolean {
   return parseIsoDateUTC(dateIso).getUTCDay() === 1
 }
 
-function dailyRecurringBillCharge(bills: RecurringBill[], dateIso: string): number {
+/** The active recurring bills that actually fall due on `dateIso` — the single rule the day-by-day projection and the chart's forecast markers both use. */
+export function recurringBillsDueOnDate(bills: RecurringBill[], dateIso: string): RecurringBill[] {
   const [, m, d] = dateIso.split('-').map(Number)
   const daysInMonth = new Date(Date.UTC(Number(dateIso.slice(0, 4)), m, 0)).getUTCDate()
+  return bills.filter((bill) => {
+    if (!bill.active) return false
+    if (bill.frequency === 'monthly') return d === Math.min(bill.dueDay, daysInMonth)
+    if (bill.frequency === 'weekly') return isMonday(dateIso)
+    if (bill.frequency === 'fortnightly') return isMonday(dateIso) && isCombinedPayday(dateIso, FORTNIGHTLY_BILL_EPOCH_MONDAY)
+    return false
+  })
+}
+
+function dailyRecurringBillCharge(bills: RecurringBill[], dateIso: string): number {
   let total = 0
-  for (const bill of bills) {
-    if (!bill.active) continue
-    if (bill.frequency === 'monthly') {
-      const effectiveDueDay = Math.min(bill.dueDay, daysInMonth)
-      if (d === effectiveDueDay) total += bill.amount
-    } else if (bill.frequency === 'weekly') {
-      if (isMonday(dateIso)) total += bill.amount
-    } else if (bill.frequency === 'fortnightly') {
-      if (isMonday(dateIso) && isCombinedPayday(dateIso, FORTNIGHTLY_BILL_EPOCH_MONDAY)) total += bill.amount
-    }
-  }
+  for (const bill of recurringBillsDueOnDate(bills, dateIso)) total += bill.amount
   return total
 }
 
