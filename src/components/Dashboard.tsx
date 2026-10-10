@@ -18,6 +18,7 @@ import { Sparkline } from './Sparkline'
 import { BillIcon } from './BillIcons'
 import { YearInReview } from './YearInReview'
 import { DashboardForecastCard } from './DashboardForecastCard'
+import { TakeawaySavings } from './TakeawaySavings'
 import { FinancialTipOfDay } from './FinancialTipOfDay'
 import { GettingStartedCard } from './GettingStartedCard'
 
@@ -55,6 +56,11 @@ export function Dashboard() {
     if (!order.includes('forecast')) {
       const statsIdx = order.indexOf('stats')
       order = statsIdx === -1 ? [...order, 'forecast'] : [...order.slice(0, statsIdx + 1), 'forecast', ...order.slice(statsIdx + 1)]
+      changed = true
+    }
+    if (!order.includes('takeaways')) {
+      const statsIdx = order.indexOf('stats')
+      order = statsIdx === -1 ? [...order, 'takeaways'] : [...order.slice(0, statsIdx + 1), 'takeaways', ...order.slice(statsIdx + 1)]
       changed = true
     }
     if (!order.includes('yearInReview')) {
@@ -213,6 +219,7 @@ export function Dashboard() {
         </StatCard>
       </div>
     ),
+    takeaways: <TakeawaySavings />,
     forecast: <DashboardForecastCard />,
     health: (
       <StatCard label="Financial Health Score" glow={healthScore.score >= 75 ? 'success' : healthScore.score >= 40 ? 'amber' : 'danger'} copyable>
