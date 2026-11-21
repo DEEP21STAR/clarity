@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { StatCard } from './StatCard'
+import { EncryptedBackupPanel } from './EncryptedBackupPanel'
 import { useStore } from '@/lib/store'
 import { buildFullExportJson } from '@/lib/dataExport'
 import { buildAccountantCsv } from '@/lib/logic'
@@ -100,6 +101,8 @@ export function DataExportPanel() {
           Shape documented in <code>EXPORT_SCHEMA.md</code> at the project root, for the separate local-desktop agent consuming this file.
         </p>
       </StatCard>
+
+      <EncryptedBackupPanel />
 
       <StatCard label="Accountant-Ready Export" glow="purple">
         <p className="mt-4 text-xs text-white/40">Categorised totals for {state.mode === 'personal' ? 'Personal' : 'Business'} transactions — respects the Personal/Business toggle.</p>

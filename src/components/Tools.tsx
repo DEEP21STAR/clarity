@@ -7,6 +7,7 @@ import { PaymentHistoryPanel } from './PaymentHistoryPanel'
 import { SegmentedControl } from './SegmentedControl'
 import { calcWfhFixedRate, gstOnExclusive, gstFromInclusive, NZ_WFH_FIXED_RATE_PER_HOUR, AU_WFH_FIXED_RATE_PER_HOUR, calcRoundUpSavings, runDataHealthCheck, projectBalanceSeries } from '@/lib/logic'
 import { cn, formatCurrency, formatShortDate, todayIso } from '@/lib/utils'
+import { runExtraHealthChecks } from '@/lib/dataHealthExtra'
 import { Plus, Trash2, Volume2, VolumeX, AlertTriangle, Info, ShieldCheck, Coffee, TrendingUp, Award, Flame, PiggyBank, Lock, BellRing, Mic } from 'lucide-react'
 import { useUndoableDelete } from '@/lib/useUndoableDelete'
 import { DateField } from './DateField'
@@ -73,8 +74,11 @@ export function Tools() {
   // card in this app). See runDataHealthCheck()'s doc comment in logic.ts for exactly what
   // each finding category checks and why.
   const healthFindings = useMemo(
-    () => runDataHealthCheck({ bills: state.bills, creditCards: state.creditCards, accounts: state.accounts }),
-    [state.bills, state.creditCards, state.accounts]
+    () => [
+      ...runDataHealthCheck({ bills: state.bills, creditCards: state.creditCards, accounts: state.accounts }),
+      ...runExtraHealthChecks({ today: todayIso(), bills: state.bills, accounts: state.accounts, creditCards: state.creditCards, savingsGoals: state.savingsGoals, sinkingFunds: state.sinkingFunds, oneOffEntries: state.oneOffEntries, incomeAnchor: state.incomeAnchor }),
+    ],
+    [state.bills, state.creditCards, state.accounts, state.savingsGoals, state.sinkingFunds, state.oneOffEntries, state.incomeAnchor]
   )
 
   // 2026-09-23 round 8 — "what-if income simulator" (Deep, via the ideation table). Reuses the
