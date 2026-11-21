@@ -4,6 +4,7 @@ import { useStore } from '@/lib/store'
 import { StatCard } from './StatCard'
 import { CountUp } from './CountUp'
 import { computeLiveFunds } from '@/lib/liveFunds'
+import { computeSafeToSpend } from '@/lib/safeToSpend'
 import { addDaysIso, isBillAmountChanged, nextMonthlyDueDate, resolvePaymentMethod, dueTodayBills, round2, isPayday, incomeOnDate } from '@/lib/logic'
 import { cn, formatCurrency, todayIso, formatShortDate } from '@/lib/utils'
 import type { UpcomingWindow, RecurringBill, BillFrequency, PeriodicBill } from '@/lib/types'
@@ -71,6 +72,7 @@ export function UpcomingPayments() {
     [state, today, window_, view]
   )
   const isOverspent = liveFundsAvailable < 0
+  const safe = useMemo(() => computeSafeToSpend(state, today, view), [state, today, view])
 
   const foodAmount = (liveFundsBeforeSpend * allocation.food) / 100
   const fuelAmount = (liveFundsBeforeSpend * allocation.fuel) / 100
@@ -281,6 +283,12 @@ export function UpcomingPayments() {
               HSBC + Overdraft + income landing this {window_}, minus bills/funds due — what's actually free to spend.
             </p>
           )}
+          <div data-testid="safe-to-spend" className="mt-3 space-y-2">
+            {!isOverspent && <p className="text-white/70 text-sm">About <span className="font-bold text-white tabular-nums">{formatCurrency(safe.dailyAllowance)}</span> a day until payday ({safe.daysToPayday} day{safe.daysToPayday === 1 ? '' : 's'}).</p>}
+            {safe.warnings.filter((w) => w.id !== 'overspent').map((w) => (
+              <p key={w.id} role="alert" className={cn('rounded-xl border px-3 py-2 text-sm font-semibold', w.severity === 'critical' ? 'border-rose-400/40 bg-rose-500/10 text-rose-200' : 'border-amber-400/40 bg-amber-500/10 text-amber-200')}>{w.message}</p>
+            ))}
+          </div>
           <button
             type="button"
             onClick={() => setShowBalanceEdit((v) => !v)}
