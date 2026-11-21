@@ -1391,7 +1391,7 @@ export function planPayoffWithExtra(plan: InstallmentPlan, extraPerMonth: number
 // ---------------------------------------------------------------------------
 
 /** The $ amount of a shared-owner item attributed to a specific household view. 'combined' always gets the full amount. */
-function householdShare(amount: number, owner: HouseholdOwner, sharedSplitDeepPercent: number | undefined, view: HouseholdView): number {
+export function householdShare(amount: number, owner: HouseholdOwner, sharedSplitDeepPercent: number | undefined, view: HouseholdView): number {
   if (view === 'combined') return amount
   if (owner === view) return amount
   if (owner === 'shared') {

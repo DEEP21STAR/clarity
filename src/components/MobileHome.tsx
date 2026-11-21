@@ -4,6 +4,7 @@ import { Menu, Plus, X, ArrowDownLeft, ArrowUpRight, Wallet, ChevronRight, Alert
 import { useStore } from '@/lib/store'
 import { CountUp } from './CountUp'
 import { BillIcon } from './BillIcons'
+import { computeSafeToSpend } from '@/lib/safeToSpend'
 import { computeLiveFunds, applyQuickEntry, undoQuickEntry, type QuickEntry, type QuickCategory } from '@/lib/liveFunds'
 import { addDaysIso, daysBetweenIso, incomeOnDate, nextMonthlyDueDate, nzNetIncome, auNetIncome, monthlyEquivalent, generateInsights } from '@/lib/logic'
 import { cn, formatCurrency, formatShortDate, todayIso } from '@/lib/utils'
@@ -29,6 +30,7 @@ export function MobileHome({ onOpenMenu, onNavigate }: { onOpenMenu: () => void;
 
   const lf = useMemo(() => computeLiveFunds(state, today, 'week', view), [state, today, view])
   const isOverspent = lf.liveFundsAvailable < 0
+  const safe = useMemo(() => computeSafeToSpend(state, today, view), [state, today, view])
 
   const events = useMemo(() => {
     const out: { key: string; date: string; label: string; amount: number; kind: 'bill' | 'payday' }[] = []
@@ -94,6 +96,17 @@ export function MobileHome({ onOpenMenu, onNavigate }: { onOpenMenu: () => void;
           <p className="mt-1 text-xs text-white/50">{Math.round(billsPct)}% of your money is set aside for bills (a daily share of monthly bills, not just what falls due this week).</p>
         </div>
       </section>
+
+      {(safe.warnings.length > 0 || lf.liveFundsAvailable >= 0) && (
+        <section aria-label="Safe to spend" data-testid="safe-to-spend" className="space-y-2">
+          {lf.liveFundsAvailable >= 0 && (
+            <p className="text-sm text-white/70">About <span className="font-bold text-white tabular-nums">{formatCurrency(safe.dailyAllowance)}</span> a day is free to spend until payday ({safe.daysToPayday} day{safe.daysToPayday === 1 ? '' : 's'}).</p>
+          )}
+          {safe.warnings.filter((w) => w.id !== 'overspent').map((w) => (
+            <p key={w.id} role="alert" className={cn('rounded-2xl border px-4 py-3 text-sm font-semibold', w.severity === 'critical' ? 'border-rose-400/40 bg-rose-500/10 text-rose-200' : 'border-amber-400/40 bg-amber-500/10 text-amber-200')}>{w.message}</p>
+          ))}
+        </section>
+      )}
 
       <section aria-label="Coming up">
         <h3 className="text-base font-bold text-white mb-2">Coming up</h3>
