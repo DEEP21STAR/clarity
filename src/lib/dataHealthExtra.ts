@@ -16,8 +16,10 @@ export function runExtraHealthChecks(params: {
   sinkingFunds: SinkingFund[]
   oneOffEntries: OneOffEntry[]
   incomeAnchor: IncomeAnchor
+  /** ISO datetime of the last data export or backup, if any. Omit to skip the backup check. */
+  lastExportedAt?: string | null
 }): DataHealthFinding[] {
-  const { today, bills, accounts, savingsGoals, sinkingFunds, oneOffEntries, incomeAnchor } = params
+  const { today, bills, accounts, savingsGoals, sinkingFunds, oneOffEntries, incomeAnchor, lastExportedAt } = params
   const out: DataHealthFinding[] = []
   const validIso = (d: string | undefined) => !!d && /^\d{4}-\d{2}-\d{2}$/.test(d) && Number.isFinite(Date.parse(d + 'T12:00:00Z'))
   const money = (n: number) => `$${n.toFixed(2)}`
@@ -63,6 +65,13 @@ export function runExtraHealthChecks(params: {
     if (validIso(e.date) && e.date > oneYearOut) out.push({ id: `oneoff-far-${e.id}`, severity: 'warning', message: `"${e.description}" is dated ${e.date}, more than a year ahead: check the year.` })
     if (!validIso(e.date)) out.push({ id: `oneoff-bad-${e.id}`, severity: 'warning', message: `"${e.description}" has a date that is not a real date (${e.date}).` })
     if (e.amount === 0) out.push({ id: `oneoff-zero-${e.id}`, severity: 'info', message: `"${e.description}" is a $0 one-off entry.` })
+  }
+
+  if (lastExportedAt !== undefined) {
+    const last = lastExportedAt ? Date.parse(lastExportedAt) : NaN
+    const days = Number.isFinite(last) ? Math.floor((Date.parse(today + 'T12:00:00Z') - last) / 86_400_000) : null
+    if (days === null) out.push({ id: 'backup-never', severity: 'info', message: 'No backup or export has been saved from this device yet: everything lives only here.' })
+    else if (days > 30) out.push({ id: 'backup-stale', severity: 'info', message: `The last backup or export was ${days} days ago: save a fresh encrypted backup.` })
   }
   return out
 }

@@ -76,9 +76,9 @@ export function Tools() {
   const healthFindings = useMemo(
     () => [
       ...runDataHealthCheck({ bills: state.bills, creditCards: state.creditCards, accounts: state.accounts }),
-      ...runExtraHealthChecks({ today: todayIso(), bills: state.bills, accounts: state.accounts, creditCards: state.creditCards, savingsGoals: state.savingsGoals, sinkingFunds: state.sinkingFunds, oneOffEntries: state.oneOffEntries, incomeAnchor: state.incomeAnchor }),
+      ...runExtraHealthChecks({ today: todayIso(), bills: state.bills, accounts: state.accounts, creditCards: state.creditCards, savingsGoals: state.savingsGoals, sinkingFunds: state.sinkingFunds, oneOffEntries: state.oneOffEntries, incomeAnchor: state.incomeAnchor, lastExportedAt: state.lastExportedAt ?? null }),
     ],
-    [state.bills, state.creditCards, state.accounts, state.savingsGoals, state.sinkingFunds, state.oneOffEntries, state.incomeAnchor]
+    [state.bills, state.creditCards, state.accounts, state.savingsGoals, state.sinkingFunds, state.oneOffEntries, state.incomeAnchor, state.lastExportedAt]
   )
 
   // 2026-09-23 round 8 — "what-if income simulator" (Deep, via the ideation table). Reuses the

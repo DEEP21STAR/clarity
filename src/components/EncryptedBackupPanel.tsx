@@ -8,7 +8,7 @@ import { todayIso } from '@/lib/utils'
 
 /** Encrypted full backup, restore test, and restore. The passphrase is never stored; losing it loses the file. */
 export function EncryptedBackupPanel() {
-  const { state, restoreState } = useStore()
+  const { state, restoreState, setLastExportedAt } = useStore()
   const [pass, setPass] = useState('')
   const [text, setText] = useState('')
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null)
@@ -24,6 +24,7 @@ export function EncryptedBackupPanel() {
     await verifyBackup(file, pass)
     setText(file)
     const outcome = await saveFile(`clarity-backup-${todayIso()}.clarity-backup`, file)
+    setLastExportedAt(new Date().toISOString())
     if (outcome === 'saved') return 'Saved, and tested: the file opens with this passphrase.'
     try { await navigator.clipboard.writeText(file); return 'Copied to the clipboard (and tested). Paste it into a file you keep.' } catch { return 'Encrypted below (tested). Copy it into a file you keep.' }
   })

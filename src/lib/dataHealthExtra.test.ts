@@ -40,4 +40,10 @@ describe('extra data health checks', () => {
     const f = run({ oneOffEntries: [e({ id: '1', date: '2028-01-01' }), e({ id: '2', date: '2026-02-30x' }), e({ id: '3', amount: 0 }), e({ id: '4', date: '2027-11-01' })] })
     expect(ids(f).sort()).toEqual(['oneoff-bad-2', 'oneoff-far-1', 'oneoff-zero-3'])
   })
+  it('backup reminder: never, stale, recent, and skipped when not provided', () => {
+    expect(ids(run({ lastExportedAt: null }))).toEqual(['backup-never'])
+    expect(ids(run({ lastExportedAt: '2026-10-01T00:00:00Z' }))).toEqual(['backup-stale'])
+    expect(run({ lastExportedAt: '2026-11-10T00:00:00Z' })).toEqual([])
+    expect(run({})).toEqual([])
+  })
 })
