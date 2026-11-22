@@ -286,6 +286,7 @@ export function Transactions() {
               <p className="text-white/70">In {formatCurrency(preview.income)} · Out {formatCurrency(preview.spend)}</p>
               <p className="text-xs text-white/50">Columns used: date "{preview.columns.date}", description "{preview.columns.description}", amount "{preview.columns.amount}".</p>
               {preview.duplicates.length > 0 && <p className="text-xs text-amber-200">{preview.duplicates.length} already in your ledger (same day, amount and description), so they will not be added again.</p>}
+              {preview.learned > 0 && <p className="text-xs text-cyan-200">{preview.learned} categorised from how you already filed the same merchant.</p>}
               <PreviewCategories preview={preview} known={[...new Set([...state.transactions.map((t) => t.category), 'Groceries', 'Fuel', 'Food', 'Housing', 'Utilities', 'Internet & Mobile', 'Insurance', 'Subscriptions', 'Transport', 'Shopping', 'Health', 'Entertainment', 'Income'])].filter((c) => c && c !== 'uncategorised')} onSet={(id, category) => setPreview((p) => (p ? recategorisePreview(p, id, category) : p))} />
               {preview.skipped.length > 0 && (
                 <details className="text-xs text-rose-200">

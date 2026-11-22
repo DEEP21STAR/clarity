@@ -67,6 +67,8 @@ export interface CsvPreview {
   spend: number
   firstDate: string | null
   lastDate: string | null
+  /** Rows whose category was taken from how the same merchant is already filed in your ledger. */
+  learned: number
 }
 
 export function previewCsvImport(text: string, mode: Mode, existing: readonly Transaction[] = []): CsvPreview {
@@ -74,6 +76,8 @@ export function previewCsvImport(text: string, mode: Mode, existing: readonly Tr
   const guess = guessCol(header, rows.slice(0, Math.min(20, rows.length)))
   const dayFirst = !fileIsMonthFirst(rows.map((r) => r[guess.dateCol] ?? ''))
   const have = new Map<string, number>()
+  const known = merchantCategories(existing)
+  let learned = 0
   for (const t of existing) have.set(txKey(t), (have.get(txKey(t)) ?? 0) + 1)
 
   const fresh: Transaction[] = [], duplicates: Transaction[] = [], skipped: SkippedRow[] = []
@@ -100,7 +104,9 @@ export function previewCsvImport(text: string, mode: Mode, existing: readonly Tr
     const key = txKey(base)
     const nth = (seenInFile.get(key) ?? 0) + 1
     seenInFile.set(key, nth)
-    const tx: Transaction = { id: `csv-${key.replace(/[^A-Za-z0-9|-]/g, '')}-${nth}`, ...base, category: guessTransactionCategory(description), mode }
+    const fromLedger = known.get(descKey(description))
+    if (fromLedger) learned++
+    const tx: Transaction = { id: `csv-${key.replace(/[^A-Za-z0-9|-]/g, '')}-${nth}`, ...base, category: fromLedger ?? guessTransactionCategory(description), mode }
     const left = have.get(key) ?? 0
     if (left > 0) { have.set(key, left - 1); duplicates.push(tx) } else fresh.push(tx)
   })
@@ -113,7 +119,24 @@ export function previewCsvImport(text: string, mode: Mode, existing: readonly Tr
     spend: Math.round(fresh.filter((t) => t.amount < 0).reduce((s, t) => s - t.amount, 0) * 100) / 100,
     firstDate: dates[0] ?? null,
     lastDate: dates[dates.length - 1] ?? null,
+    learned,
   }
+}
+
+/** Most common real category per merchant (digits/punctuation ignored) across the existing ledger: your own filing beats the keyword guess. */
+function merchantCategories(existing: readonly Transaction[]): Map<string, string> {
+  const counts = new Map<string, Map<string, number>>()
+  for (const t of existing) {
+    if (!t.category || t.category === 'uncategorised') continue
+    const k = descKey(t.description)
+    if (!k) continue
+    const m = counts.get(k) ?? new Map<string, number>()
+    m.set(t.category, (m.get(t.category) ?? 0) + 1)
+    counts.set(k, m)
+  }
+  const out = new Map<string, string>()
+  counts.forEach((m, k) => out.set(k, [...m.entries()].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))[0][0]))
+  return out
 }
 
 const descKey = (s: string) => s.toUpperCase().replace(/[^A-Z0-9]+/g, ' ').replace(/\b\d+\b/g, '').replace(/\s+/g, ' ').trim()

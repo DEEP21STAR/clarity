@@ -96,3 +96,22 @@ describe('recategorisePreview', () => {
     expect(categoryCounts(p.fresh)).toEqual([{ category: 'Shopping', count: 1 }, { category: 'uncategorised', count: 2 }])
   })
 })
+
+describe('learning categories from the existing ledger', () => {
+  const csv = 'Date,Description,Amount\n05/11/2026,COUNTDOWN WELLINGTON 4411,-50.00\n06/11/2026,ZZ NEW SHOP,-9.00\n'
+  const filed = { id: 'x1', date: '2026-10-01', amount: -30, description: 'COUNTDOWN WELLINGTON 9020', category: 'Weekly shop', mode: 'personal' } as Transaction
+  it('uses how the same merchant is already filed, over the keyword guess', () => {
+    const p = previewCsvImport(csv, 'personal', [filed])
+    expect(p.fresh.find((x) => x.description.startsWith('COUNTDOWN'))?.category).toBe('Weekly shop')
+    expect(p.learned).toBe(1)
+  })
+  it('falls back to keywords and ignores uncategorised history', () => {
+    const p = previewCsvImport(csv, 'personal', [{ ...filed, category: 'uncategorised' }])
+    expect(p.fresh.find((x) => x.description.startsWith('COUNTDOWN'))?.category).toBe('Groceries')
+    expect(p.learned).toBe(0)
+  })
+  it('picks the most common category when a merchant was filed two ways', () => {
+    const p = previewCsvImport(csv, 'personal', [filed, { ...filed, id: 'x2', category: 'Food' }, { ...filed, id: 'x3' }])
+    expect(p.fresh.find((x) => x.description.startsWith('COUNTDOWN'))?.category).toBe('Weekly shop')
+  })
+})
