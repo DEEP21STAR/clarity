@@ -116,7 +116,7 @@ function PreviewCategories({ preview, known, onSet }: { preview: CsvPreview; kno
               const apply = () => { if (v.trim()) { onSet(t.id, v.trim()); setDraft((d) => ({ ...d, [t.id]: '' })) } }
               return (
                 <li key={t.id} className="flex flex-wrap items-center gap-2">
-                  <span className="min-w-0 flex-1 truncate text-white/80" title={t.description}>{t.description}</span>
+                  <span className="min-w-0 basis-full truncate text-white/80 sm:basis-0 sm:flex-1" title={t.description}>{t.description}</span>
                   <input list="csv-known-categories" aria-label={`Category for ${t.description}`} value={v} onChange={(e) => setDraft((d) => ({ ...d, [t.id]: e.target.value }))} onKeyDown={(e) => { if (e.key === 'Enter') apply() }} placeholder="category" className="w-32 rounded border border-white/10 bg-black/30 px-2 py-1 outline-none focus:border-cyan-400/50 placeholder:text-white/25" />
                   <button type="button" onClick={apply} disabled={!v.trim()} className="font-medium text-cyan-300 hover:text-cyan-200 disabled:text-white/20">Set</button>
                 </li>
