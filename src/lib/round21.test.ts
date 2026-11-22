@@ -286,3 +286,18 @@ describe('guessTransactionCategory', () => {
     expect(guessTransactionCategory('ampol foodary')).toBe('Fuel')
   })
 })
+
+describe('guessTransactionCategory — extra NZ merchants', () => {
+  it('maps NZ power companies to Utilities', () => {
+    expect(guessTransactionCategory('CONTACT ENERGY LTD 0123')).toBe('Utilities')
+    expect(guessTransactionCategory('FLICK ELECTRIC')).toBe('Utilities')
+  })
+  it('maps more NZ grocers, fuel and hardware', () => {
+    expect(guessTransactionCategory('FOUR SQUARE TAUPO')).toBe('Groceries')
+    expect(guessTransactionCategory('NPD HAMILTON')).toBe('Fuel')
+    expect(guessTransactionCategory('MITRE 10 MEGA')).toBe('Shopping')
+  })
+  it('still falls back to uncategorised for unknown merchants', () => {
+    expect(guessTransactionCategory('ZZ UNKNOWN PTY')).toBe('uncategorised')
+  })
+})

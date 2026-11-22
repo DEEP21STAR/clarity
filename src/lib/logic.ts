@@ -242,17 +242,18 @@ export function parseCsvText(text: string): { header: string[]; rows: string[][]
  * the honest fallback for anything that doesn't match, not the default for everything.
  */
 const CATEGORY_KEYWORD_RULES: { category: string; keywords: string[] }[] = [
-  { category: 'Fuel', keywords: ['AMPOL', 'BP ', 'CALTEX', 'SHELL', 'MOBIL', 'GULL', 'Z ENERGY', 'PETROL', 'FUEL', 'FREEDOM FUEL', '7-ELEVEN', '7 ELEVEN'] },
-  { category: 'Groceries', keywords: ['WOOLWORTH', 'COLES', 'ALDI', 'IGA ', 'COUNTDOWN', 'NEW WORLD', 'PAK N SAVE', 'PAK\'NSAVE', 'FOODTOWN', 'SUPERMARKET', 'FOODSTUFFS'] },
-  { category: 'Food', keywords: ['KFC', 'MCDONALD', 'SUBWAY', 'DOMINO', 'PIZZA', 'UBER EATS', 'UBER *EATS', 'MENULOG', 'DOORDASH', 'HUNGRY JACK', 'NANDO', 'BURGER', 'GRILL', 'CAFE', 'COFFEE', 'RESTAURANT', 'STARBUCKS'] },
+  { category: 'Fuel', keywords: ['AMPOL', 'BP ', 'CALTEX', 'SHELL', 'MOBIL', 'GULL', 'Z ENERGY', 'PETROL', 'FUEL', 'FREEDOM FUEL', '7-ELEVEN', '7 ELEVEN', 'NPD ', 'WAITOMO', 'ALLIED PETROLEUM'] },
+  { category: 'Groceries', keywords: ['WOOLWORTH', 'COLES', 'ALDI', 'IGA ', 'COUNTDOWN', 'NEW WORLD', 'PAK N SAVE', 'PAK\'NSAVE', 'FOODTOWN', 'SUPERMARKET', 'FOODSTUFFS', 'FOUR SQUARE', 'FRESH CHOICE', 'FRUITWORLD', 'MOORE WILSON', 'COSTCO'] },
+  { category: 'Food', keywords: ['KFC', 'MCDONALD', 'SUBWAY', 'DOMINO', 'PIZZA', 'UBER EATS', 'UBER *EATS', 'MENULOG', 'DOORDASH', 'HUNGRY JACK', 'NANDO', 'BURGER', 'GRILL', 'CAFE', 'COFFEE', 'RESTAURANT', 'STARBUCKS', 'BURGER KING', 'RED ROOSTER', 'CARLS JR', 'LITTLE CAESARS', 'BAKERY', 'SUSHI'] },
   { category: 'Housing', keywords: ['RENT', 'PROPERTY MANAGEMENT', 'REAL ESTATE', 'LANDLORD', 'BODY CORPORATE', 'BODY CORP'] },
+  { category: 'Utilities', keywords: ['CONTACT ENERGY', 'MERIDIAN ENERGY', 'GENESIS ENERGY', 'MERCURY ENERGY', 'TRUSTPOWER', 'ELECTRIC KIWI', 'FLICK ELECTRIC', 'WATER RATES', 'COUNCIL RATES', 'POWER BILL', 'ELECTRICITY'] },
   { category: 'Internet & Mobile', keywords: ['SPARK', 'VODAFONE', 'TELSTRA', 'OPTUS', '2DEGREES', 'SKINNY', 'ONE NZ', 'TELECOM'] },
   { category: 'Bank Fees', keywords: ['INTEREST CHARGED', 'ACCOUNT FEE', 'HONOUR FEE', 'DISHONOUR', 'OVERDRAFT FEE', 'MONTHLY FEE', 'BANK FEE', 'LATE FEE'] },
   { category: 'Insurance', keywords: ['INSURANCE', ' AMI ', 'STATE INSURANCE', 'TOWER INSURANCE', 'SUNCORP', 'AA INSURANCE'] },
   { category: 'Subscriptions', keywords: ['NETFLIX', 'SPOTIFY', 'DISNEY+', 'DISNEY PLUS', 'YOUTUBE PREMIUM', 'APPLE.COM/BILL', 'GOOGLE *', 'AMAZON PRIME', 'ANYTIME FITNESS', ' GYM ', 'CLAUDE.AI', 'CHATGPT', 'OPENAI'] },
-  { category: 'Transport', keywords: ['UBER *TRIP', 'UBER TRIP', 'TAXI', 'PARKING', 'TOLL', 'AT HOP', 'METLINK', 'TRANSPORTNSW'] },
-  { category: 'Shopping', keywords: ['KMART', 'TARGET', 'THE WAREHOUSE', 'BUNNINGS', 'HARVEY NORMAN', 'JB HI-FI', 'JB HIFI', 'AMAZON', 'EBAY', 'THE GOOD GUYS', 'BIG W'] },
-  { category: 'Health', keywords: ['PHARMACY', 'CHEMIST', 'MEDICAL CENTRE', 'MEDICAL CENTER', 'DOCTOR', 'DENTIST', 'UNICHEM', 'LIFE PHARMACY', 'CHEMIST WAREHOUSE'] },
+  { category: 'Transport', keywords: ['UBER *TRIP', 'UBER TRIP', 'TAXI', 'PARKING', 'TOLL', 'AT HOP', 'METLINK', 'TRANSPORTNSW', 'BEECARD', 'WAKA KOTAHI', 'NZTA', 'WOF ', 'AIR NEW ZEALAND', 'JETSTAR'] },
+  { category: 'Shopping', keywords: ['KMART', 'TARGET', 'THE WAREHOUSE', 'BUNNINGS', 'HARVEY NORMAN', 'JB HI-FI', 'JB HIFI', 'AMAZON', 'EBAY', 'THE GOOD GUYS', 'BIG W', 'MITRE 10', 'PLACEMAKERS', 'NOEL LEEMING', 'BRISCOES', 'REBEL SPORT', 'FARMERS '] },
+  { category: 'Health', keywords: ['PHARMACY', 'CHEMIST', 'MEDICAL CENTRE', 'MEDICAL CENTER', 'DOCTOR', 'DENTIST', 'UNICHEM', 'LIFE PHARMACY', 'CHEMIST WAREHOUSE', 'PHYSIO', 'OPTOMETRIST', 'SPECSAVERS'] },
   { category: 'Income', keywords: ['SALARY', 'PAYROLL', 'WAGES'] },
   { category: 'Entertainment', keywords: ['CINEMA', 'EVENTFINDA', 'TICKETEK', 'TICKETMASTER', 'HOYTS', 'EVENT CINEMAS'] },
 ]
