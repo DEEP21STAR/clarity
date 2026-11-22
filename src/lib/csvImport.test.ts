@@ -75,3 +75,24 @@ describe('previewCsvImport', () => {
     expect(previewCsvImport('Date,Description,Amount\n', 'personal').fresh).toEqual([])
   })
 })
+
+import { recategorisePreview, categoryCounts } from './csvImport'
+describe('recategorisePreview', () => {
+  const csv = 'Date,Description,Amount\n01/11/2026,ZZ CORNER DAIRY 123,-5.00\n02/11/2026,ZZ CORNER DAIRY 456,-6.00\n03/11/2026,OTHER SHOP,-7.00\n'
+  it('sets the category on the chosen row and every same-merchant row only', () => {
+    const p = previewCsvImport(csv, 'personal', [])
+    const first = p.fresh[0].id
+    const r = recategorisePreview(p, first, 'Groceries')
+    expect(r.fresh.map((t) => t.category)).toEqual(['Groceries', 'Groceries', 'uncategorised'])
+    expect(p.fresh[0].category).toBe('uncategorised') // original untouched
+  })
+  it('ignores empty categories and unknown ids', () => {
+    const p = previewCsvImport(csv, 'personal', [])
+    expect(recategorisePreview(p, p.fresh[0].id, '  ')).toBe(p)
+    expect(recategorisePreview(p, 'nope', 'X')).toBe(p)
+  })
+  it('counts categories with uncategorised last', () => {
+    const p = recategorisePreview(previewCsvImport(csv, 'personal', []), previewCsvImport(csv, 'personal', []).fresh[2].id, 'Shopping')
+    expect(categoryCounts(p.fresh)).toEqual([{ category: 'Shopping', count: 1 }, { category: 'uncategorised', count: 2 }])
+  })
+})

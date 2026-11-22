@@ -115,3 +115,26 @@ export function previewCsvImport(text: string, mode: Mode, existing: readonly Tr
     lastDate: dates[dates.length - 1] ?? null,
   }
 }
+
+const descKey = (s: string) => s.toUpperCase().replace(/[^A-Z0-9]+/g, ' ').replace(/\b\d+\b/g, '').replace(/\s+/g, ' ').trim()
+
+/**
+ * Set the category on one previewed row, and on every other previewed row from the same merchant
+ * (same description once digits/punctuation are ignored, so "COUNTDOWN 1234" and "COUNTDOWN 5678" match).
+ * Returns a new preview; the input is not mutated. Empty category is ignored.
+ */
+export function recategorisePreview(preview: CsvPreview, id: string, category: string): CsvPreview {
+  const cat = category.trim()
+  const target = preview.fresh.find((t) => t.id === id)
+  if (!target || !cat) return preview
+  const k = descKey(target.description)
+  return { ...preview, fresh: preview.fresh.map((t) => (t.id === id || (k !== '' && descKey(t.description) === k) ? { ...t, category: cat } : t)) }
+}
+
+/** Category -> count over the rows that will be added, biggest first, uncategorised last. */
+export function categoryCounts(fresh: readonly Transaction[]): { category: string; count: number }[] {
+  const m = new Map<string, number>()
+  for (const t of fresh) m.set(t.category, (m.get(t.category) ?? 0) + 1)
+  return [...m.entries()].map(([category, count]) => ({ category, count }))
+    .sort((a, b) => (a.category === 'uncategorised' ? 1 : 0) - (b.category === 'uncategorised' ? 1 : 0) || b.count - a.count || a.category.localeCompare(b.category))
+}

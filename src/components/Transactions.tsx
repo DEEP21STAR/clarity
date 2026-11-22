@@ -4,7 +4,7 @@ import { useStore } from '@/lib/store'
 import { StatCard } from './StatCard'
 import { CountUp } from './CountUp'
 import { categoryColor, findMatchRanges } from '@/lib/logic'
-import { previewCsvImport, type CsvPreview } from '@/lib/csvImport'
+import { previewCsvImport, recategorisePreview, categoryCounts, type CsvPreview } from '@/lib/csvImport'
 import { formatCurrency, formatNumericDate } from '@/lib/utils'
 import { saveFile } from '@/lib/downloads'
 import { useUndoableDelete } from '@/lib/useUndoableDelete'
@@ -91,6 +91,41 @@ function BulkRecategorize({ count, onApply }: { count: number; onApply: (categor
       >
         Apply
       </button>
+    </div>
+  )
+}
+
+/** CSV preview: category summary + fix-up of rows the auto-categoriser could not place, before anything is added. */
+function PreviewCategories({ preview, known, onSet }: { preview: CsvPreview; known: string[]; onSet: (id: string, category: string) => void }) {
+  const [draft, setDraft] = useState<Record<string, string>>({})
+  const counts = categoryCounts(preview.fresh)
+  const open = preview.fresh.filter((t) => t.category === 'uncategorised')
+  if (preview.fresh.length === 0) return null
+  return (
+    <div className="space-y-1.5" data-testid="csv-preview-categories">
+      <p className="flex flex-wrap gap-1.5 text-xs">
+        {counts.map((c) => <span key={c.category} className="rounded-full border border-white/10 bg-white/5 px-2 py-0.5 text-white/70">{c.category} · {c.count}</span>)}
+      </p>
+      {open.length > 0 && (
+        <div className="text-xs">
+          <p className="text-amber-200">{open.length} not categorised. Set one here and every row from the same merchant follows:</p>
+          <datalist id="csv-known-categories">{known.map((k) => <option key={k} value={k} />)}</datalist>
+          <ul className="mt-1 space-y-1">
+            {open.slice(0, 8).map((t) => {
+              const v = draft[t.id] ?? ''
+              const apply = () => { if (v.trim()) { onSet(t.id, v.trim()); setDraft((d) => ({ ...d, [t.id]: '' })) } }
+              return (
+                <li key={t.id} className="flex flex-wrap items-center gap-2">
+                  <span className="min-w-0 flex-1 truncate text-white/80" title={t.description}>{t.description}</span>
+                  <input list="csv-known-categories" aria-label={`Category for ${t.description}`} value={v} onChange={(e) => setDraft((d) => ({ ...d, [t.id]: e.target.value }))} onKeyDown={(e) => { if (e.key === 'Enter') apply() }} placeholder="category" className="w-32 rounded border border-white/10 bg-black/30 px-2 py-1 outline-none focus:border-cyan-400/50 placeholder:text-white/25" />
+                  <button type="button" onClick={apply} disabled={!v.trim()} className="font-medium text-cyan-300 hover:text-cyan-200 disabled:text-white/20">Set</button>
+                </li>
+              )
+            })}
+          </ul>
+          {open.length > 8 && <p className="mt-1 text-white/40">+{open.length - 8} more stay uncategorised; fix them in the ledger after adding.</p>}
+        </div>
+      )}
     </div>
   )
 }
@@ -251,6 +286,7 @@ export function Transactions() {
               <p className="text-white/70">In {formatCurrency(preview.income)} · Out {formatCurrency(preview.spend)}</p>
               <p className="text-xs text-white/50">Columns used: date "{preview.columns.date}", description "{preview.columns.description}", amount "{preview.columns.amount}".</p>
               {preview.duplicates.length > 0 && <p className="text-xs text-amber-200">{preview.duplicates.length} already in your ledger (same day, amount and description), so they will not be added again.</p>}
+              <PreviewCategories preview={preview} known={[...new Set([...state.transactions.map((t) => t.category), 'Groceries', 'Fuel', 'Food', 'Housing', 'Utilities', 'Internet & Mobile', 'Insurance', 'Subscriptions', 'Transport', 'Shopping', 'Health', 'Entertainment', 'Income'])].filter((c) => c && c !== 'uncategorised')} onSet={(id, category) => setPreview((p) => (p ? recategorisePreview(p, id, category) : p))} />
               {preview.skipped.length > 0 && (
                 <details className="text-xs text-rose-200">
                   <summary className="cursor-pointer">{preview.skipped.length} row{preview.skipped.length === 1 ? '' : 's'} could not be read and will be left out</summary>
