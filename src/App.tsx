@@ -27,6 +27,7 @@ import { computeCurrentHealthScore, calcNetWorth, dueTodayBills } from '@/lib/lo
 import { cn, formatCurrency, todayIso } from '@/lib/utils'
 import { billsDueForAlert, sendDueBillNotifications } from '@/lib/notifications'
 import { captureThumbnail } from '@/lib/thumbnailCache'
+import { shouldCaptureThumbnails, currentThumbEnv, whenIdle, ON_VISIT_CAPTURE_DELAY_MS } from '@/lib/thumbnailPolicy'
 import {
   LayoutDashboard, CalendarClock, Receipt, PieChart, CreditCard, ShoppingCart, Wrench, TrendingUp, CalendarDays, Command, WifiOff, Check, Menu, Home,
 } from 'lucide-react'
@@ -139,8 +140,12 @@ export function AppContent() {
   useEffect(() => {
     const el = mainRef.current
     if (!el) return
-    const timer = window.setTimeout(() => { captureThumbnail(tab, el) }, 900)
-    return () => window.clearTimeout(timer)
+    // Desktop hover-pointer feature only, and only once the browser is idle: capturing on launch froze the
+    // main thread for over a second while the app was trying to become usable (measured with a CPU profile).
+    if (!shouldCaptureThumbnails(currentThumbEnv())) return
+    let cancelIdle = () => {}
+    const timer = window.setTimeout(() => { cancelIdle = whenIdle(() => { captureThumbnail(tab, el) }) }, ON_VISIT_CAPTURE_DELAY_MS)
+    return () => { window.clearTimeout(timer); cancelIdle() }
   }, [tab])
 
   // Single scroll listener drives every glass panel's subtle depth-shift sheen

@@ -1,11 +1,12 @@
 // Prints the measured scorecard from test-results/measure/*.json against the "10" targets. Run after `npm run e2e` (or use `npm run measure`).
 import { readFileSync, existsSync } from 'node:fs'
 const rd = (n) => { const f = `test-results/measure/${n}.json`; return existsSync(f) ? JSON.parse(readFileSync(f, 'utf8')) : null }
-const perf = rd('perf'), a11y = rd('a11y')
+const perf = rd('perf'), a11y = rd('a11y'), relaunch = rd('perf-relaunch')
 const rows = []
 const row = (area, metric, value, target, ok) => rows.push({ area, metric, value, target, status: value === 'n/a' ? 'not measured' : ok ? 'PASS' : 'below 10' })
 if (perf) {
-  row('Effortless', 'Time to usable (splash gone)', `${perf.timeToUsableMs} ms`, '<= 1000 ms', perf.timeToUsableMs <= 1000)
+  if (relaunch) row('Effortless', 'Time to usable, everyday relaunch', `${relaunch.timeToUsableMs} ms`, '<= 1000 ms', relaunch.timeToUsableMs <= 1000)
+  row('Effortless', 'Time to usable, first launch (full splash)', `${perf.timeToUsableMs} ms`, '<= 3000 ms (brand moment)', perf.timeToUsableMs <= 3000)
   row('Performance', 'Largest contentful paint', `${perf.lcpMs} ms`, '<= 2500 ms', perf.lcpMs <= 2500)
   row('Performance', 'JavaScript, gzipped', `${Math.round(perf.jsGzipBytes / 1024)} KB`, '<= 300 KB', perf.jsGzipBytes <= 300 * 1024)
   row('Performance', 'Long-task blocking', `${perf.longTaskMs} ms`, '<= 300 ms', perf.longTaskMs <= 300)

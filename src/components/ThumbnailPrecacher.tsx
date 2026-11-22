@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { getCachedThumbnail, captureThumbnail } from '@/lib/thumbnailCache'
+import { shouldCaptureThumbnails, currentThumbEnv, PRECACHE_START_DELAY_MS } from '@/lib/thumbnailPolicy'
 
 const STAGGER_MS = 400
 // Shorter than the 900ms on-visit capture in App.tsx — these mounts never actually go through
@@ -33,6 +34,15 @@ export function ThumbnailPrecacher({
   const [index, setIndex] = useState(0)
   const hostRef = useRef<HTMLDivElement>(null)
   const currentId = queue[index]
+  // Off entirely on touch/data-saver/low-memory devices; elsewhere it only starts after the app has been open a while.
+  const [enabled] = useState(() => shouldCaptureThumbnails(currentThumbEnv()))
+  const [started, setStarted] = useState(false)
+  useEffect(() => {
+    if (!enabled) return
+    const t = window.setTimeout(() => setStarted(true), PRECACHE_START_DELAY_MS)
+    return () => window.clearTimeout(t)
+  }, [enabled])
+  const active = enabled && started
 
   // Skip any tab that already has a real cached thumbnail — from an earlier real visit this
   // session, or a prior session's localStorage — so this never re-captures work already done.
@@ -43,7 +53,7 @@ export function ThumbnailPrecacher({
   }, [index])
 
   useEffect(() => {
-    if (!currentId || !hostRef.current) return
+    if (!active || !currentId || !hostRef.current) return
     const el = hostRef.current
     const settleTimer = window.setTimeout(() => {
       captureThumbnail(currentId, el).finally(() => {
@@ -51,9 +61,9 @@ export function ThumbnailPrecacher({
       })
     }, SETTLE_MS)
     return () => window.clearTimeout(settleTimer)
-  }, [currentId])
+  }, [currentId, active])
 
-  if (!currentId) return null
+  if (!active || !currentId) return null
 
   return (
     <div style={{ position: 'fixed', top: 0, left: -99999, width: 1152, pointerEvents: 'none' }} aria-hidden="true">

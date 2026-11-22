@@ -4,7 +4,7 @@ import { dirname, join } from 'node:path'
 
 export const TABS = ['dashboard', 'upcoming', 'transactions', 'budgets', 'debts', 'networth', 'calendar', 'shopping', 'tools'] as const
 export const VIEWPORTS = { desktop: { width: 1440, height: 900 }, phone: { width: 390, height: 844 } } as const
-export const SPLASH_TEXT = 'tap anywhere to skip'
+export const SPLASH_TEXT = 'tap anywhere'
 
 /** Opens a tab on a fresh (empty) state with the PIN gate bypassed, the same way every manual check in this project did. */
 export async function openApp(page: Page, tab: string = 'upcoming', opts: { skipSplash?: boolean } = {}) {

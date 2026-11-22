@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import gsap from 'gsap'
+import { chooseBootMode, readLastBoot, writeLastBoot } from '../lib/bootMode'
 
 interface Particle {
   x: number
@@ -86,6 +87,17 @@ export function BootSequence({ onDone }: { onDone: () => void }) {
     const ctx = canvas.getContext('2d')
     if (!ctx) return
 
+    // Full cinematic splash on the first launch and after a long gap; a ~0.7 s wordmark fade on quick relaunches
+    // (see lib/bootMode.ts). The launch is recorded now, so tapping the splash away still counts as having seen it.
+    const mode = chooseBootMode({
+      now: Date.now(),
+      lastBoot: readLastBoot(window.localStorage),
+      reduceMotion,
+      force: new URLSearchParams(window.location.search).get('splash') === 'full' ? 'full' : null,
+    })
+    writeLastBoot(window.localStorage, Date.now())
+    const full = mode === 'full'
+
     const dpr = Math.min(window.devicePixelRatio || 1, 2)
 
     // 2026-09-23 round 6 — real device bug, found from Deep's own screen recording: on his
@@ -162,15 +174,19 @@ export function BootSequence({ onDone }: { onDone: () => void }) {
         }
       })
     }
-    resync()
-    window.addEventListener('resize', resync)
-    window.addEventListener('orientationchange', resync)
+    if (full) {
+      resync()
+      window.addEventListener('resize', resync)
+      window.addEventListener('orientationchange', resync)
+    }
 
     // Reduced-motion / low-power fallback: skip straight to the static formed glyph, no
     // scatter-converge animation, same as the old version's respect for this preference.
     if (reduceMotion) {
       progressRef.current.t = 1
     }
+    const onKey = () => skip()
+    window.addEventListener('keydown', onKey)
 
     let raf = 0
     let wasFormed = false
@@ -206,10 +222,14 @@ export function BootSequence({ onDone }: { onDone: () => void }) {
         p.x = p.sx + (p.tx - p.sx) * eased
         p.y = p.sy + (p.ty - p.sy) * eased
         const glow = (0.4 + eased * 0.6) * pulse
+        // Glow drawn as a wide soft disc under a bright core. The old per-particle shadowBlur re-blurred the whole
+        // canvas for every particle on every frame (460 blurs x 60 fps), which froze the main thread for seconds.
         ctx.beginPath()
-        ctx.fillStyle = `hsla(${p.hue}, 90%, 70%, ${glow})`
-        ctx.shadowColor = `hsla(${p.hue}, 90%, 65%, ${glow})`
-        ctx.shadowBlur = (6 + eased * 5) * pulse
+        ctx.fillStyle = `hsla(${p.hue}, 90%, 65%, ${glow * 0.16})`
+        ctx.arc(p.x, p.y, p.size * 3.2, 0, Math.PI * 2)
+        ctx.fill()
+        ctx.beginPath()
+        ctx.fillStyle = `hsla(${p.hue}, 90%, 72%, ${glow})`
         ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2)
         ctx.fill()
       }
@@ -234,7 +254,7 @@ export function BootSequence({ onDone }: { onDone: () => void }) {
 
       raf = requestAnimationFrame(draw)
     }
-    raf = requestAnimationFrame(draw)
+    if (full) raf = requestAnimationFrame(draw)
 
     const tl = gsap.timeline({
       onComplete: () => {
@@ -243,26 +263,34 @@ export function BootSequence({ onDone }: { onDone: () => void }) {
         onDone()
       },
     })
-    if (!reduceMotion) {
+    if (!reduceMotion && full) {
       tl.to(progressRef.current, { t: 1, duration: 1.3, ease: 'power3.out' })
       tl.to(burstRef.current, { p: 1, duration: 0.7, ease: 'power2.out' })
       tl.to({}, { duration: 0.5 }) // hold, fully formed, breathing glow running
     }
     // Punchier reveal: scale + glow in, not just a fade-up — reads as the wordmark arriving with
     // weight rather than politely appearing.
-    tl.fromTo(
-      '.boot-line',
-      { opacity: 0, y: 10, scale: 0.85, filter: 'brightness(2.2)' },
-      { opacity: 1, y: 0, scale: 1, filter: 'brightness(1)', duration: 0.45, stagger: 0.12, ease: 'back.out(1.7)' }
-    )
-    tl.to({}, { duration: 0.45 }) // hold on the formed wordmark
-    tl.to('.boot-line', { opacity: 0, duration: 0.3 })
-    tl.to(canvas, { opacity: 0, duration: 0.35 }, '<')
-    tl.to(ref.current, { opacity: 0, duration: 0.4, onComplete: () => setVisible(false) })
+    if (full) {
+      tl.fromTo(
+        '.boot-line',
+        { opacity: 0, y: 10, scale: 0.85, filter: 'brightness(2.2)' },
+        { opacity: 1, y: 0, scale: 1, filter: 'brightness(1)', duration: 0.45, stagger: 0.12, ease: 'back.out(1.7)' }
+      )
+      tl.to({}, { duration: 0.45 }) // hold on the formed wordmark
+      tl.to('.boot-line', { opacity: 0, duration: 0.3 })
+      tl.to(canvas, { opacity: 0, duration: 0.35 }, '<')
+      tl.to(ref.current, { opacity: 0, duration: 0.4, onComplete: () => setVisible(false) })
+    } else {
+      // Quick relaunch: wordmark in, a beat, out. About 0.7 s in total.
+      tl.fromTo('.boot-line', { opacity: 0, y: 6 }, { opacity: 1, y: 0, duration: 0.2, stagger: 0.04, ease: 'power2.out' })
+      tl.to({}, { duration: 0.15 })
+      tl.to(ref.current, { opacity: 0, duration: 0.2, onComplete: () => setVisible(false) })
+    }
 
     return () => {
       tl.kill()
       cancelAnimationFrame(raf)
+      window.removeEventListener('keydown', onKey)
       window.removeEventListener('resize', resync)
       window.removeEventListener('orientationchange', resync)
     }
@@ -298,7 +326,7 @@ export function BootSequence({ onDone }: { onDone: () => void }) {
         </div>
         <div className="boot-line text-xs text-white/40 mt-2 tracking-[0.3em]">BUDGET SYSTEM — INITIALISING</div>
         <div className="boot-line text-[10px] text-cyan-300/60 mt-4">loading tax engine · payday model · insights</div>
-        <div className="boot-line text-[10px] text-white/25 mt-6">tap anywhere to skip</div>
+        <div className="boot-line text-[10px] text-white/25 mt-6">tap anywhere or press any key to skip</div>
       </div>
     </div>
   )

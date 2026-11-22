@@ -48,3 +48,24 @@ test('startup and bundle metrics', async ({ page }) => {
     }
   }
 })
+
+// Relaunch: the same browser opened again a minute later should get the quick splash, not the full one.
+test('relaunch is quick', async ({ page }) => {
+  await page.addInitScript(() => {
+    try {
+      localStorage.setItem('clarity-dashboard-state-v5', '{}')
+      localStorage.setItem('clarity-last-boot', String(Date.now() - 60_000))
+      sessionStorage.setItem('clarity-pin-unlocked', '1')
+    } catch { /* ignore */ }
+  })
+  const t0 = Date.now()
+  await page.goto('./?tab=upcoming')
+  let ms = 0
+  try {
+    await page.getByText(SPLASH_TEXT).waitFor({ state: 'visible', timeout: 3000 })
+    await page.getByText(SPLASH_TEXT).waitFor({ state: 'detached', timeout: 20000 })
+    ms = Date.now() - t0
+  } catch { ms = Date.now() - t0 }
+  writeMeasure('perf-relaunch', { timeToUsableMs: ms })
+  expect(ms, 'relaunch time to usable (ms)').toBeLessThanOrEqual(3500)
+})

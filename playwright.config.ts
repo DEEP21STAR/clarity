@@ -26,7 +26,7 @@ export default defineConfig({
   webServer: {
     command: `npm run build && npx vite preview --host 127.0.0.1 --port ${PORT} --strictPort`,
     url: `http://127.0.0.1:${PORT}/clarity/`,
-    reuseExistingServer: true,
+    reuseExistingServer: false, // never reuse: a stale preview server once served an old build and gave false numbers
     timeout: 240_000,
   },
 })
