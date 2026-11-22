@@ -90,10 +90,10 @@ function GoalCard({ goal, onUpdate, onRemove, onLogContribution }: {
     <StatCard label={goal.name} glow="success">
       <div className="absolute top-3 right-3 z-20 flex items-center gap-2">
         {/* #26 — circular progress-ring as an alternate view, not a replacement for the bar. */}
-        <button onClick={() => setRingView((v) => !v)} title={ringView ? 'Switch to bar view' : 'Switch to ring view'} className="text-white/30 hover:text-emerald-300">
+        <button onClick={() => setRingView((v) => !v)} title={ringView ? 'Switch to bar view' : 'Switch to ring view'} className="text-white/55 hover:text-emerald-300">
           {ringView ? <Rows3 className="w-3.5 h-3.5" /> : <CircleDot className="w-3.5 h-3.5" />}
         </button>
-        <button onClick={onRemove} className="text-white/30 hover:text-rose-400" aria-label={`Remove ${goal.name}`}>
+        <button onClick={onRemove} className="text-white/55 hover:text-rose-400" aria-label={`Remove ${goal.name}`}>
           <Trash2 className="w-3.5 h-3.5" />
         </button>
       </div>
@@ -124,7 +124,7 @@ function GoalCard({ goal, onUpdate, onRemove, onLogContribution }: {
         <div className="flex-1">
           <div className="flex justify-between text-sm">
             <span className="text-white/60">{formatCurrency(goal.contributedAmount)} of {formatCurrency(goal.targetAmount)}</span>
-            <span className="text-white/40">{progress.toFixed(0)}%</span>
+            <span className="text-white/55">{progress.toFixed(0)}%</span>
           </div>
           {!ringView && (
             <div className="mt-2 h-2 rounded-full bg-white/5 overflow-hidden">
@@ -133,10 +133,10 @@ function GoalCard({ goal, onUpdate, onRemove, onLogContribution }: {
           )}
         </div>
       </div>
-      {goal.targetDate && <p className="mt-2 text-xs text-white/40">Target date: {formatShortDate(goal.targetDate)}</p>}
+      {goal.targetDate && <p className="mt-2 text-xs text-white/55">Target date: {formatShortDate(goal.targetDate)}</p>}
       <div className="mt-3 flex items-center gap-2">
         <label className="text-xs text-white/50">Funded this period</label>
-        <span className="text-white/40">$</span>
+        <span className="text-white/55">$</span>
         <input
           type="number"
           step="0.01"
@@ -168,7 +168,7 @@ function GoalForm({ onCancel, onSave }: { onCancel: () => void; onSave: (v: { na
     <StatCard label="Add Savings Goal" glow="success" tilt={false}>
       <div className="mt-4 space-y-3">
         <div className="flex justify-end">
-          <button onClick={onCancel} className="text-white/30 hover:text-white"><X className="w-4 h-4" /></button>
+          <button onClick={onCancel} className="text-white/55 hover:text-white"><X className="w-4 h-4" /></button>
         </div>
         <div>
           <label className="text-xs text-white/50">Goal name</label>
@@ -182,7 +182,7 @@ function GoalForm({ onCancel, onSave }: { onCancel: () => void; onSave: (v: { na
           <div>
             <label className="text-xs text-white/50">Target amount</label>
             <div className="mt-1 flex items-center gap-1 bg-black/30 border border-white/10 rounded-lg px-3 py-2">
-              <span className="text-white/40">$</span>
+              <span className="text-white/55">$</span>
               <input type="number" step="0.01" aria-label="Target amount" value={targetAmount} onChange={(e) => setTargetAmount(parseFloat(e.target.value) || 0)} className="w-full bg-transparent outline-none tabular-nums" />
             </div>
           </div>
@@ -201,7 +201,7 @@ function GoalForm({ onCancel, onSave }: { onCancel: () => void; onSave: (v: { na
         <div>
           <label className="text-xs text-white/50">Funded this period</label>
           <div className="mt-1 flex items-center gap-1 bg-black/30 border border-white/10 rounded-lg px-3 py-2">
-            <span className="text-white/40">$</span>
+            <span className="text-white/55">$</span>
             <input type="number" step="0.01" aria-label="Funded this period" value={fundedThisPeriod} onChange={(e) => setFundedThisPeriod(parseFloat(e.target.value) || 0)} className="w-full bg-transparent outline-none tabular-nums" />
           </div>
         </div>

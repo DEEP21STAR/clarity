@@ -2,7 +2,8 @@ import React, { useEffect, useRef, useState } from 'react'
 import gsap from 'gsap'
 // html2canvas-pro — see thumbnailCache.ts's comment: plain html2canvas can't parse Tailwind
 // v4's oklch colors at all, confirmed via a real failed capture, not assumed.
-import html2canvas from 'html2canvas-pro'
+// Loaded when someone actually copies a card as an image, not at startup (large library).
+const loadHtml2canvas = async () => (await import('html2canvas-pro')).default
 import { cn, prefersReducedMotion } from '@/lib/utils'
 import { Info, Camera, Check } from 'lucide-react'
 
@@ -51,6 +52,7 @@ export function StatCard({ label, glow = 'cyan', tilt = true, className, childre
     if (!ref.current || copyState === 'copying') return
     setCopyState('copying')
     try {
+      const html2canvas = await loadHtml2canvas()
       const canvas = await html2canvas(ref.current, {
         backgroundColor: '#0b0d14',
         scale: 2,
@@ -160,7 +162,7 @@ export function StatCard({ label, glow = 'cyan', tilt = true, className, childre
           data-copy-btn
           onClick={copyAsImage}
           title={copyState === 'error' ? 'Copy failed — clipboard image write may be blocked in this view' : 'Copy this card as an image'}
-          className="absolute top-3 right-3 z-20 w-6 h-6 rounded-md flex items-center justify-center text-white/30 hover:text-cyan-300 hover:bg-white/5 transition-colors"
+          className="absolute top-3 right-3 z-20 w-6 h-6 rounded-md flex items-center justify-center text-white/55 hover:text-cyan-300 hover:bg-white/5 transition-colors"
         >
           {copyState === 'copied' ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Camera className={cn('w-3.5 h-3.5', copyState === 'copying' && 'animate-pulse')} />}
         </button>

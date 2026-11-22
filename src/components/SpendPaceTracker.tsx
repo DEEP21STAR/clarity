@@ -73,10 +73,10 @@ export function SpendPaceTracker({
     <StatCard label="Spend Pace & Streak" glow={alerts.length > 0 ? 'danger' : 'success'}>
       <div className="mt-4 flex items-center justify-between flex-wrap gap-3">
         <div className="flex items-center gap-2">
-          <Flame className={cn(flameSize, flameGlow, 'transition-all duration-500', state.streak.current > 0 ? 'text-amber-400' : 'text-white/30')} />
+          <Flame className={cn(flameSize, flameGlow, 'transition-all duration-500', state.streak.current > 0 ? 'text-amber-400' : 'text-white/55')} />
           <span className="text-sm text-white/70">
             <span className="text-xl font-bold text-white tabular-nums">{state.streak.current}</span> day streak
-            {state.streak.best > 0 && <span className="text-white/40"> · best {state.streak.best}</span>}
+            {state.streak.best > 0 && <span className="text-white/55"> · best {state.streak.best}</span>}
           </span>
           {[7, 30, 100].filter((m) => state.streak.milestonesHit.includes(m)).map((m) => (
             <span key={m} className="flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-300 border border-amber-400/30 streak-badge-pop">
@@ -84,7 +84,7 @@ export function SpendPaceTracker({
             </span>
           ))}
         </div>
-        <button onClick={() => resetSpendTracker(today)} className="text-xs text-white/40 hover:text-white">
+        <button onClick={() => resetSpendTracker(today)} className="text-xs text-white/55 hover:text-white">
           Reset spend tracker
         </button>
       </div>
@@ -94,14 +94,14 @@ export function SpendPaceTracker({
           <div key={cat} className="rounded-xl border border-white/10 bg-black/30 p-3">
             <label className="text-xs font-semibold uppercase tracking-wide text-white/60 capitalize">{cat} spent so far</label>
             <div className="mt-2 flex items-center gap-1">
-              <span className="text-white/40">$</span>
+              <span className="text-white/55">$</span>
               <input
                 type="number" step="0.01" aria-label={`${cat} spent so far`} value={state.spendTracker[cat]}
                 onChange={(e) => updateSpendTracker({ [cat]: parseFloat(e.target.value) || 0 } as any)}
                 className="w-full bg-transparent text-lg font-bold tabular-nums text-white outline-none border-b border-white/10 focus:border-cyan-400/60"
               />
             </div>
-            <p className="text-[11px] text-white/35 mt-1">of {formatCurrency(allocation[cat])} allocated</p>
+            <p className="text-[11px] text-white/55 mt-1">of {formatCurrency(allocation[cat])} allocated</p>
           </div>
         ))}
       </div>

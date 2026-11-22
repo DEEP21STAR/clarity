@@ -12,7 +12,7 @@ export default defineConfig({
   testDir: './e2e',
   outputDir: './test-results/e2e',
   timeout: 90_000,
-  expect: { timeout: 15_000 },
+  expect: { timeout: 15_000, toHaveScreenshot: { maxDiffPixelRatio: 0.002 } },
   fullyParallel: false,
   workers: 2,
   retries: 0,
@@ -21,7 +21,8 @@ export default defineConfig({
     baseURL: `http://127.0.0.1:${PORT}/clarity/`,
     serviceWorkers: 'block',
     trace: 'retain-on-failure',
-    launchOptions: chrome ? { executablePath: chrome } : {},
+    // PW_CHANNEL=chrome (or msedge) uses an installed browser, e.g. on Windows; otherwise the system Chromium path, otherwise Playwright's own.
+    ...(process.env.PW_CHANNEL ? { channel: process.env.PW_CHANNEL as 'chrome' } : { launchOptions: chrome ? { executablePath: chrome } : {} }),
   },
   webServer: {
     command: `npm run build && npx vite preview --host 127.0.0.1 --port ${PORT} --strictPort`,

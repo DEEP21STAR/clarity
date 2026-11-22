@@ -3,7 +3,8 @@
 // function 'oklab'" on every real capture attempt in this app, since Tailwind v4 emits oklch
 // colors by default). html2canvas-pro is a maintained fork that adds oklch/oklab/lab/color-mix
 // parsing — verified working via a real capture, not assumed from its README.
-import html2canvas from 'html2canvas-pro'
+// Loaded on first use, not at startup: it is a large library and nothing needs it until a thumbnail is captured.
+const loadHtml2canvas = async () => (await import('html2canvas-pro')).default
 
 /**
  * Round 21, item #3 — cached destination thumbnails for the ⌘K Quick Actions
@@ -67,6 +68,7 @@ export async function captureThumbnail(tabId: string, el: HTMLElement): Promise<
   // (e.g. a very fast double tab-switch) has caused occasional blank frames in testing.
   const run = async () => {
     try {
+      const html2canvas = await loadHtml2canvas()
       const canvas = await html2canvas(el, {
         backgroundColor: '#05060a',
         scale: 1,

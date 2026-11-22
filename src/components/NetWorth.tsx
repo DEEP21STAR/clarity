@@ -42,7 +42,7 @@ export function NetWorth() {
         </StatCard>
         <StatCard label="Total Liabilities" glow="danger" delay={0.05}>
           <div className="mt-4 text-3xl font-bold text-rose-300 tabular-nums"><CountUp value={breakdown.totalLiabilities} prefix="$" /></div>
-          <p className="text-xs text-white/40 mt-2">GEM VISA card balances + tracked Debts.</p>
+          <p className="text-xs text-white/55 mt-2">GEM VISA card balances + tracked Debts.</p>
         </StatCard>
         <StatCard label="Net Worth" glow={breakdown.netWorth >= 0 ? 'success' : 'danger'} delay={0.1}>
           <div className={`mt-4 text-3xl font-bold tabular-nums ${breakdown.netWorth >= 0 ? 'text-emerald-300' : 'text-rose-300'}`}>
@@ -60,8 +60,8 @@ export function NetWorth() {
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={chartData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
                 <CartesianGrid stroke="rgba(255,255,255,0.06)" vertical={false} />
-                <XAxis dataKey="date" stroke="rgba(255,255,255,0.35)" fontSize={11} tickLine={false} />
-                <YAxis stroke="rgba(255,255,255,0.35)" fontSize={11} tickLine={false} tickFormatter={(v) => `$${(v / 1000).toFixed(0)}k`} />
+                <XAxis dataKey="date" stroke="rgba(255,255,255,0.55)" fontSize={11} tickLine={false} />
+                <YAxis stroke="rgba(255,255,255,0.55)" fontSize={11} tickLine={false} tickFormatter={(v) => `$${(v / 1000).toFixed(0)}k`} />
                 <Tooltip
                   contentStyle={{ background: '#0b0d14', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 8 }}
                   labelStyle={{ color: '#fff' }}
@@ -75,7 +75,7 @@ export function NetWorth() {
               </LineChart>
             </ResponsiveContainer>
           ) : (
-            <div className="h-full flex items-center justify-center text-sm text-white/40">
+            <div className="h-full flex items-center justify-center text-sm text-white/55">
               Net worth history builds a real point each day you open Clarity — check back after a couple of days for a real trend line.
             </div>
           )}

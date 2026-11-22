@@ -41,7 +41,7 @@ export function EncryptedBackupPanel() {
   const ready = pass.length >= 8
   return (
     <StatCard label="Encrypted Backup" glow="cyan">
-      <p className="mt-4 text-xs text-white/40 flex items-start gap-2"><Lock className="w-4 h-4 shrink-0" />
+      <p className="mt-4 text-xs text-white/55 flex items-start gap-2"><Lock className="w-4 h-4 shrink-0" />
         Locks everything with a passphrase (AES-256). The passphrase is not stored anywhere: if you lose it, the file cannot be opened.</p>
       <input type="password" value={pass} onChange={(e) => setPass(e.target.value)} placeholder="Passphrase (8+ characters)" autoComplete="off"
         className="mt-3 w-full bg-black/40 border border-white/10 rounded-lg px-3 py-2 text-sm text-white outline-none" data-testid="backup-pass" />

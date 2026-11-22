@@ -17,7 +17,7 @@ export function TrendArrow({ current, previous, goodDirection = 'up', suffix = '
   const pct = percentChange(current, previous)
   if (dir === 'flat' || pct === null) {
     return (
-      <span className="trend-arrow inline-flex items-center gap-1 text-[11px] text-white/40">
+      <span className="trend-arrow inline-flex items-center gap-1 text-[11px] text-white/55">
         <Minus className="w-3 h-3" /> flat{suffix}
       </span>
     )

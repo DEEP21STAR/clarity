@@ -4,6 +4,7 @@ import { useStore } from '@/lib/store'
 import { StatCard } from './StatCard'
 import { CountUp } from './CountUp'
 import { categoryColor, findMatchRanges } from '@/lib/logic'
+import { EmptyState } from './EmptyState'
 import { previewCsvImport, recategorisePreview, categoryCounts, type CsvPreview } from '@/lib/csvImport'
 import { formatCurrency, formatNumericDate } from '@/lib/utils'
 import { saveFile } from '@/lib/downloads'
@@ -76,13 +77,13 @@ function BulkRecategorize({ count, onApply }: { count: number; onApply: (categor
   const [value, setValue] = useState('')
   return (
     <div className="mt-2 flex items-center gap-2 text-xs">
-      <span className="text-white/40">Set category for all {count} result{count === 1 ? '' : 's'}:</span>
+      <span className="text-white/55">Set category for all {count} result{count === 1 ? '' : 's'}:</span>
       <input
         value={value}
         onChange={(e) => setValue(e.target.value)}
         onKeyDown={(e) => { if (e.key === 'Enter' && value.trim()) { onApply(value.trim()); setValue('') } }}
         placeholder="e.g. Groceries"
-        className="bg-black/30 border border-white/10 rounded px-2 py-1 outline-none focus:border-cyan-400/50 placeholder:text-white/25 w-32"
+        className="bg-black/30 border border-white/10 rounded px-2 py-1 outline-none focus:border-cyan-400/50 placeholder:text-white/50 w-32"
       />
       <button
         onClick={() => { if (value.trim()) { onApply(value.trim()); setValue('') } }}
@@ -117,13 +118,13 @@ function PreviewCategories({ preview, known, onSet }: { preview: CsvPreview; kno
               return (
                 <li key={t.id} className="flex flex-wrap items-center gap-2">
                   <span className="min-w-0 basis-full truncate text-white/80 sm:basis-0 sm:flex-1" title={t.description}>{t.description}</span>
-                  <input list="csv-known-categories" aria-label={`Category for ${t.description}`} value={v} onChange={(e) => setDraft((d) => ({ ...d, [t.id]: e.target.value }))} onKeyDown={(e) => { if (e.key === 'Enter') apply() }} placeholder="category" className="w-32 rounded border border-white/10 bg-black/30 px-2 py-1 outline-none focus:border-cyan-400/50 placeholder:text-white/25" />
+                  <input list="csv-known-categories" aria-label={`Category for ${t.description}`} value={v} onChange={(e) => setDraft((d) => ({ ...d, [t.id]: e.target.value }))} onKeyDown={(e) => { if (e.key === 'Enter') apply() }} placeholder="category" className="w-32 rounded border border-white/10 bg-black/30 px-2 py-1 outline-none focus:border-cyan-400/50 placeholder:text-white/50" />
                   <button type="button" onClick={apply} disabled={!v.trim()} className="font-medium text-cyan-300 hover:text-cyan-200 disabled:text-white/20">Set</button>
                 </li>
               )
             })}
           </ul>
-          {open.length > 8 && <p className="mt-1 text-white/40">+{open.length - 8} more stay uncategorised; fix them in the ledger after adding.</p>}
+          {open.length > 8 && <p className="mt-1 text-white/55">+{open.length - 8} more stay uncategorised; fix them in the ledger after adding.</p>}
         </div>
       )}
     </div>
@@ -231,7 +232,7 @@ export function Transactions() {
             <ArrowDownCircle className="w-8 h-8 text-emerald-400/70 shrink-0" />
             <div>
               <div className="text-3xl font-bold text-emerald-300 tabular-nums"><CountUp value={totalIn} prefix="$" /></div>
-              <p className="text-xs text-white/40 mt-1">{inTxs.length} credit{inTxs.length === 1 ? '' : 's'}{inTxs.length > 0 && ` · avg ${formatCurrency(totalIn / inTxs.length)}`}</p>
+              <p className="text-xs text-white/55 mt-1">{inTxs.length} credit{inTxs.length === 1 ? '' : 's'}{inTxs.length > 0 && ` · avg ${formatCurrency(totalIn / inTxs.length)}`}</p>
             </div>
           </div>
         </StatCard>
@@ -240,7 +241,7 @@ export function Transactions() {
             <ArrowUpCircle className="w-8 h-8 text-rose-400/70 shrink-0" />
             <div>
               <div className="text-3xl font-bold text-rose-300 tabular-nums"><CountUp value={Math.abs(totalOut)} prefix="$" /></div>
-              <p className="text-xs text-white/40 mt-1">{outTxs.length} debit{outTxs.length === 1 ? '' : 's'}{outTxs.length > 0 && ` · avg ${formatCurrency(Math.abs(totalOut) / outTxs.length)}`}</p>
+              <p className="text-xs text-white/55 mt-1">{outTxs.length} debit{outTxs.length === 1 ? '' : 's'}{outTxs.length > 0 && ` · avg ${formatCurrency(Math.abs(totalOut) / outTxs.length)}`}</p>
             </div>
           </div>
         </StatCard>
@@ -250,7 +251,7 @@ export function Transactions() {
           real category vs. fell back to "uncategorised" — the auto-categorisation pass is
           best-effort pattern matching, not perfect, so this is honest about its own coverage. */}
       {state.transactions.length > 0 && (
-        <p className="text-xs text-white/35 -mt-2">
+        <p className="text-xs text-white/55 -mt-2">
           {state.transactions.length - uncategorisedCount} of {state.transactions.length} transactions auto-categorised
           {uncategorisedCount > 0 && ` · ${uncategorisedCount} left as uncategorised — click any category below to fix one by hand`}.
         </p>
@@ -303,7 +304,7 @@ export function Transactions() {
           {!importing && importedCount !== null && (
             <p className="text-xs text-emerald-300 mt-2">Imported {importedCount} transactions — date/description/amount columns auto-detected.</p>
           )}
-          <p className="text-xs text-white/40 mt-2">
+          <p className="text-xs text-white/55 mt-2">
             Auto-detects date, description and amount (or split debit/credit) columns from any bank export, even without matching headers.
           </p>
         </div>
@@ -320,22 +321,22 @@ export function Transactions() {
                 <Line type="monotone" dataKey="running" stroke="#22d3ee" strokeWidth={2} dot={false} isAnimationActive />
               </LineChart>
             </ResponsiveContainer>
-            <p className="text-[10px] text-white/30 -mt-1">Running balance trend across the imported ledger.</p>
+            <p className="text-[10px] text-white/55 -mt-1">Running balance trend across the imported ledger.</p>
           </div>
         )}
 
         <div className="mt-4 flex items-center gap-2">
           <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-white/30" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-white/55" />
             <input
               ref={searchRef}
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder="Search description or category... (press / to focus)"
-              className="w-full bg-black/30 border border-white/10 rounded-lg pl-9 pr-3 py-2 text-sm outline-none focus:border-cyan-400/50 placeholder:text-white/30"
+              className="w-full bg-black/30 border border-white/10 rounded-lg pl-9 pr-3 py-2 text-sm outline-none focus:border-cyan-400/50 placeholder:text-white/50"
             />
             {!query && (
-              <kbd className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] text-white/25 border border-white/10 rounded px-1">/</kbd>
+              <kbd className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] text-white/55 border border-white/10 rounded px-1">/</kbd>
             )}
           </div>
           {filtered.length > 0 && (
@@ -369,7 +370,7 @@ export function Transactions() {
         <div className="mt-3 max-h-80 overflow-y-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="text-left text-white/40 text-xs uppercase tracking-wide">
+              <tr className="text-left text-white/55 text-xs uppercase tracking-wide">
                 <th className="pb-2">Date</th><th className="pb-2">Category</th><th className="pb-2">Description</th><th className="pb-2 text-right">Amount</th><th className="pb-2" />
               </tr>
             </thead>
@@ -400,7 +401,7 @@ export function Transactions() {
                         looking cluttered with 100 trash icons at rest. */}
                     <button
                       onClick={() => withUndo('Transaction removed', () => removeTransaction(t.id))}
-                      className="text-white/20 hover:text-rose-400 opacity-0 group-hover:opacity-100 transition-opacity"
+                      className="text-white/55 hover:text-rose-400 opacity-0 group-hover:opacity-100 transition-opacity"
                       title="Remove this transaction"
                     >
                       <Trash2 className="w-3.5 h-3.5" />
@@ -409,14 +410,16 @@ export function Transactions() {
                 </tr>
               ))}
               {filtered.length === 0 && state.transactions.length > 0 && (
-                <tr><td colSpan={5} className="py-4 text-center text-white/30">No transactions match "{query}".</td></tr>
+                <tr><td colSpan={5} className="py-4 text-center text-white/55">No transactions match "{query}".</td></tr>
               )}
               {state.transactions.length === 0 && (
                 <tr><td colSpan={5} className="py-8">
-                  <div className="flex flex-col items-center text-center">
-                    <Receipt className="w-6 h-6 text-white/20 mb-2" />
-                    <span className="text-white/40 text-sm">No transactions yet — import a bank CSV above to get started.</span>
-                  </div>
+                  <EmptyState
+                    icon={Receipt}
+                    title="No transactions yet"
+                    body="Import a bank statement and every row is sorted, checked for duplicates and shown here. Nothing is added until you confirm the preview."
+                    action={{ label: 'Choose a bank CSV', onClick: () => document.querySelector<HTMLInputElement>('input[type=file]')?.click() }}
+                  />
                 </td></tr>
               )}
             </tbody>

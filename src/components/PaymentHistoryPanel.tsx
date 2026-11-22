@@ -1,3 +1,4 @@
+import { EmptyState } from './EmptyState'
 import { useMemo, useState } from 'react'
 import { useStore } from '@/lib/store'
 import { StatCard } from './StatCard'
@@ -44,7 +45,7 @@ export function PaymentHistoryPanel() {
 
   return (
     <StatCard label="Payment History" glow="success" tooltip="Every real payment recorded across GEM VISA cards, recurring bills, periodic bills, and device repayments — one filterable ledger.">
-      <p className="mt-4 text-xs text-white/40">
+      <p className="mt-4 text-xs text-white/55">
         {state.paymentRecords.length} payment{state.paymentRecords.length === 1 ? '' : 's'} recorded, total {formatCurrency(state.paymentRecords.reduce((s, r) => s + r.amount, 0))}.
       </p>
       <div className="mt-3">
@@ -55,10 +56,11 @@ export function PaymentHistoryPanel() {
       )}
       <div className="mt-3 max-h-72 overflow-y-auto space-y-1.5">
         {filtered.length === 0 && (
-          <div className="flex flex-col items-center justify-center py-8 text-center">
-            <History className="w-6 h-6 text-white/20 mb-2" />
-            <p className="text-sm text-white/40">{state.paymentRecords.length === 0 ? 'No payments recorded yet.' : 'No payments match this filter.'}</p>
-          </div>
+          <EmptyState
+            icon={History}
+            title={state.paymentRecords.length === 0 ? 'No payments recorded yet' : 'No payments match this filter'}
+            body={state.paymentRecords.length === 0 ? 'Mark a bill as paid on Upcoming Payments and it is logged here with its date and amount.' : 'Try a wider date range or a different card.'}
+          />
         )}
         {filtered.map((r) => {
           const Icon = TARGET_ICON[r.targetType]
@@ -67,10 +69,10 @@ export function PaymentHistoryPanel() {
               <Icon className="w-3.5 h-3.5 text-cyan-300 shrink-0" />
               <div className="flex-1 min-w-0">
                 <div className="text-white/80 truncate">{r.targetLabel}</div>
-                <div className="text-[10px] text-white/35">{formatShortDate(r.date)}{r.dueDateIso ? ` · against ${formatShortDate(r.dueDateIso)} due date` : ''}</div>
+                <div className="text-[10px] text-white/55">{formatShortDate(r.date)}{r.dueDateIso ? ` · against ${formatShortDate(r.dueDateIso)} due date` : ''}</div>
               </div>
               <span className="tabular-nums text-emerald-300 font-semibold">{formatCurrency(r.amount)}</span>
-              <button onClick={() => undo(r.id, r.targetLabel)} title="Remove this payment record (reverses its balance effect)" className="text-white/30 hover:text-rose-400">
+              <button onClick={() => undo(r.id, r.targetLabel)} title="Remove this payment record (reverses its balance effect)" className="text-white/55 hover:text-rose-400">
                 <Trash2 className="w-3.5 h-3.5" />
               </button>
             </div>

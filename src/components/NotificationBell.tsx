@@ -69,7 +69,7 @@ export function NotificationBell() {
         <div className="absolute right-0 mt-2 w-72 rounded-xl border border-cyan-400/30 bg-[#0b0d14] shadow-[0_0_40px_-10px_rgba(34,211,238,0.4)] overflow-hidden z-50">
           <div className="px-3 py-2 text-xs font-semibold text-white/50 uppercase tracking-wide border-b border-white/10">Recent alerts</div>
           <div className="max-h-64 overflow-y-auto">
-            {alerts.length === 0 && <div className="px-3 py-4 text-sm text-white/30">Nothing needs attention right now.</div>}
+            {alerts.length === 0 && <div className="px-3 py-4 text-sm text-white/55">Nothing needs attention right now.</div>}
             {alerts.map((a, i) => (
               <div key={i} className="flex items-start gap-2 px-3 py-2 text-sm border-t border-white/5 first:border-t-0">
                 {a.type === 'price' ? (

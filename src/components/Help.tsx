@@ -88,14 +88,14 @@ export function Help() {
                   <Icon className="w-3.5 h-3.5 text-cyan-300" />
                 </div>
                 <span className="text-xs font-semibold text-white/85 flex-1">{topic.title}</span>
-                <ChevronDown className={cn('w-3.5 h-3.5 text-white/35 transition-transform shrink-0', isOpen && 'rotate-180')} />
+                <ChevronDown className={cn('w-3.5 h-3.5 text-white/55 transition-transform shrink-0', isOpen && 'rotate-180')} />
               </button>
               <div className="disclosure-body" style={{ maxHeight: isOpen ? 400 : 0, opacity: isOpen ? 1 : 0 }}>
                 <div className="px-3.5 pb-3.5 pt-1">
                   <ol className="space-y-1.5 text-[11px] text-white/55 leading-relaxed list-decimal list-inside">
                     {topic.steps.map((step, i) => <li key={i}>{step}</li>)}
                   </ol>
-                  <div className="mt-3 flex items-center gap-2 rounded-lg border border-dashed border-white/10 bg-white/[0.02] px-3 py-2 text-[10px] text-white/30">
+                  <div className="mt-3 flex items-center gap-2 rounded-lg border border-dashed border-white/10 bg-white/[0.02] px-3 py-2 text-[10px] text-white/55">
                     <ImageOff className="w-3.5 h-3.5 shrink-0" />
                     Screenshots for this step are coming — not faked with a placeholder image.
                   </div>

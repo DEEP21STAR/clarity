@@ -99,12 +99,12 @@ export function BillCalendar() {
       {/* tilt off: a grid of precisely-clickable day cells — kept from the app-wide mouse-tilt audit. */}
       <StatCard label={monthLabel} glow="purple" tilt={false} tooltip="Background shading is a real heat-map: darker = more $ due that day, relative to this month's busiest day.">
         <div className="mt-4 flex items-center justify-between">
-          <button onClick={() => goMonth(-1)} aria-label="Previous month" className="text-white/40 hover:text-white p-2 -m-2"><ChevronLeft className="w-5 h-5" /></button>
+          <button onClick={() => goMonth(-1)} aria-label="Previous month" className="text-white/55 hover:text-white p-2 -m-2"><ChevronLeft className="w-5 h-5" /></button>
           <span className="text-sm text-white/60">{monthLabel}</span>
-          <button onClick={() => goMonth(1)} aria-label="Next month" className="text-white/40 hover:text-white p-2 -m-2"><ChevronRight className="w-5 h-5" /></button>
+          <button onClick={() => goMonth(1)} aria-label="Next month" className="text-white/55 hover:text-white p-2 -m-2"><ChevronRight className="w-5 h-5" /></button>
         </div>
 
-        <div className="mt-4 grid grid-cols-7 gap-1 text-center text-[10px] text-white/40 uppercase">
+        <div className="mt-4 grid grid-cols-7 gap-1 text-center text-[10px] text-white/55 uppercase">
           {WEEKDAYS.map((d) => <div key={d}>{d}</div>)}
         </div>
         {/* #13 — real slide transition: keying on the viewed month forces a fresh mount every
@@ -122,9 +122,9 @@ export function BillCalendar() {
               >
                 {day && (
                   <>
-                    <div className="flex items-center justify-between text-[10px] text-white/40">
+                    <div className="flex items-center justify-between text-[10px] text-white/55">
                       <span>{day}</span>
-                      {dayTotal > 0 && <span className="text-white/30">{formatCurrency(dayTotal)}</span>}
+                      {dayTotal > 0 && <span className="text-white/55">{formatCurrency(dayTotal)}</span>}
                     </div>
                     <div className="space-y-0.5 mt-0.5">
                       {(entriesByDay.get(day) ?? []).slice(0, 3).map((e, j) => {
@@ -133,7 +133,7 @@ export function BillCalendar() {
                         // #8 upgrade over Round 19's guess: a PAID instance is genuinely done
                         // regardless of date; only an UNPAID past instance is genuinely overdue now.
                         const severity = paid ? null : daysUntil >= 0 ? dueDateSeverity(daysUntil) : 'danger'
-                        const textClass = paid ? 'text-emerald-400/70 line-through' : severity ? CALENDAR_ENTRY_TEXT[severity] : 'text-white/35'
+                        const textClass = paid ? 'text-emerald-400/70 line-through' : severity ? CALENDAR_ENTRY_TEXT[severity] : 'text-white/55'
                         const tooltip = paid ? 'paid'
                           : severity === 'danger' ? 'overdue — unpaid past due date'
                           : severity === 'warn' ? 'due soon'
@@ -166,7 +166,7 @@ export function BillCalendar() {
             )
           })}
         </div>
-        <p className="mt-3 text-[10px] text-white/30 flex items-center gap-1"><Check className="w-2.5 h-2.5" /> Click any bill (not sinking funds) to mark it paid/unpaid for that specific due date.</p>
+        <p className="mt-3 text-[10px] text-white/55 flex items-center gap-1"><Check className="w-2.5 h-2.5" /> Click any bill (not sinking funds) to mark it paid/unpaid for that specific due date.</p>
       </StatCard>
     </div>
   )

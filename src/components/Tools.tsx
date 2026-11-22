@@ -16,7 +16,7 @@ import { isNotificationSupported, getNotificationPermission, requestNotification
 import { isSpeechRecognitionSupported, startListening, parseVoiceTranscript } from '@/lib/voiceInput'
 
 export function Tools() {
-  const { state, addOneOffEntry, removeOneOffEntry, setSoundEnabled, setTextScale, setBillAlertsEnabled, setAccentTheme } = useStore()
+  const { state, addOneOffEntry, removeOneOffEntry, setSoundEnabled, setCelebrationLevel, setTextScale, setBillAlertsEnabled, setAccentTheme } = useStore()
   const withUndo = useUndoableDelete()
   const [hoursPerWeek, setHoursPerWeek] = useState(15)
   const [weeksPerYear, setWeeksPerYear] = useState(48)
@@ -120,7 +120,7 @@ export function Tools() {
         <button
           onClick={() => setSoundEnabled(!state.soundEnabled)}
           title={state.soundEnabled ? 'Sound effects on — click to mute' : 'Sound effects off — click to enable chimes on bill-paid / streak milestones'}
-          className={`flex items-center gap-1.5 text-xs rounded-full px-3 py-1.5 border transition-colors ${state.soundEnabled ? 'text-cyan-300 border-cyan-400/40 bg-cyan-400/10' : 'text-white/40 border-white/10 hover:border-white/20'}`}
+          className={`flex items-center gap-1.5 text-xs rounded-full px-3 py-1.5 border transition-colors ${state.soundEnabled ? 'text-cyan-300 border-cyan-400/40 bg-cyan-400/10' : 'text-white/55 border-white/10 hover:border-white/20'}`}
         >
           {state.soundEnabled ? <Volume2 className="w-3.5 h-3.5" /> : <VolumeX className="w-3.5 h-3.5" />}
           Sound {state.soundEnabled ? 'on' : 'off'}
@@ -146,6 +146,19 @@ export function Tools() {
               { value: 'large', label: 'Large' },
             ]}
           />
+        </div>
+        <div className="mt-4">
+          <label className="text-xs text-white/50 mb-1.5 block">Celebrations (confetti when you reach a goal)</label>
+          <SegmentedControl
+            value={state.celebrationLevel ?? 'subtle'}
+            onChange={setCelebrationLevel}
+            options={[
+              { value: 'off', label: 'Off' },
+              { value: 'subtle', label: 'Subtle' },
+              { value: 'showtime', label: 'Showtime' },
+            ]}
+          />
+          <p className="mt-2 text-xs text-white/55">Reduced motion in your device settings always turns celebrations off. Sound is the separate switch at the top of this page.</p>
         </div>
       </StatCard>
 
@@ -187,13 +200,13 @@ export function Tools() {
           that instead of overselling "even when closed" push. */}
       <StatCard label="Bill Alerts" glow="danger" tooltip="Real browser notifications for bills due today or tomorrow — but only while Clarity is open in a tab or as an installed app. There's no server behind this, so it can't wake a fully-closed browser or notify while your phone is asleep.">
         {!isNotificationSupported() ? (
-          <p className="mt-4 text-sm text-white/40">Notifications aren't supported in this browser.</p>
+          <p className="mt-4 text-sm text-white/55">Notifications aren't supported in this browser.</p>
         ) : notifPermission === 'denied' ? (
           <p className="mt-4 text-sm text-amber-300/80 flex items-start gap-2"><AlertTriangle className="w-4 h-4 mt-0.5 shrink-0" /> Blocked in your browser settings. Enable notifications for this site to turn alerts back on.</p>
         ) : notifPermission === 'granted' && state.billAlertsEnabled ? (
           <div className="mt-4 flex items-center justify-between">
             <span className="text-sm text-emerald-300 flex items-center gap-1.5"><BellRing className="w-4 h-4" /> On — bills due today/tomorrow will alert you while the app is open.</span>
-            <button onClick={() => setBillAlertsEnabled(false)} className="text-xs text-white/40 hover:text-white/70 underline">Turn off</button>
+            <button onClick={() => setBillAlertsEnabled(false)} className="text-xs text-white/55 hover:text-white/70 underline">Turn off</button>
           </div>
         ) : (
           <button
@@ -217,8 +230,8 @@ export function Tools() {
                   unlocked ? 'border-amber-400/40 bg-amber-500/10' : 'border-white/10 bg-black/20 opacity-50'
                 )}
               >
-                {unlocked ? <Award className="w-6 h-6 text-amber-300" /> : <Lock className="w-5 h-5 text-white/30" />}
-                <span className={cn('text-xs font-semibold', unlocked ? 'text-amber-200' : 'text-white/40')}>{m}-day streak</span>
+                {unlocked ? <Award className="w-6 h-6 text-amber-300" /> : <Lock className="w-5 h-5 text-white/55" />}
+                <span className={cn('text-xs font-semibold', unlocked ? 'text-amber-200' : 'text-white/55')}>{m}-day streak</span>
               </div>
             )
           })}
@@ -252,7 +265,7 @@ export function Tools() {
         {/* #10 — real animated result reveal, re-triggered every recalculation (keyed on the actual result) */}
         <div key={wfhDeduction} className="result-reveal">
           <div className="mt-2 text-3xl font-bold text-cyan-300 tabular-nums"><CountUp value={wfhDeduction} prefix="$" /></div>
-          <p className="text-xs text-white/40 mt-1">Estimated annual deduction — editable rate/inputs, not a lodged claim.</p>
+          <p className="text-xs text-white/55 mt-1">Estimated annual deduction — editable rate/inputs, not a lodged claim.</p>
         </div>
       </StatCard>
 
@@ -265,7 +278,7 @@ export function Tools() {
           />
         </div>
         <div className="mt-4 flex items-center gap-2">
-          <span className="text-white/40">$</span>
+          <span className="text-white/55">$</span>
           <input type="number" aria-label="Amount for GST" value={gstAmount} onChange={(e) => setGstAmount(parseFloat(e.target.value) || 0)} className="bg-transparent text-2xl font-bold tabular-nums text-purple-200 outline-none border-b border-white/10 focus:border-purple-400/60 w-full" />
         </div>
         <div key={gstResult.gst} className="result-reveal mt-4 grid grid-cols-3 gap-4 text-sm">
@@ -273,7 +286,7 @@ export function Tools() {
           <Metric label="GST" value={gstResult.gst} />
           <Metric label="Inc-GST" value={gstResult.amountIncGst} />
         </div>
-        <p className="text-xs text-white/40 mt-3">{state.country} GST rate: {state.country === 'NZ' ? '15%' : '10%'}.</p>
+        <p className="text-xs text-white/55 mt-3">{state.country} GST rate: {state.country === 'NZ' ? '15%' : '10%'}.</p>
       </StatCard>
 
       <StatCard label="What-If Income Simulator" glow="success" tooltip="Reuses the same 30-day projection as the Cash-Flow Forecast on Upcoming Payments — just run twice, with and without the hypothetical amount.">
@@ -281,7 +294,7 @@ export function Tools() {
           <div>
             <label className="text-xs text-white/50">Extra income, per week</label>
             <div className="mt-1 flex items-center gap-2 bg-black/30 border border-white/10 rounded-lg px-3 py-2">
-              <span className="text-white/40">$</span>
+              <span className="text-white/55">$</span>
               <input
                 type="number"
                 step="1"
@@ -294,7 +307,7 @@ export function Tools() {
           </div>
           <div className="flex items-center gap-4">
             <div>
-              <p className="text-[10px] text-white/40 uppercase tracking-wide">Balance in 30 days — now</p>
+              <p className="text-[10px] text-white/55 uppercase tracking-wide">Balance in 30 days — now</p>
               <p className="text-lg font-bold tabular-nums text-white/70">{formatCurrency(whatIfComparison.realEnd)}</p>
             </div>
             <TrendingUp className="w-4 h-4 text-emerald-400 mt-3" />
@@ -305,7 +318,7 @@ export function Tools() {
           </div>
         </div>
         {whatIfExtraPerWeek > 0 && (
-          <p className="mt-3 text-xs text-white/40">
+          <p className="mt-3 text-xs text-white/55">
             An extra {formatCurrency(whatIfExtraPerWeek)}/week would leave you {formatCurrency(whatIfComparison.hypotheticalEnd - whatIfComparison.realEnd)} better off after 30 days.
           </p>
         )}
@@ -321,12 +334,12 @@ export function Tools() {
         </div>
         <div key={roundUpSavings} className="result-reveal">
           <div className="mt-2 text-3xl font-bold text-amber-300 tabular-nums"><CountUp value={roundUpSavings} prefix="$" /></div>
-          <p className="text-xs text-white/40 mt-1">You'd have "saved" this much across all imported transactions, if every purchase rounded up.</p>
+          <p className="text-xs text-white/55 mt-1">You'd have "saved" this much across all imported transactions, if every purchase rounded up.</p>
         </div>
       </StatCard>
 
       <StatCard label="One-Off Entries" glow="cyan" tooltip={isSpeechRecognitionSupported() ? 'Tap the mic to fill this form by voice — it never guesses income vs. expense, so review the amount before adding.' : 'Voice fill needs Chrome, Edge, or Safari — not supported in this browser.'}>
-        <p className="mt-4 text-xs text-white/40">One-off income/expenses feed the Cash-Flow Forecast chart on Upcoming Payments — a bonus, a big purchase, anything outside the regular bill/pay cycle.</p>
+        <p className="mt-4 text-xs text-white/55">One-off income/expenses feed the Cash-Flow Forecast chart on Upcoming Payments — a bonus, a big purchase, anything outside the regular bill/pay cycle.</p>
         {isSpeechRecognitionSupported() && (
           <div className="mt-3 flex items-center gap-2">
             <button
@@ -339,7 +352,7 @@ export function Tools() {
             >
               <Mic className={cn('w-3.5 h-3.5', listening && 'animate-pulse')} /> {listening ? 'Listening…' : 'Voice quick-log'}
             </button>
-            {voiceHeard && !listening && <span className="text-xs text-white/40">Heard: "{voiceHeard}"</span>}
+            {voiceHeard && !listening && <span className="text-xs text-white/55">Heard: "{voiceHeard}"</span>}
           </div>
         )}
         <div className="mt-3 grid grid-cols-1 md:grid-cols-4 gap-2">
@@ -351,7 +364,7 @@ export function Tools() {
             overlayClassName="px-3 text-sm"
           />
           <div className="flex items-center gap-1 bg-black/30 border border-white/10 rounded-lg px-3 py-2">
-            <span className="text-white/40">$</span>
+            <span className="text-white/55">$</span>
             <input type="number" step="0.01" aria-label="One-off purchase amount" value={oneOffAmount} onChange={(e) => setOneOffAmount(parseFloat(e.target.value) || 0)} className="w-full bg-transparent outline-none tabular-nums text-sm" placeholder="+income / -expense" />
           </div>
         </div>
@@ -371,7 +384,7 @@ export function Tools() {
               <span className="text-white/60">{formatShortDate(e.date)} — {e.description}</span>
               <div className="flex items-center gap-2">
                 <span className={`tabular-nums ${e.amount < 0 ? 'text-rose-300' : 'text-emerald-300'}`}>{formatCurrency(e.amount)}</span>
-                <button onClick={() => withUndo(`"${e.description}" removed`, () => removeOneOffEntry(e.id))} className="text-white/30 hover:text-rose-400"><Trash2 className="w-3.5 h-3.5" /></button>
+                <button onClick={() => withUndo(`"${e.description}" removed`, () => removeOneOffEntry(e.id))} className="text-white/55 hover:text-rose-400"><Trash2 className="w-3.5 h-3.5" /></button>
               </div>
             </div>
           ))}
@@ -379,7 +392,7 @@ export function Tools() {
       </StatCard>
 
       <StatCard label="Extra Usage Purchases" glow="amber" tooltip="A freely-editable log for ad-hoc extra usage purchases (e.g. Claude API overage) — not a fixed recurring bill. Feeds the same Cash-Flow Forecast as any other one-off expense.">
-        <p className="mt-4 text-xs text-white/40">Log any one-off extra-usage purchase as it happens — API overage, an extra credit top-up, anything outside your fixed subscriptions.</p>
+        <p className="mt-4 text-xs text-white/55">Log any one-off extra-usage purchase as it happens — API overage, an extra credit top-up, anything outside your fixed subscriptions.</p>
         <div className="mt-3 grid grid-cols-1 md:grid-cols-4 gap-2">
           <input aria-label="Extra usage description" value={extraUsageDesc} onChange={(e) => setExtraUsageDesc(e.target.value)} placeholder="e.g. Claude API overage" className="bg-black/30 border border-white/10 rounded-lg px-3 py-2 text-sm outline-none focus:border-amber-400/50 md:col-span-2" />
           <DateField
@@ -389,7 +402,7 @@ export function Tools() {
             overlayClassName="px-3 text-sm"
           />
           <div className="flex items-center gap-1 bg-black/30 border border-white/10 rounded-lg px-3 py-2">
-            <span className="text-white/40">$</span>
+            <span className="text-white/55">$</span>
             <input type="number" step="0.01" aria-label="Extra usage amount" value={extraUsageAmount} onChange={(e) => setExtraUsageAmount(parseFloat(e.target.value) || 0)} className="w-full bg-transparent outline-none tabular-nums text-sm" placeholder="amount" />
           </div>
         </div>
@@ -409,12 +422,12 @@ export function Tools() {
               <span className="text-white/60">{formatShortDate(e.date)} — {e.description}</span>
               <div className="flex items-center gap-2">
                 <span className="tabular-nums text-rose-300">{formatCurrency(e.amount)}</span>
-                <button onClick={() => withUndo(`"${e.description}" removed`, () => removeOneOffEntry(e.id))} className="text-white/30 hover:text-rose-400"><Trash2 className="w-3.5 h-3.5" /></button>
+                <button onClick={() => withUndo(`"${e.description}" removed`, () => removeOneOffEntry(e.id))} className="text-white/55 hover:text-rose-400"><Trash2 className="w-3.5 h-3.5" /></button>
               </div>
             </div>
           ))}
           {state.oneOffEntries.filter((e) => e.category === 'extraUsage').length === 0 && (
-            <p className="text-xs text-white/30 pt-1">No extra usage purchases logged yet.</p>
+            <p className="text-xs text-white/55 pt-1">No extra usage purchases logged yet.</p>
           )}
         </div>
       </StatCard>
@@ -458,7 +471,7 @@ export function Tools() {
         glow="purple"
         tooltip="Clarity stays free — this is entirely optional, honor-system support."
       >
-        <p className="mt-4 text-xs text-white/40">
+        <p className="mt-4 text-xs text-white/55">
           Clarity is free to use — building and hosting it isn't. If it's saving you real time or
           stress, a coffee genuinely helps keep it running. Completely optional, no strings attached.
         </p>
@@ -480,7 +493,7 @@ export function Tools() {
 function Metric({ label, value }: { label: string; value: number }) {
   return (
     <div>
-      <div className="text-xs text-white/40 uppercase tracking-wide">{label}</div>
+      <div className="text-xs text-white/55 uppercase tracking-wide">{label}</div>
       <div className="text-lg font-bold tabular-nums text-white">{formatCurrency(value)}</div>
     </div>
   )
