@@ -3,7 +3,8 @@ import { LineChart, Line, ResponsiveContainer } from 'recharts'
 import { useStore } from '@/lib/store'
 import { StatCard } from './StatCard'
 import { CountUp } from './CountUp'
-import { importTransactionsFromCsv, categoryColor, findMatchRanges } from '@/lib/logic'
+import { categoryColor, findMatchRanges } from '@/lib/logic'
+import { previewCsvImport, type CsvPreview } from '@/lib/csvImport'
 import { formatCurrency, formatNumericDate } from '@/lib/utils'
 import { saveFile } from '@/lib/downloads'
 import { useUndoableDelete } from '@/lib/useUndoableDelete'
@@ -100,6 +101,7 @@ export function Transactions() {
   const { showToast } = useToast()
   const [importedCount, setImportedCount] = useState<number | null>(null)
   const [importing, setImporting] = useState(false)
+  const [preview, setPreview] = useState<CsvPreview | null>(null)
   const [query, setQuery] = useState('')
   const fileRef = useRef<HTMLInputElement>(null)
   const searchRef = useRef<HTMLInputElement>(null)
@@ -168,10 +170,17 @@ export function Transactions() {
     // if brief, async gap — not a faked delay), instead of a blank flash.
     setImporting(true)
     const text = await file.text()
-    const txs = importTransactionsFromCsv(text, state.mode)
-    addTransactions(txs)
-    setImportedCount(txs.length)
+    // nothing is added yet: the user sees what would happen (new, already-have, unreadable) and confirms
+    setPreview(previewCsvImport(text, state.mode, state.transactions))
+    setImportedCount(null)
     setImporting(false)
+  }
+
+  const confirmImport = () => {
+    if (!preview) return
+    addTransactions(preview.fresh)
+    setImportedCount(preview.fresh.length)
+    setPreview(null)
   }
 
   return (
@@ -219,7 +228,7 @@ export function Transactions() {
             type="file"
             accept=".csv,text/csv"
             className="hidden"
-            onChange={(e) => e.target.files?.[0] && handleFile(e.target.files[0])}
+            onChange={(e) => { const f = e.target.files?.[0]; e.target.value = ''; if (f) void handleFile(f) }}
           />
           <button
             onClick={() => fileRef.current?.click()}
@@ -231,6 +240,27 @@ export function Transactions() {
             <div className="mt-2 space-y-1.5">
               <div className="skeleton h-3 w-2/3" />
               <div className="skeleton h-3 w-1/2" />
+            </div>
+          )}
+          {!importing && preview && (
+            <div data-testid="csv-preview" className="mt-3 rounded-xl border border-cyan-400/30 bg-cyan-500/5 p-3 text-sm space-y-2">
+              <p className="font-semibold text-white">
+                {preview.fresh.length} new transaction{preview.fresh.length === 1 ? '' : 's'} to add
+                {preview.firstDate && preview.lastDate && <span className="font-normal text-white/60"> · {formatNumericDate(preview.firstDate)} to {formatNumericDate(preview.lastDate)}</span>}
+              </p>
+              <p className="text-white/70">In {formatCurrency(preview.income)} · Out {formatCurrency(preview.spend)}</p>
+              <p className="text-xs text-white/50">Columns used: date "{preview.columns.date}", description "{preview.columns.description}", amount "{preview.columns.amount}".</p>
+              {preview.duplicates.length > 0 && <p className="text-xs text-amber-200">{preview.duplicates.length} already in your ledger (same day, amount and description), so they will not be added again.</p>}
+              {preview.skipped.length > 0 && (
+                <details className="text-xs text-rose-200">
+                  <summary className="cursor-pointer">{preview.skipped.length} row{preview.skipped.length === 1 ? '' : 's'} could not be read and will be left out</summary>
+                  <ul className="mt-1 space-y-0.5">{preview.skipped.slice(0, 8).map((r) => <li key={r.line}>Line {r.line}: {r.reason} ({r.text})</li>)}</ul>
+                </details>
+              )}
+              <div className="flex gap-2 pt-1">
+                <button type="button" disabled={preview.fresh.length === 0} onClick={confirmImport} className="px-4 py-1.5 rounded-lg bg-gradient-to-r from-cyan-400 to-purple-500 text-black text-sm font-semibold disabled:opacity-40">Add {preview.fresh.length}</button>
+                <button type="button" onClick={() => setPreview(null)} className="px-4 py-1.5 rounded-lg border border-white/15 text-sm text-white/80">Cancel</button>
+              </div>
             </div>
           )}
           {!importing && importedCount !== null && (
