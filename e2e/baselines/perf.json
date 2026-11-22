@@ -1,0 +1,10 @@
+{
+  "timeToUsableMs": 8152,
+  "fcpMs": 84,
+  "lcpMs": 1164,
+  "longTaskMs": 6213,
+  "domNodes": 1649,
+  "jsBytes": 1825839,
+  "jsGzipBytes": 500854,
+  "cssBytes": 109266
+}

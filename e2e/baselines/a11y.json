@@ -1,0 +1,202 @@
+[
+  {
+    "key": "desktop/budgets",
+    "critical": 0,
+    "serious": 1,
+    "moderate": 0,
+    "minor": 0,
+    "rules": [
+      "aria-hidden-focus(1)"
+    ]
+  },
+  {
+    "key": "desktop/calendar",
+    "critical": 1,
+    "serious": 2,
+    "moderate": 0,
+    "minor": 0,
+    "rules": [
+      "aria-hidden-focus(1)",
+      "button-name(2)",
+      "target-size(3)"
+    ]
+  },
+  {
+    "key": "desktop/dashboard",
+    "critical": 1,
+    "serious": 3,
+    "moderate": 0,
+    "minor": 0,
+    "rules": [
+      "aria-hidden-focus(1)",
+      "aria-progressbar-name(1)",
+      "label(1)",
+      "target-size(10)"
+    ]
+  },
+  {
+    "key": "desktop/debts",
+    "critical": 1,
+    "serious": 1,
+    "moderate": 0,
+    "minor": 0,
+    "rules": [
+      "aria-hidden-focus(1)",
+      "label(1)"
+    ]
+  },
+  {
+    "key": "desktop/networth",
+    "critical": 1,
+    "serious": 1,
+    "moderate": 0,
+    "minor": 0,
+    "rules": [
+      "aria-hidden-focus(1)",
+      "label(6)"
+    ]
+  },
+  {
+    "key": "desktop/shopping",
+    "critical": 0,
+    "serious": 1,
+    "moderate": 0,
+    "minor": 0,
+    "rules": [
+      "aria-hidden-focus(1)"
+    ]
+  },
+  {
+    "key": "desktop/tools",
+    "critical": 2,
+    "serious": 1,
+    "moderate": 0,
+    "minor": 0,
+    "rules": [
+      "aria-hidden-focus(1)",
+      "label(8)",
+      "select-name(2)"
+    ]
+  },
+  {
+    "key": "desktop/transactions",
+    "critical": 0,
+    "serious": 1,
+    "moderate": 0,
+    "minor": 0,
+    "rules": [
+      "aria-hidden-focus(1)"
+    ]
+  },
+  {
+    "key": "desktop/upcoming",
+    "critical": 1,
+    "serious": 1,
+    "moderate": 0,
+    "minor": 0,
+    "rules": [
+      "aria-hidden-focus(1)",
+      "label(27)"
+    ]
+  },
+  {
+    "key": "phone/budgets",
+    "critical": 0,
+    "serious": 1,
+    "moderate": 0,
+    "minor": 0,
+    "rules": [
+      "aria-hidden-focus(1)"
+    ]
+  },
+  {
+    "key": "phone/calendar",
+    "critical": 1,
+    "serious": 1,
+    "moderate": 0,
+    "minor": 0,
+    "rules": [
+      "aria-hidden-focus(1)",
+      "button-name(2)"
+    ]
+  },
+  {
+    "key": "phone/dashboard",
+    "critical": 1,
+    "serious": 3,
+    "moderate": 0,
+    "minor": 0,
+    "rules": [
+      "aria-hidden-focus(1)",
+      "aria-progressbar-name(1)",
+      "label(1)",
+      "target-size(10)"
+    ]
+  },
+  {
+    "key": "phone/debts",
+    "critical": 1,
+    "serious": 1,
+    "moderate": 0,
+    "minor": 0,
+    "rules": [
+      "aria-hidden-focus(1)",
+      "label(1)"
+    ]
+  },
+  {
+    "key": "phone/networth",
+    "critical": 1,
+    "serious": 1,
+    "moderate": 0,
+    "minor": 0,
+    "rules": [
+      "aria-hidden-focus(1)",
+      "label(6)"
+    ]
+  },
+  {
+    "key": "phone/shopping",
+    "critical": 0,
+    "serious": 1,
+    "moderate": 0,
+    "minor": 0,
+    "rules": [
+      "aria-hidden-focus(1)"
+    ]
+  },
+  {
+    "key": "phone/tools",
+    "critical": 2,
+    "serious": 1,
+    "moderate": 0,
+    "minor": 0,
+    "rules": [
+      "aria-hidden-focus(1)",
+      "label(8)",
+      "select-name(2)"
+    ]
+  },
+  {
+    "key": "phone/transactions",
+    "critical": 0,
+    "serious": 1,
+    "moderate": 0,
+    "minor": 0,
+    "rules": [
+      "aria-hidden-focus(1)"
+    ]
+  },
+  {
+    "key": "phone/upcoming",
+    "critical": 1,
+    "serious": 2,
+    "moderate": 0,
+    "minor": 0,
+    "rules": [
+      "aria-hidden-focus(1)",
+      "label(27)",
+      "scrollable-region-focusable(1)"
+    ]
+  }
+]
