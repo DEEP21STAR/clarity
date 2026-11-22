@@ -70,6 +70,7 @@ export function RecordPaymentButton({ targetType, targetId, targetLabel, default
         />
       </div>
       <DateField
+        ariaLabel="Payment date"
         value={date}
         onChange={setDate}
         inputClassName="bg-black/30 border border-white/10 rounded-lg px-2 py-1 text-xs outline-none focus:border-cyan-400/50"

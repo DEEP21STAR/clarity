@@ -43,8 +43,10 @@ test('startup and bundle metrics', async ({ page }) => {
   if (process.env.UPDATE_BASELINE === '1') { writeBaseline('perf', out); return }
   const base = readBaseline<typeof out>('perf')
   if (base) {
+    // The first-launch time includes the animated splash and swung 5.6-7.3 s between identical builds, so it gets a wider band.
+    const tolerance = { timeToUsableMs: 1.6, lcpMs: 1.25, jsGzipBytes: 1.25, domNodes: 1.25 } as const
     for (const k of ['timeToUsableMs', 'lcpMs', 'jsGzipBytes', 'domNodes'] as const) {
-      expect(out[k], `${k} got >25% worse (baseline ${base[k]})`).toBeLessThanOrEqual(Math.max(base[k] * 1.25, base[k] + 200))
+      expect(out[k], `${k} got >${Math.round((tolerance[k] - 1) * 100)}% worse (baseline ${base[k]})`).toBeLessThanOrEqual(Math.max(base[k] * tolerance[k], base[k] + 200))
     }
   }
 })

@@ -64,6 +64,9 @@ export function TipScroller({ tips }: { tips: Tip[] }) {
           const idx = Math.round(track.scrollLeft / step)
           if (idx !== active && idx >= 0 && idx < tips.length) setActive(idx)
         }}
+        tabIndex={0}
+        role="region"
+        aria-label="Tips, scroll sideways"
         className="flex gap-2 overflow-x-auto snap-x snap-mandatory pb-1"
         style={{ scrollbarWidth: 'none' }}
       >

@@ -94,7 +94,7 @@ export function PeriodicBillForm({
           <div>
             <label className="text-xs text-white/50">Current period start</label>
             <DateField
-              value={values.gaugePeriodStart}
+              ariaLabel="Current period start" value={values.gaugePeriodStart}
               onChange={(v) => set('gaugePeriodStart', v)}
               wrapperClassName="mt-1"
               inputClassName="w-full bg-black/30 border border-white/10 rounded-lg px-3 py-2 outline-none focus:border-cyan-400/50"
@@ -104,7 +104,7 @@ export function PeriodicBillForm({
           <div>
             <label className="text-xs text-white/50">Current period end</label>
             <DateField
-              value={values.gaugePeriodEnd}
+              ariaLabel="Current period end" value={values.gaugePeriodEnd}
               onChange={(v) => set('gaugePeriodEnd', v)}
               wrapperClassName="mt-1"
               inputClassName="w-full bg-black/30 border border-white/10 rounded-lg px-3 py-2 outline-none focus:border-cyan-400/50"

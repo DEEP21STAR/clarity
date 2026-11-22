@@ -66,7 +66,7 @@ export function ThumbnailPrecacher({
   if (!active || !currentId) return null
 
   return (
-    <div style={{ position: 'fixed', top: 0, left: -99999, width: 1152, pointerEvents: 'none' }} aria-hidden="true">
+    <div style={{ position: 'fixed', top: 0, left: -99999, width: 1152, pointerEvents: 'none' }} aria-hidden="true" inert>
       <div ref={hostRef} className="max-w-6xl mx-auto px-4 py-8">
         {renderTab(currentId)}
       </div>

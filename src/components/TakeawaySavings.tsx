@@ -87,7 +87,7 @@ export function TakeawaySavings() {
           <span>Toward a {GOAL_DAYS}-day streak</span>
           <span>{Math.min(s.days, GOAL_DAYS)} / {GOAL_DAYS}</span>
         </div>
-        <div className="h-2 w-full overflow-hidden rounded-full bg-white/10" role="progressbar" aria-valuemin={0} aria-valuemax={GOAL_DAYS} aria-valuenow={Math.min(s.days, GOAL_DAYS)}>
+        <div className="h-2 w-full overflow-hidden rounded-full bg-white/10" role="progressbar" aria-label="Takeaway-free streak progress" aria-valuemin={0} aria-valuemax={GOAL_DAYS} aria-valuenow={Math.min(s.days, GOAL_DAYS)}>
           <div className="h-full rounded-full bg-gradient-to-r from-cyan-400 to-emerald-400 transition-[width] duration-500" style={{ width: `${pct}%` }} />
         </div>
       </div>

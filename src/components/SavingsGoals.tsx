@@ -140,7 +140,7 @@ function GoalCard({ goal, onUpdate, onRemove, onLogContribution }: {
         <input
           type="number"
           step="0.01"
-          value={goal.fundedThisPeriod}
+          aria-label={`${goal.name} funded this period`} value={goal.fundedThisPeriod}
           onChange={(e) => onUpdate({ fundedThisPeriod: parseFloat(e.target.value) || 0 })}
           className="bg-transparent outline-none border-b border-white/10 focus:border-emerald-400/50 w-20 tabular-nums text-sm"
         />
@@ -172,10 +172,10 @@ function GoalForm({ onCancel, onSave }: { onCancel: () => void; onSave: (v: { na
         </div>
         <div>
           <label className="text-xs text-white/50">Goal name</label>
-          <input value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. Christmas" className="mt-1 w-full bg-black/30 border border-white/10 rounded-lg px-3 py-2 outline-none focus:border-emerald-400/50" />
+          <input aria-label="Goal name" value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. Christmas" className="mt-1 w-full bg-black/30 border border-white/10 rounded-lg px-3 py-2 outline-none focus:border-emerald-400/50" />
         </div>
         <label className="flex items-center gap-2 text-xs text-white/50 cursor-pointer w-fit">
-          <input type="checkbox" checked={isHoliday} onChange={(e) => setIsHoliday(e.target.checked)} className="accent-cyan-400 w-3.5 h-3.5" />
+          <input type="checkbox" aria-label="Holiday goal" checked={isHoliday} onChange={(e) => setIsHoliday(e.target.checked)} className="accent-cyan-400 w-3.5 h-3.5" />
           <Plane className="w-3.5 h-3.5 text-cyan-300" /> This is a holiday savings goal
         </label>
         <div className="grid grid-cols-2 gap-3">
@@ -183,13 +183,13 @@ function GoalForm({ onCancel, onSave }: { onCancel: () => void; onSave: (v: { na
             <label className="text-xs text-white/50">Target amount</label>
             <div className="mt-1 flex items-center gap-1 bg-black/30 border border-white/10 rounded-lg px-3 py-2">
               <span className="text-white/40">$</span>
-              <input type="number" step="0.01" value={targetAmount} onChange={(e) => setTargetAmount(parseFloat(e.target.value) || 0)} className="w-full bg-transparent outline-none tabular-nums" />
+              <input type="number" step="0.01" aria-label="Target amount" value={targetAmount} onChange={(e) => setTargetAmount(parseFloat(e.target.value) || 0)} className="w-full bg-transparent outline-none tabular-nums" />
             </div>
           </div>
           <div>
             <label className="text-xs text-white/50">Target date (optional)</label>
             <DateField
-              value={targetDate}
+              ariaLabel="Target date" value={targetDate}
               onChange={setTargetDate}
               wrapperClassName="mt-1"
               inputClassName="w-full bg-black/30 border border-white/10 rounded-lg px-3 py-2 outline-none focus:border-emerald-400/50"
@@ -202,7 +202,7 @@ function GoalForm({ onCancel, onSave }: { onCancel: () => void; onSave: (v: { na
           <label className="text-xs text-white/50">Funded this period</label>
           <div className="mt-1 flex items-center gap-1 bg-black/30 border border-white/10 rounded-lg px-3 py-2">
             <span className="text-white/40">$</span>
-            <input type="number" step="0.01" value={fundedThisPeriod} onChange={(e) => setFundedThisPeriod(parseFloat(e.target.value) || 0)} className="w-full bg-transparent outline-none tabular-nums" />
+            <input type="number" step="0.01" aria-label="Funded this period" value={fundedThisPeriod} onChange={(e) => setFundedThisPeriod(parseFloat(e.target.value) || 0)} className="w-full bg-transparent outline-none tabular-nums" />
           </div>
         </div>
         <button

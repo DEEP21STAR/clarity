@@ -179,7 +179,7 @@ export function Dashboard() {
             <span className="text-white/40">$</span>
             <input
               type="number"
-              value={grossAnnualIncome}
+              aria-label="Gross annual income" value={grossAnnualIncome}
               onChange={(e) => setGrossAnnualIncome(parseFloat(e.target.value) || 0)}
               className="bg-transparent text-3xl font-bold tabular-nums text-cyan-200 outline-none border-b border-white/10 focus:border-cyan-400/60 w-full"
             />
@@ -384,7 +384,7 @@ export function Dashboard() {
                 disabled={state.dashboardCardOrder.indexOf(id) === 0}
                 title="Move card up"
                 aria-label={`Move ${id} card up`}
-                className="w-4 h-4 flex items-center justify-center rounded hover:bg-white/10 hover:text-white disabled:opacity-20 disabled:hover:bg-transparent"
+                className="w-6 h-6 flex items-center justify-center rounded hover:bg-white/10 hover:text-white disabled:opacity-20 disabled:hover:bg-transparent"
               >
                 <ChevronUp className="w-3 h-3" />
               </button>
@@ -393,7 +393,7 @@ export function Dashboard() {
                 disabled={state.dashboardCardOrder.indexOf(id) === state.dashboardCardOrder.length - 1}
                 title="Move card down"
                 aria-label={`Move ${id} card down`}
-                className="w-4 h-4 flex items-center justify-center rounded hover:bg-white/10 hover:text-white disabled:opacity-20 disabled:hover:bg-transparent"
+                className="w-6 h-6 flex items-center justify-center rounded hover:bg-white/10 hover:text-white disabled:opacity-20 disabled:hover:bg-transparent"
               >
                 <ChevronDown className="w-3 h-3" />
               </button>

@@ -53,7 +53,7 @@ function AccountInput({ name, value, onChange }: { name: string; value: number; 
         <input
           type="number"
           step="0.01"
-          value={value}
+          aria-label={`${name} balance`} value={value}
           onChange={(e) => onChange(parseFloat(e.target.value) || 0)}
           className="w-full bg-transparent text-xl font-bold tabular-nums text-white outline-none border-b border-white/10 focus:border-cyan-400/60"
         />

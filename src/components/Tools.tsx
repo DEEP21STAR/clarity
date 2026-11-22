@@ -239,11 +239,11 @@ export function Tools() {
         <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <label className="text-xs text-white/50">Hours worked from home / week</label>
-            <input type="number" value={hoursPerWeek} onChange={(e) => setHoursPerWeek(parseFloat(e.target.value) || 0)} className="mt-1 w-full bg-black/30 border border-white/10 rounded-lg px-3 py-2 outline-none focus:border-cyan-400/50" />
+            <input type="number" aria-label="Hours worked from home per week" value={hoursPerWeek} onChange={(e) => setHoursPerWeek(parseFloat(e.target.value) || 0)} className="mt-1 w-full bg-black/30 border border-white/10 rounded-lg px-3 py-2 outline-none focus:border-cyan-400/50" />
           </div>
           <div>
             <label className="text-xs text-white/50">Weeks / year</label>
-            <input type="number" value={weeksPerYear} onChange={(e) => setWeeksPerYear(parseFloat(e.target.value) || 0)} className="mt-1 w-full bg-black/30 border border-white/10 rounded-lg px-3 py-2 outline-none focus:border-cyan-400/50" />
+            <input type="number" aria-label="Weeks worked per year" value={weeksPerYear} onChange={(e) => setWeeksPerYear(parseFloat(e.target.value) || 0)} className="mt-1 w-full bg-black/30 border border-white/10 rounded-lg px-3 py-2 outline-none focus:border-cyan-400/50" />
           </div>
         </div>
         <div className="mt-4 text-sm text-white/50">
@@ -266,7 +266,7 @@ export function Tools() {
         </div>
         <div className="mt-4 flex items-center gap-2">
           <span className="text-white/40">$</span>
-          <input type="number" value={gstAmount} onChange={(e) => setGstAmount(parseFloat(e.target.value) || 0)} className="bg-transparent text-2xl font-bold tabular-nums text-purple-200 outline-none border-b border-white/10 focus:border-purple-400/60 w-full" />
+          <input type="number" aria-label="Amount for GST" value={gstAmount} onChange={(e) => setGstAmount(parseFloat(e.target.value) || 0)} className="bg-transparent text-2xl font-bold tabular-nums text-purple-200 outline-none border-b border-white/10 focus:border-purple-400/60 w-full" />
         </div>
         <div key={gstResult.gst} className="result-reveal mt-4 grid grid-cols-3 gap-4 text-sm">
           <Metric label="Ex-GST" value={gstResult.amountExGst} />
@@ -285,7 +285,7 @@ export function Tools() {
               <input
                 type="number"
                 step="1"
-                value={whatIfExtraPerWeek || ''}
+                aria-label="Extra income per week" value={whatIfExtraPerWeek || ''}
                 onChange={(e) => setWhatIfExtraPerWeek(parseFloat(e.target.value) || 0)}
                 placeholder="e.g. a $50/week raise"
                 className="w-40 bg-transparent outline-none tabular-nums text-sm"
@@ -315,7 +315,7 @@ export function Tools() {
         <p className="mt-4 text-xs text-amber-300/80 font-semibold uppercase tracking-wide">Simulation only — moves no real money</p>
         <div className="mt-2 flex items-center gap-2 text-sm text-white/50">
           Round every purchase up to the nearest
-          <select value={roundTo} onChange={(e) => setRoundTo(Number(e.target.value))} className="bg-black/40 rounded px-2 py-1 text-xs outline-none border border-white/10">
+          <select aria-label="Round every purchase up to the nearest dollar amount" value={roundTo} onChange={(e) => setRoundTo(Number(e.target.value))} className="bg-black/40 rounded px-2 py-1 text-xs outline-none border border-white/10">
             {[1, 2, 5, 10].map((r) => <option key={r} value={r}>${r}</option>)}
           </select>
         </div>
@@ -343,16 +343,16 @@ export function Tools() {
           </div>
         )}
         <div className="mt-3 grid grid-cols-1 md:grid-cols-4 gap-2">
-          <input value={oneOffDesc} onChange={(e) => setOneOffDesc(e.target.value)} placeholder="Description" className="bg-black/30 border border-white/10 rounded-lg px-3 py-2 text-sm outline-none focus:border-cyan-400/50 md:col-span-2" />
+          <input aria-label="One-off purchase description" value={oneOffDesc} onChange={(e) => setOneOffDesc(e.target.value)} placeholder="Description" className="bg-black/30 border border-white/10 rounded-lg px-3 py-2 text-sm outline-none focus:border-cyan-400/50 md:col-span-2" />
           <DateField
-            value={oneOffDate}
+            ariaLabel="One-off purchase date" value={oneOffDate}
             onChange={setOneOffDate}
             inputClassName="w-full bg-black/30 border border-white/10 rounded-lg px-3 py-2 text-sm outline-none focus:border-cyan-400/50"
             overlayClassName="px-3 text-sm"
           />
           <div className="flex items-center gap-1 bg-black/30 border border-white/10 rounded-lg px-3 py-2">
             <span className="text-white/40">$</span>
-            <input type="number" step="0.01" value={oneOffAmount} onChange={(e) => setOneOffAmount(parseFloat(e.target.value) || 0)} className="w-full bg-transparent outline-none tabular-nums text-sm" placeholder="+income / -expense" />
+            <input type="number" step="0.01" aria-label="One-off purchase amount" value={oneOffAmount} onChange={(e) => setOneOffAmount(parseFloat(e.target.value) || 0)} className="w-full bg-transparent outline-none tabular-nums text-sm" placeholder="+income / -expense" />
           </div>
         </div>
         <button
@@ -381,16 +381,16 @@ export function Tools() {
       <StatCard label="Extra Usage Purchases" glow="amber" tooltip="A freely-editable log for ad-hoc extra usage purchases (e.g. Claude API overage) — not a fixed recurring bill. Feeds the same Cash-Flow Forecast as any other one-off expense.">
         <p className="mt-4 text-xs text-white/40">Log any one-off extra-usage purchase as it happens — API overage, an extra credit top-up, anything outside your fixed subscriptions.</p>
         <div className="mt-3 grid grid-cols-1 md:grid-cols-4 gap-2">
-          <input value={extraUsageDesc} onChange={(e) => setExtraUsageDesc(e.target.value)} placeholder="e.g. Claude API overage" className="bg-black/30 border border-white/10 rounded-lg px-3 py-2 text-sm outline-none focus:border-amber-400/50 md:col-span-2" />
+          <input aria-label="Extra usage description" value={extraUsageDesc} onChange={(e) => setExtraUsageDesc(e.target.value)} placeholder="e.g. Claude API overage" className="bg-black/30 border border-white/10 rounded-lg px-3 py-2 text-sm outline-none focus:border-amber-400/50 md:col-span-2" />
           <DateField
-            value={extraUsageDate}
+            ariaLabel="Extra usage date" value={extraUsageDate}
             onChange={setExtraUsageDate}
             inputClassName="w-full bg-black/30 border border-white/10 rounded-lg px-3 py-2 text-sm outline-none focus:border-amber-400/50"
             overlayClassName="px-3 text-sm"
           />
           <div className="flex items-center gap-1 bg-black/30 border border-white/10 rounded-lg px-3 py-2">
             <span className="text-white/40">$</span>
-            <input type="number" step="0.01" value={extraUsageAmount} onChange={(e) => setExtraUsageAmount(parseFloat(e.target.value) || 0)} className="w-full bg-transparent outline-none tabular-nums text-sm" placeholder="amount" />
+            <input type="number" step="0.01" aria-label="Extra usage amount" value={extraUsageAmount} onChange={(e) => setExtraUsageAmount(parseFloat(e.target.value) || 0)} className="w-full bg-transparent outline-none tabular-nums text-sm" placeholder="amount" />
           </div>
         </div>
         <button

@@ -24,7 +24,7 @@ export function PaymentFilterBar({ targets, filter, onChange }: {
     <div className="flex flex-wrap items-center gap-2 text-xs">
       <span className="flex items-center gap-1 text-white/40"><Filter className="w-3 h-3" /> Filter</span>
       <select
-        value={filter.targetId ?? ''}
+        aria-label="Filter payments by account or card" value={filter.targetId ?? ''}
         onChange={(e) => onChange({ ...filter, targetId: e.target.value || undefined })}
         className="bg-black/30 border border-white/10 rounded-lg px-2 py-1 outline-none focus:border-cyan-400/50"
       >
@@ -33,7 +33,7 @@ export function PaymentFilterBar({ targets, filter, onChange }: {
       </select>
       <span className="text-white/30">from</span>
       <DateField
-        value={filter.startDate ?? ''}
+        ariaLabel="Show payments from date" value={filter.startDate ?? ''}
         onChange={(v) => onChange({ ...filter, startDate: v || undefined })}
         inputClassName="bg-black/30 border border-white/10 rounded-lg px-2 py-1 outline-none focus:border-cyan-400/50"
         overlayClassName="px-2"
@@ -41,7 +41,7 @@ export function PaymentFilterBar({ targets, filter, onChange }: {
       />
       <span className="text-white/30">to</span>
       <DateField
-        value={filter.endDate ?? ''}
+        ariaLabel="Show payments up to date" value={filter.endDate ?? ''}
         onChange={(v) => onChange({ ...filter, endDate: v || undefined })}
         inputClassName="bg-black/30 border border-white/10 rounded-lg px-2 py-1 outline-none focus:border-cyan-400/50"
         overlayClassName="px-2"

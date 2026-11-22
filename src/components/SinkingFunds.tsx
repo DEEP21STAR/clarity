@@ -113,7 +113,7 @@ function FundForm({ onCancel, onSave }: { onCancel: () => void; onSave: (v: { na
           <div>
             <label className="text-xs text-white/50">Due date</label>
             <DateField
-              value={targetDate}
+              ariaLabel="Due date" value={targetDate}
               onChange={setTargetDate}
               wrapperClassName="mt-1"
               inputClassName="w-full bg-black/30 border border-white/10 rounded-lg px-3 py-2 outline-none focus:border-amber-400/50"

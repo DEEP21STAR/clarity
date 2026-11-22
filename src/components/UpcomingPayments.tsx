@@ -567,7 +567,7 @@ function QuickAddButton({ onSubmit, accent, glowColor }: { onSubmit: (amount: nu
     <div className="flex items-center gap-1 shrink-0">
       <span className="text-white/40 text-xs">$</span>
       <input
-        ref={inputRef}
+        aria-label="Amount to add" ref={inputRef}
         type="number"
         inputMode="decimal"
         step="0.01"
@@ -640,7 +640,7 @@ function AllocationTile({ label, amount, spent, pct, glowFrom, glowTo, ringColor
         type="range"
         min={0}
         max={100}
-        value={pct}
+        aria-label={`${label} share of the spending guide`} value={pct}
         onChange={(e) => onChange(Number(e.target.value))}
         className="w-full mt-3 accent-cyan-400"
       />
@@ -738,7 +738,7 @@ function PersonalAllocationTile({
         type="range"
         min={0}
         max={100}
-        value={pct}
+        aria-label="Personal share of the spending guide" value={pct}
         onChange={(e) => onChange(Number(e.target.value))}
         className="w-full mt-3 accent-cyan-400"
       />
@@ -757,7 +757,7 @@ function PersonalAllocationTile({
                   type="range"
                   min={0}
                   max={100}
-                  value={split[item.key]}
+                  aria-label={`${item.label} share, percent`} value={split[item.key]}
                   onChange={(e) => onSplitChange({ ...split, [item.key]: Number(e.target.value) })}
                   className="w-full mt-1 accent-pink-400"
                 />
@@ -888,7 +888,7 @@ function BillsManager({ bills, onUpdate, onAdd, onRemove, view, onViewChange, li
                   <div className="flex items-center gap-1.5">
                     <BillIcon name={bill.name} className="w-3.5 h-3.5" />
                     <input
-                      value={bill.name}
+                      aria-label="Bill name" value={bill.name}
                       onChange={(e) => onUpdate(bill.id, { name: e.target.value })}
                       className="bg-transparent outline-none border-b border-transparent focus:border-cyan-400/50 w-28"
                     />
@@ -910,7 +910,7 @@ function BillsManager({ bills, onUpdate, onAdd, onRemove, view, onViewChange, li
                     <input
                       type="number"
                       step="0.01"
-                      value={bill.amount}
+                      aria-label={`${bill.name} amount`} value={bill.amount}
                       onChange={(e) => onUpdate(bill.id, { amount: parseFloat(e.target.value) || 0 })}
                       className="bg-transparent outline-none border-b border-transparent focus:border-cyan-400/50 w-20 tabular-nums"
                     />
@@ -918,7 +918,7 @@ function BillsManager({ bills, onUpdate, onAdd, onRemove, view, onViewChange, li
                 </td>
                 <td className="py-2 pr-2">
                   <select
-                    value={bill.frequency}
+                    aria-label={`${bill.name} frequency`} value={bill.frequency}
                     onChange={(e) => onUpdate(bill.id, { frequency: e.target.value as BillFrequency })}
                     className="bg-black/40 rounded px-2 py-1 text-xs outline-none border border-white/10"
                   >
@@ -940,7 +940,7 @@ function BillsManager({ bills, onUpdate, onAdd, onRemove, view, onViewChange, li
                       type="number"
                       min={1}
                       max={31}
-                      value={bill.dueDay}
+                      aria-label={`${bill.name} due day of the month`} value={bill.dueDay}
                       onChange={(e) => onUpdate(bill.id, { dueDay: Number(e.target.value) || 1 })}
                       className="bg-transparent outline-none border-b border-transparent focus:border-cyan-400/50 w-10 tabular-nums"
                     />
@@ -956,7 +956,7 @@ function BillsManager({ bills, onUpdate, onAdd, onRemove, view, onViewChange, li
                 </td>
                 <td className="py-2 pr-2">
                   <select
-                    value={bill.owner}
+                    aria-label={`${bill.name} owner`} value={bill.owner}
                     onChange={(e) => onUpdate(bill.id, { owner: e.target.value as RecurringBill['owner'] })}
                     className="bg-black/40 rounded px-2 py-1 text-xs outline-none border border-white/10 capitalize"
                   >
@@ -968,7 +968,7 @@ function BillsManager({ bills, onUpdate, onAdd, onRemove, view, onViewChange, li
                 <td className="py-2 pr-2">
                   <input
                     type="checkbox"
-                    checked={bill.active}
+                    aria-label={`${bill.name} active`} checked={bill.active}
                     onChange={(e) => onUpdate(bill.id, { active: e.target.checked })}
                     className="accent-cyan-400 w-4 h-4"
                   />

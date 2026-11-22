@@ -122,7 +122,7 @@ export function InstallmentPlanCard({ plan, delay = 0, expiredPlanRate = 0 }: { 
             <span className="text-cyan-300 font-semibold tabular-nums">{formatCurrency(extra)}</span>
           </div>
           <input
-            type="range" min={0} max={500} step={10} value={extra}
+            type="range" min={0} max={500} step={10} aria-label="Extra monthly payment" value={extra}
             onChange={(e) => setExtra(Number(e.target.value))}
             className="w-full mt-2 accent-cyan-400"
           />
@@ -251,7 +251,7 @@ export function DeviceRepaymentCard({
     <StatCard label={device.name || 'Device Repayment'} glow={paidOff ? 'success' : 'cyan'} delay={delay} tilt={!onUpdate}>
       {onUpdate && (
         <input
-          value={device.name}
+          aria-label="Device name" value={device.name}
           onChange={(e) => onUpdate({ name: e.target.value })}
           placeholder="Device name"
           className="mt-3 bg-transparent outline-none text-sm font-medium text-white/80 border-b border-white/10 focus:border-cyan-400/50 w-full"
@@ -264,7 +264,7 @@ export function DeviceRepaymentCard({
             <input
               type="number"
               step="0.01"
-              value={device.monthlyAmount}
+              aria-label={`${device.name} monthly amount`} value={device.monthlyAmount}
               onChange={(e) => onUpdate({ monthlyAmount: parseFloat(e.target.value) || 0 })}
               className="bg-transparent outline-none border-b border-transparent focus:border-cyan-400/50 w-20 tabular-nums"
             />
@@ -281,7 +281,7 @@ export function DeviceRepaymentCard({
               <input
                 type="number"
                 min={0}
-                value={device.paymentsRemaining}
+                aria-label={`${device.name} payments remaining`} value={device.paymentsRemaining}
                 onChange={(e) => onUpdate({ paymentsRemaining: Math.max(0, Number(e.target.value) || 0) })}
                 className="bg-transparent outline-none border-b border-transparent focus:border-cyan-400/50 w-10 tabular-nums text-right"
               />
@@ -289,7 +289,7 @@ export function DeviceRepaymentCard({
               <input
                 type="number"
                 min={1}
-                value={device.paymentsTotal}
+                aria-label={`${device.name} total payments`} value={device.paymentsTotal}
                 onChange={(e) => onUpdate({ paymentsTotal: Math.max(1, Number(e.target.value) || 1) })}
                 className="bg-transparent outline-none border-b border-transparent focus:border-cyan-400/50 w-10 tabular-nums text-right"
               />

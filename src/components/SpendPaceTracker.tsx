@@ -96,7 +96,7 @@ export function SpendPaceTracker({
             <div className="mt-2 flex items-center gap-1">
               <span className="text-white/40">$</span>
               <input
-                type="number" step="0.01" value={state.spendTracker[cat]}
+                type="number" step="0.01" aria-label={`${cat} spent so far`} value={state.spendTracker[cat]}
                 onChange={(e) => updateSpendTracker({ [cat]: parseFloat(e.target.value) || 0 } as any)}
                 className="w-full bg-transparent text-lg font-bold tabular-nums text-white outline-none border-b border-white/10 focus:border-cyan-400/60"
               />

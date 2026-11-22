@@ -500,7 +500,7 @@ export function SetupWizard({ mode = 'demo' }: { mode?: 'demo' | 'onboarding' } 
                     </div>
                   ) : (
                     <div className="flex items-center gap-2">
-                      <DateField value={billDue} onChange={setBillDue} inputClassName="w-full bg-black/30 border border-white/10 rounded-lg px-3 py-2 text-sm outline-none focus:border-cyan-400/50" overlayClassName="px-3 text-sm" />
+                      <DateField ariaLabel="Bill due date" value={billDue} onChange={setBillDue} inputClassName="w-full bg-black/30 border border-white/10 rounded-lg px-3 py-2 text-sm outline-none focus:border-cyan-400/50" overlayClassName="px-3 text-sm" />
                       <button type="button" onClick={() => setBillDueUnknown(true)} className="text-[13px] text-white/35 hover:text-white/60 whitespace-nowrap shrink-0">
                         Not sure — skip
                       </button>

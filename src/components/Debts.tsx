@@ -113,7 +113,7 @@ export function Debts() {
             <span className="text-white/40">$</span>
             <input
               type="number"
-              value={extraBudget}
+              aria-label="Extra monthly budget" value={extraBudget}
               onChange={(e) => setExtraBudget(parseFloat(e.target.value) || 0)}
               className="bg-transparent text-2xl font-bold tabular-nums text-cyan-200 outline-none border-b border-white/10 focus:border-cyan-400/60 w-full"
             />
@@ -206,18 +206,18 @@ export function Debts() {
                     <Link2 className="w-3 h-3 text-cyan-400 shrink-0" /> {debt.name}
                   </span>
                 ) : (
-                  <input value={debt.name} onChange={(e) => updateDebt(debt.id, { name: e.target.value })} className="bg-transparent outline-none flex-1 min-w-[100px]" />
+                  <input aria-label={`Debt name, ${debt.name}`} value={debt.name} onChange={(e) => updateDebt(debt.id, { name: e.target.value })} className="bg-transparent outline-none flex-1 min-w-[100px]" />
                 )}
                 {isCardDebt ? (
                   <span className="w-24 tabular-nums text-right text-white/85">{formatCurrency(debt.balance)}</span>
                 ) : (
-                  <input type="number" step="0.01" value={debt.balance} onChange={(e) => updateDebt(debt.id, { balance: parseFloat(e.target.value) || 0 })} className="bg-transparent outline-none w-24 tabular-nums text-right" />
+                  <input type="number" step="0.01" aria-label={`${debt.name} balance`} value={debt.balance} onChange={(e) => updateDebt(debt.id, { balance: parseFloat(e.target.value) || 0 })} className="bg-transparent outline-none w-24 tabular-nums text-right" />
                 )}
                 <div className="flex items-center gap-1 w-20 justify-end">
                   {isCardDebt ? (
                     <span className="tabular-nums text-white/85">{(debt.apr * 100).toFixed(2)}</span>
                   ) : (
-                    <input type="number" step="0.1" value={debt.apr * 100} onChange={(e) => updateDebt(debt.id, { apr: (parseFloat(e.target.value) || 0) / 100 })} className="bg-transparent outline-none w-12 tabular-nums text-right" />
+                    <input type="number" step="0.1" aria-label={`${debt.name} interest rate, percent`} value={debt.apr * 100} onChange={(e) => updateDebt(debt.id, { apr: (parseFloat(e.target.value) || 0) / 100 })} className="bg-transparent outline-none w-12 tabular-nums text-right" />
                   )}
                   <span className="text-white/40 text-xs">% APR</span>
                 </div>

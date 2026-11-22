@@ -22,6 +22,7 @@ export function DateField({
   wrapperClassName,
   overlayClassName,
   placeholder,
+  ariaLabel,
 }: {
   value: string
   onChange: (v: string) => void
@@ -31,11 +32,13 @@ export function DateField({
   /** Padding/text-size for the overlay text — should match inputClassName's own padding so the single visible date lines up inside the same box. */
   overlayClassName?: string
   placeholder?: string
+  /** Accessible name for the date input (the visible text is a separate overlay). */
+  ariaLabel?: string
 }) {
   return (
     <div className={cn('relative', wrapperClassName)}>
       <input
-        type="date"
+aria-label={ariaLabel}         type="date"
         value={value}
         onChange={(e) => onChange(e.target.value)}
         className={inputClassName}

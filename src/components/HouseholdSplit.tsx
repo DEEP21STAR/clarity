@@ -59,7 +59,7 @@ export function HouseholdSplit() {
                       <td className="py-2 pr-2 tabular-nums text-white/60">{formatCurrency(monthly)}</td>
                       <td className="py-2 pr-2">
                         <input
-                          type="number" min={0} max={100} value={deepPct}
+                          type="number" min={0} max={100} value={deepPct} aria-label={`${b.name}: Deep's share, percent`}
                           onChange={(e) => updateBill(b.id, { sharedSplitDeepPercent: Math.max(0, Math.min(100, Number(e.target.value))) })}
                           className="bg-transparent outline-none border-b border-white/10 focus:border-purple-400/50 w-12 tabular-nums"
                         />

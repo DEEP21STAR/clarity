@@ -99,9 +99,9 @@ export function BillCalendar() {
       {/* tilt off: a grid of precisely-clickable day cells — kept from the app-wide mouse-tilt audit. */}
       <StatCard label={monthLabel} glow="purple" tilt={false} tooltip="Background shading is a real heat-map: darker = more $ due that day, relative to this month's busiest day.">
         <div className="mt-4 flex items-center justify-between">
-          <button onClick={() => goMonth(-1)} className="text-white/40 hover:text-white"><ChevronLeft className="w-5 h-5" /></button>
+          <button onClick={() => goMonth(-1)} aria-label="Previous month" className="text-white/40 hover:text-white p-2 -m-2"><ChevronLeft className="w-5 h-5" /></button>
           <span className="text-sm text-white/60">{monthLabel}</span>
-          <button onClick={() => goMonth(1)} className="text-white/40 hover:text-white"><ChevronRight className="w-5 h-5" /></button>
+          <button onClick={() => goMonth(1)} aria-label="Next month" className="text-white/40 hover:text-white p-2 -m-2"><ChevronRight className="w-5 h-5" /></button>
         </div>
 
         <div className="mt-4 grid grid-cols-7 gap-1 text-center text-[10px] text-white/40 uppercase">
@@ -145,7 +145,7 @@ export function BillCalendar() {
                             onClick={() => togglePaid(e)}
                             disabled={!e.billId}
                             title={`${e.name}: ${formatCurrency(e.amount)} — ${tooltip}${e.billId ? ' (click to toggle paid)' : ''}`}
-                            className={`w-full flex items-center gap-1 text-[9px] truncate ${textClass} ${e.billId ? 'cursor-pointer hover:opacity-80' : 'cursor-default'}`}
+                            className={`w-full min-h-6 flex items-center gap-1 text-[9px] truncate ${textClass} ${e.billId ? 'cursor-pointer hover:opacity-80' : 'cursor-default'}`}
                           >
                             {paid ? (
                               <svg className="checkmark-draw w-2.5 h-2.5 shrink-0 text-emerald-400" viewBox="0 0 24 24" fill="none">
