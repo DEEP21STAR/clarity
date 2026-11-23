@@ -188,7 +188,7 @@ export function Tools() {
                 className="w-full h-6 rounded-md"
                 style={{ background: `linear-gradient(90deg, ${t.from}, ${t.to})` }}
               />
-              <span className={cn('text-[11px]', state.accentTheme === t.value ? 'text-white' : 'text-white/50')}>{t.label}</span>
+              <span className={cn('text-xs', state.accentTheme === t.value ? 'text-white' : 'text-white/50')}>{t.label}</span>
             </button>
           ))}
         </div>
@@ -307,12 +307,12 @@ export function Tools() {
           </div>
           <div className="flex items-center gap-4">
             <div>
-              <p className="text-[10px] text-white/55 uppercase tracking-wide">Balance in 30 days — now</p>
+              <p className="text-xs text-white/55 uppercase tracking-wide">Balance in 30 days — now</p>
               <p className="text-lg font-bold tabular-nums text-white/70">{formatCurrency(whatIfComparison.realEnd)}</p>
             </div>
             <TrendingUp className="w-4 h-4 text-emerald-400 mt-3" />
             <div>
-              <p className="text-[10px] text-emerald-300/70 uppercase tracking-wide">With this change</p>
+              <p className="text-xs text-emerald-300/70 uppercase tracking-wide">With this change</p>
               <p className="text-lg font-bold tabular-nums text-emerald-300">{formatCurrency(whatIfComparison.hypotheticalEnd)}</p>
             </div>
           </div>

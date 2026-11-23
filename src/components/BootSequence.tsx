@@ -364,7 +364,7 @@ export function BootSequence({ onDone, greeting }: { onDone: () => void; greetin
         </div>
         <div className="boot-line text-lg font-semibold text-white/90 mt-3 tracking-wide">{greeting ?? 'Welcome back'}</div>
         <div className="boot-line text-xs text-white/55 mt-2 tracking-[0.3em]">YOUR MONEY, MADE CLEAR</div>
-        <div className="boot-line text-[10px] text-white/55 mt-6">tap anywhere or press any key to skip</div>
+        <div className="boot-line text-xs text-white/55 mt-6">tap anywhere or press any key to skip</div>
       </div>
     </div>
   )

@@ -166,7 +166,7 @@ export function PeriodicBillForm({
             Fold the suggested fortnightly set-aside into Live Funds Available
           </label>
         </div>
-        <p className="text-[11px] text-white/55 -mt-2">
+        <p className="text-xs text-white/55 -mt-2">
           Off = informational gauge only, no cash-flow impact on Upcoming Payments.
         </p>
 

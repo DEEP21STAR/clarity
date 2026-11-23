@@ -59,7 +59,7 @@ export function CategoryBudgets() {
           <div className="flex min-w-0 items-center gap-2">
             <span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ background: categoryColor(r.category) }} aria-hidden="true" />
             <span className="truncate text-sm font-semibold text-white/90">{r.category}</span>
-            <span className={cn('rounded-full border border-current px-2 py-0.5 text-[11px] font-bold uppercase tracking-wide', STATUS_TEXT[r.status])}>{STATUS_LABEL[r.status]}</span>
+            <span className={cn('rounded-full border border-current px-2 py-0.5 text-xs font-bold uppercase tracking-wide', STATUS_TEXT[r.status])}>{STATUS_LABEL[r.status]}</span>
           </div>
           <div className="flex items-center gap-1.5 text-sm tabular-nums text-white/70">
             <span>{formatCurrency(r.spent)} of</span>

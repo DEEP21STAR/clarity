@@ -69,7 +69,7 @@ export function PaymentHistoryPanel() {
               <Icon className="w-3.5 h-3.5 text-cyan-300 shrink-0" />
               <div className="flex-1 min-w-0">
                 <div className="text-white/80 truncate">{r.targetLabel}</div>
-                <div className="text-[10px] text-white/55">{formatShortDate(r.date)}{r.dueDateIso ? ` · against ${formatShortDate(r.dueDateIso)} due date` : ''}</div>
+                <div className="text-xs text-white/55">{formatShortDate(r.date)}{r.dueDateIso ? ` · against ${formatShortDate(r.dueDateIso)} due date` : ''}</div>
               </div>
               <span className="tabular-nums text-emerald-300 font-semibold">{formatCurrency(r.amount)}</span>
               <button onClick={() => undo(r.id, r.targetLabel)} title="Remove this payment record (reverses its balance effect)" className="text-white/55 hover:text-rose-400">

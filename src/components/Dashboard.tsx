@@ -373,7 +373,7 @@ export function Dashboard() {
             dragOverId === id && draggingId !== id && 'drag-over drag-ghost'
           )}
         >
-          <div className="drag-handle flex items-center gap-1.5 mb-1.5 text-[10px] text-white/55 uppercase tracking-wide">
+          <div className="drag-handle flex items-center gap-1.5 mb-1.5 text-xs text-white/55 uppercase tracking-wide">
             <GripVertical className="w-3 h-3" /> drag to reorder
             {/* Round 21, item #14 — native HTML5 drag-and-drop has no keyboard or touch
                 equivalent at all; these buttons are a real second way to reorder, always

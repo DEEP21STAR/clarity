@@ -29,7 +29,7 @@ export function AccountsPanel({ compact = false }: { compact?: boolean }) {
         <div className="mt-6">
           <div className="text-xs font-semibold uppercase tracking-wide text-white/55 mb-2 flex items-center gap-1.5">
             Non-Liquid Assets
-            <span className="flex items-center gap-1 text-[10px] font-normal text-amber-300/80 normal-case tracking-normal">
+            <span className="flex items-center gap-1 text-xs font-normal text-amber-300/80 normal-case tracking-normal">
               <AlertCircle className="w-3 h-3" /> manually maintained — never a live market value
             </span>
           </div>

@@ -114,7 +114,7 @@ function GoalCard({ goal, onUpdate, onRemove, onLogContribution }: {
                 </linearGradient>
               </defs>
             </svg>
-            <div className="absolute inset-0 flex items-center justify-center text-[11px] font-bold text-white">{progress.toFixed(0)}%</div>
+            <div className="absolute inset-0 flex items-center justify-center text-xs font-bold text-white">{progress.toFixed(0)}%</div>
           </div>
         ) : goal.category === 'holiday' ? (
           <Plane className="w-6 h-6 text-cyan-300 shrink-0" />

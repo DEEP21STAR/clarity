@@ -83,7 +83,7 @@ export function NetWorth() {
         {milestones.length > 0 && (
           <div className="mt-2 flex flex-wrap gap-2">
             {milestones.map((m) => (
-              <span key={m.threshold} className="inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-300 border border-amber-400/30">
+              <span key={m.threshold} className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-300 border border-amber-400/30">
                 <Flag className="w-2.5 h-2.5" /> ${(m.threshold / 1000).toFixed(0)}k reached {formatShortDate(m.date)}
               </span>
             ))}

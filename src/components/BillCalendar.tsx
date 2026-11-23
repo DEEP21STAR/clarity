@@ -104,7 +104,7 @@ export function BillCalendar() {
           <button onClick={() => goMonth(1)} aria-label="Next month" className="text-white/55 hover:text-white p-2 -m-2"><ChevronRight className="w-5 h-5" /></button>
         </div>
 
-        <div className="mt-4 grid grid-cols-7 gap-1 text-center text-[10px] text-white/55 uppercase">
+        <div className="mt-4 grid grid-cols-7 gap-1 text-center text-xs text-white/55 uppercase">
           {WEEKDAYS.map((d) => <div key={d}>{d}</div>)}
         </div>
         {/* #13 — real slide transition: keying on the viewed month forces a fresh mount every
@@ -117,14 +117,14 @@ export function BillCalendar() {
             return (
               <div
                 key={i}
-                className={`min-h-[64px] rounded-lg border p-1 text-left ${day ? 'border-white/10' : 'border-transparent'}`}
+                className={`min-h-[64px] min-w-0 overflow-hidden rounded-lg border p-1 text-left ${day ? 'border-white/10' : 'border-transparent'}`}
                 style={day ? { backgroundColor: `rgba(168,85,247,${heat})` } : undefined}
               >
                 {day && (
                   <>
-                    <div className="flex items-center justify-between text-[10px] text-white/55">
+                    <div className="flex items-center justify-between text-xs text-white/55">
                       <span>{day}</span>
-                      {dayTotal > 0 && <span className="text-white/55">{formatCurrency(dayTotal)}</span>}
+                      {dayTotal > 0 && <span className="sr-only sm:not-sr-only text-white/55">{formatCurrency(dayTotal)}</span>}
                     </div>
                     <div className="space-y-0.5 mt-0.5">
                       {(entriesByDay.get(day) ?? []).slice(0, 3).map((e, j) => {
@@ -145,7 +145,7 @@ export function BillCalendar() {
                             onClick={() => togglePaid(e)}
                             disabled={!e.billId}
                             title={`${e.name}: ${formatCurrency(e.amount)} — ${tooltip}${e.billId ? ' (click to toggle paid)' : ''}`}
-                            className={`w-full min-h-6 flex items-center gap-1 text-[9px] truncate ${textClass} ${e.billId ? 'cursor-pointer hover:opacity-80' : 'cursor-default'}`}
+                            className={`w-full min-h-6 flex items-center gap-1 text-xs truncate ${textClass} ${e.billId ? 'cursor-pointer hover:opacity-80' : 'cursor-default'}`}
                           >
                             {paid ? (
                               <svg className="checkmark-draw w-2.5 h-2.5 shrink-0 text-emerald-400" viewBox="0 0 24 24" fill="none">
@@ -166,7 +166,7 @@ export function BillCalendar() {
             )
           })}
         </div>
-        <p className="mt-3 text-[10px] text-white/55 flex items-center gap-1"><Check className="w-2.5 h-2.5" /> Click any bill (not sinking funds) to mark it paid/unpaid for that specific due date.</p>
+        <p className="mt-3 text-xs text-white/55 flex items-center gap-1"><Check className="w-2.5 h-2.5" /> Click any bill (not sinking funds) to mark it paid/unpaid for that specific due date.</p>
       </StatCard>
     </div>
   )

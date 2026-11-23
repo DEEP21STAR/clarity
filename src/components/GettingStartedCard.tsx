@@ -73,7 +73,7 @@ export function GettingStartedCard() {
               </div>
               <div>
                 <p className="text-xs font-semibold text-white/85">{s.title}</p>
-                <p className="text-[11px] text-white/55 mt-0.5 leading-relaxed">{s.body}</p>
+                <p className="text-xs text-white/55 mt-0.5 leading-relaxed">{s.body}</p>
               </div>
             </div>
           )

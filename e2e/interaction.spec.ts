@@ -7,7 +7,7 @@ test.use({ reducedMotion: 'reduce' })
 
 // Runs inside the page: lists every on-screen control that is mostly hidden under the floating Add button.
 function coveredByFab() {
-  const fab = [...document.querySelectorAll('button')].find((b) => /^Add an expense or income/.test(b.getAttribute('aria-label') ?? ''))
+  const fab = [...document.querySelectorAll('button')].find((b) => /^Add an expense or income/.test((b.getAttribute('aria-label') ?? b.textContent ?? '').trim()))
   if (!fab) return { fab: false, covered: [] as string[] }
   const f = fab.getBoundingClientRect()
   if (f.width === 0 || f.height === 0) return { fab: false, covered: [] as string[] }
@@ -48,7 +48,7 @@ test('the audit really detects a control hidden under the Add button', async ({ 
   await openApp(page, 'budgets')
   await page.waitForTimeout(800)
   await page.evaluate(() => {
-    const fab = [...document.querySelectorAll('button')].find((b) => /^Add an expense or income/.test(b.getAttribute('aria-label') ?? ''))!
+    const fab = [...document.querySelectorAll('button')].find((b) => /^Add an expense or income/.test((b.getAttribute('aria-label') ?? b.textContent ?? '').trim()))!
     const r = fab.getBoundingClientRect()
     const decoy = document.createElement('button')
     decoy.textContent = 'decoy under the add button'
@@ -58,3 +58,26 @@ test('the audit really detects a control hidden under the Add button', async ({ 
   const res = await page.evaluate(coveredByFab)
   expect(res.covered).toContain('decoy under the add button')
 })
+
+// Regression: a CSS filter on an ancestor (colour drift, time-of-day tint) silently turns it into the anchor of every fixed child,
+// which pinned the Add button to the end of the page instead of the screen. It must float over the viewport with motion on or off.
+for (const motion of ['reduce', 'no-preference'] as const) {
+  test(`the Add button floats over the screen at scroll 0 (motion: ${motion})`, async ({ page }) => {
+    await page.emulateMedia({ reducedMotion: motion })
+    await page.setViewportSize(VIEWPORTS.desktop)
+    await openApp(page, 'budgets')
+    await page.waitForTimeout(1500)
+    const box = await page.getByRole('button', { name: /^Add an expense or income/ }).boundingBox()
+    expect(box, 'Add button should be rendered').not.toBeNull()
+    expect(box!.y + box!.height).toBeLessThanOrEqual(VIEWPORTS.desktop.height)
+    const filtered = await page.evaluate(() => {
+      const out: string[] = []
+      if (!document.querySelector('button[aria-keyshortcuts="N"]')) return ['Add button not found']
+      for (let e = document.querySelector('button[aria-keyshortcuts="N"]')?.parentElement; e && e !== document.documentElement; e = e.parentElement) {
+        if (getComputedStyle(e).filter !== 'none') out.push(e.tagName + '.' + String(e.className).slice(0, 30))
+      }
+      return out
+    })
+    expect(filtered, 'no ancestor of the Add button may have a CSS filter').toEqual([])
+  })
+}

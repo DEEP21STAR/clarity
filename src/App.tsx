@@ -100,6 +100,14 @@ export function AppContent() {
   const [tab, setTab] = useState<TabId>(initialTab)
   const mainRef = useRef<HTMLDivElement>(null)
   const tint = useTimeOfDayTint()
+  // The colour drift and time-of-day tint are CSS filters. A filter on an ordinary wrapper turns it into the anchor for every fixed
+  // child (Add button, toasts, drawer, palette), pinning them to the end of the page. On the root element they stay anchored to the screen.
+  useEffect(() => {
+    const el = document.documentElement
+    const classes = ['ambient-drift', tint]
+    el.classList.add(...classes)
+    return () => el.classList.remove(...classes)
+  }, [tint])
   const [isOnline, setIsOnline] = useState(() => (typeof navigator === 'undefined' ? true : navigator.onLine))
   const [justSaved, setJustSaved] = useState(false)
   // 2026-09-23 — mobile nav drawer. The desktop tab bar (9 tabs, scroll-to-discover) is a real
@@ -302,7 +310,7 @@ export function AppContent() {
   }
 
   return (
-    <div className={cn('min-h-screen relative ambient-drift', tint)}>
+    <div className="min-h-screen relative">
       <IdleMount delayMs={700}><AmbientBackground healthScore={healthScore} /></IdleMount>
       <CursorGlow />
       <CommandPalette tabCommands={tabCommands} />
@@ -327,7 +335,7 @@ export function AppContent() {
               {/* Round 21, item #21 — real debounced "Saved" pulse, not permanent chrome. */}
               <span
                 className={cn(
-                  'hidden md:inline-flex items-center gap-1 text-[10px] text-emerald-300/80 transition-opacity duration-500',
+                  'hidden md:inline-flex items-center gap-1 text-xs text-emerald-300/80 transition-opacity duration-500',
                   justSaved ? 'opacity-100' : 'opacity-0 pointer-events-none'
                 )}
                 aria-live="polite"
@@ -337,7 +345,7 @@ export function AppContent() {
               {/* Round 21, item #15 — honest online/offline state; this app works fine offline
                   (everything's localStorage), this just says so instead of staying silent. */}
               {!isOnline && (
-                <span title="You're offline — everything still saves locally, nothing is lost." className="hidden md:inline-flex items-center gap-1 text-[10px] text-amber-300/80 border border-amber-400/20 rounded-full px-2 py-0.5">
+                <span title="You're offline — everything still saves locally, nothing is lost." className="hidden md:inline-flex items-center gap-1 text-xs text-amber-300/80 border border-amber-400/20 rounded-full px-2 py-0.5">
                   <WifiOff className="w-3 h-3" /> Offline
                 </span>
               )}
@@ -398,7 +406,7 @@ export function AppContent() {
               >
                 <Command className="w-3 h-3" />
                 <span>Quick actions</span>
-                <kbd className="text-[10px] text-white/55 border border-white/10 rounded px-1 ml-0.5">⌘K</kbd>
+                <kbd className="text-xs text-white/55 border border-white/10 rounded px-1 ml-0.5">⌘K</kbd>
               </button>
               <NotificationBell />
             </div>
@@ -448,7 +456,7 @@ export function AppContent() {
                           ? `${billsDueTodayList[0].name} due today — click to see it`
                           : `${billsDueToday} bills due today: ${billsDueTodayList.map((b) => b.name).join(', ')} — click to see them`
                       }
-                      className="absolute -top-1 -right-1 min-w-[15px] h-[15px] px-[3px] rounded-full bg-rose-500 text-white text-[9px] font-bold flex items-center justify-center leading-none shadow-[0_0_8px_-1px_rgba(255,45,85,0.8)]"
+                      className="absolute -top-1 -right-1 min-w-[15px] h-[15px] px-[3px] rounded-full bg-rose-500 text-white text-xs font-bold flex items-center justify-center leading-none shadow-[0_0_8px_-1px_rgba(255,45,85,0.8)]"
                     >
                       {billsDueToday}
                     </span>

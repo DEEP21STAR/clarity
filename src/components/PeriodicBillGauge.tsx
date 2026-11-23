@@ -69,7 +69,7 @@ export function PeriodicBillGauge({
         </div>
       )}
       {bill.smoothingEnabled === false && (
-        <span className="absolute top-3 left-1/2 -translate-x-1/2 z-20 text-[10px] px-2 py-0.5 rounded-full bg-white/10 text-white/50 border border-white/15">
+        <span className="absolute top-3 left-1/2 -translate-x-1/2 z-20 text-xs px-2 py-0.5 rounded-full bg-white/10 text-white/50 border border-white/15">
           smoothing off
         </span>
       )}
@@ -98,11 +98,11 @@ export function PeriodicBillGauge({
             </defs>
           </svg>
           <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
-            <span className="text-[10px] uppercase tracking-wide text-white/55">Projected</span>
+            <span className="text-xs uppercase tracking-wide text-white/55">Projected</span>
             <span className="text-xl font-bold tabular-nums text-white">
               <CountUp value={bill.projectedCharge} prefix="$" decimals={2} />
             </span>
-            <span className="text-[10px] text-white/55 flex items-center gap-1 mt-0.5">
+            <span className="text-xs text-white/55 flex items-center gap-1 mt-0.5">
               <Clock className="w-2.5 h-2.5" /> {daysLeft}d left
             </span>
           </div>
@@ -132,7 +132,7 @@ export function PeriodicBillGauge({
                     </span>
                     <span className="tabular-nums">{formatCurrency(bill.pendingBill.amount)}</span>
                   </div>
-                  <div className="text-[11px] text-white/55 mt-0.5">
+                  <div className="text-xs text-white/55 mt-0.5">
                     for {formatShortDate(bill.pendingBill.periodStart)} – {formatShortDate(bill.pendingBill.periodEnd)}
                   </div>
                   {/* #8 expanded — a real payment here reduces (or fully clears, with overpayment
@@ -150,7 +150,7 @@ export function PeriodicBillGauge({
               <span className="text-xs text-cyan-200/80">Suggested fortnightly set-aside</span>
               <span className="text-lg font-bold tabular-nums text-cyan-300">{formatCurrency(suggestedFortnightly)}</span>
             </div>
-            <p className="text-[10px] text-white/55 mt-0.5">Smoothed across the current period so it's never one big lump sum.</p>
+            <p className="text-xs text-white/55 mt-0.5">Smoothed across the current period so it's never one big lump sum.</p>
           </div>
         </div>
       </div>

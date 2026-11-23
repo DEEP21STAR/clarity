@@ -130,7 +130,7 @@ function IdentityColorPicker({ value, onChange }: { value: NameColor; onChange: 
           type="button"
           onClick={() => onChange(opt.value)}
           className={cn(
-            'flex-1 flex items-center justify-center gap-1.5 text-[13px] font-medium rounded-lg px-2 py-1.5 border transition-colors',
+            'flex-1 flex items-center justify-center gap-1.5 text-sm font-medium rounded-lg px-2 py-1.5 border transition-colors',
             value === opt.value
               ? cn('border-white/40 bg-white/10', NAME_COLOR_STYLE[opt.value].text)
               : 'border-white/10 text-white/55 hover:border-white/20 hover:text-white/60'
@@ -395,7 +395,7 @@ export function SetupWizard({ mode = 'demo' }: { mode?: 'demo' | 'onboarding' } 
         <div className="flex items-center gap-2 justify-center mb-6 md:mb-8">
           <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-cyan-400 to-purple-500" />
           <span className="gradient-heading font-bold text-xl tracking-tight">Clarity</span>
-          <span className="text-[13px] uppercase tracking-wider text-white/55 border border-white/10 rounded-full px-2 py-0.5 ml-1">
+          <span className="text-sm uppercase tracking-wider text-white/55 border border-white/10 rounded-full px-2 py-0.5 ml-1">
             Wizard preview
           </span>
         </div>
@@ -406,7 +406,7 @@ export function SetupWizard({ mode = 'demo' }: { mode?: 'demo' | 'onboarding' } 
               {STEP_LABELS.map((label, i) => (
                 <div key={label} className="flex-1 flex flex-col items-center gap-1.5">
                   <div className={cn('h-1 w-full rounded-full transition-colors', i <= step ? 'bg-gradient-to-r from-cyan-400 to-purple-500' : 'bg-white/10')} />
-                  <span className={cn('text-[12px] text-center leading-tight', i === step ? 'text-white/70' : 'text-white/55')}>{label}</span>
+                  <span className={cn('text-xs text-center leading-tight', i === step ? 'text-white/70' : 'text-white/55')}>{label}</span>
                 </div>
               ))}
             </div>
@@ -472,7 +472,7 @@ export function SetupWizard({ mode = 'demo' }: { mode?: 'demo' | 'onboarding' } 
                     <span className="text-white/55 text-sm">/{payFrequency === 'weekly' ? 'week' : payFrequency === 'fortnightly' ? 'fortnight' : 'month'}</span>
                   </div>
                   {payFrequency !== 'monthly' && payAmount > 0 && (
-                    <p className="text-[13px] text-cyan-300/70 mt-1.5">≈ {formatCurrency(monthlyIncome)}/month — worked out automatically</p>
+                    <p className="text-sm text-cyan-300/70 mt-1.5">≈ {formatCurrency(monthlyIncome)}/month — worked out automatically</p>
                   )}
                 </div>
               </div>
@@ -501,7 +501,7 @@ export function SetupWizard({ mode = 'demo' }: { mode?: 'demo' | 'onboarding' } 
                   ) : (
                     <div className="flex items-center gap-2">
                       <DateField ariaLabel="Bill due date" value={billDue} onChange={setBillDue} inputClassName="w-full bg-black/30 border border-white/10 rounded-lg px-3 py-2 text-sm outline-none focus:border-cyan-400/50" overlayClassName="px-3 text-sm" />
-                      <button type="button" onClick={() => setBillDueUnknown(true)} className="text-[13px] text-white/55 hover:text-white/60 whitespace-nowrap shrink-0">
+                      <button type="button" onClick={() => setBillDueUnknown(true)} className="text-sm text-white/55 hover:text-white/60 whitespace-nowrap shrink-0">
                         Not sure — skip
                       </button>
                     </div>
@@ -531,7 +531,7 @@ export function SetupWizard({ mode = 'demo' }: { mode?: 'demo' | 'onboarding' } 
             {step === 4 && (
               <div className="space-y-4">
                 <h2 className="text-xl font-semibold">Import a bank statement</h2>
-                <div className="rounded-lg border border-cyan-400/20 bg-cyan-400/5 p-3 text-[13px] text-white/60 leading-relaxed">
+                <div className="rounded-lg border border-cyan-400/20 bg-cyan-400/5 p-3 text-sm text-white/60 leading-relaxed">
                   <p className="flex items-center gap-1.5 text-cyan-300 font-semibold mb-1"><Info className="w-3 h-3" /> How to get the file</p>
                   Log into {bank || 'your bank'}'s website or app, look for <b className="text-white/80">"Export," "Download transactions,"</b> or <b className="text-white/80">"Statements,"</b> choose <b className="text-white/80">CSV</b> as the format (not PDF), pick the last 30–90 days, then download.
                   <p className="mt-1.5 text-white/55">Exact wording varies by bank — this is the general pattern every online banking site follows.</p>
@@ -541,12 +541,12 @@ export function SetupWizard({ mode = 'demo' }: { mode?: 'demo' | 'onboarding' } 
                   <span className="text-sm">{csvFileName ? 'Choose a different file' : 'Tap to choose your CSV file'}</span>
                 </button>
                 <input ref={fileInputRef} type="file" accept=".csv" className="hidden" onChange={(e) => handleFile(e.target.files?.[0] ?? null)} />
-                {csvError && <p className="text-[13px] text-rose-300">{csvError}</p>}
+                {csvError && <p className="text-sm text-rose-300">{csvError}</p>}
                 {csvFileName && csvPreview && (
                   <div className="rounded-lg border border-white/10 bg-black/20 p-3">
                     <p className="flex items-center gap-1.5 text-sm text-emerald-300 mb-2"><FileText className="w-3.5 h-3.5" /> {csvFileName} — first {csvPreview.length} row{csvPreview.length === 1 ? '' : 's'}</p>
                     <div className="overflow-x-auto">
-                      <table className="text-[13px] tabular-nums w-full">
+                      <table className="text-sm tabular-nums w-full">
                         <tbody>
                           {csvPreview.map((row, i) => (
                             <tr key={i} className={i === 0 ? 'text-white/70 font-semibold' : 'text-white/55'}>
@@ -556,10 +556,10 @@ export function SetupWizard({ mode = 'demo' }: { mode?: 'demo' | 'onboarding' } 
                         </tbody>
                       </table>
                     </div>
-                    <p className="mt-2 text-[13px] text-white/55">This is a raw preview only — automatic column matching for {bank || 'your bank'}'s exact format needs a real sample from you to build accurately, not a guess. Not wired into any real import yet.</p>
+                    <p className="mt-2 text-sm text-white/55">This is a raw preview only — automatic column matching for {bank || 'your bank'}'s exact format needs a real sample from you to build accurately, not a guess. Not wired into any real import yet.</p>
                   </div>
                 )}
-                <p className="text-[13px] text-white/55 text-center">Optional — skip this and add transactions manually once you're in.</p>
+                <p className="text-sm text-white/55 text-center">Optional — skip this and add transactions manually once you're in.</p>
               </div>
             )}
 
@@ -573,7 +573,7 @@ export function SetupWizard({ mode = 'demo' }: { mode?: 'demo' | 'onboarding' } 
                   <div className="flex justify-between"><span className="text-white/55">Recurring payments</span><span className="font-medium">{bills.length === 0 ? 'None added' : `${bills.length} added`}</span></div>
                   <div className="flex justify-between"><span className="text-white/55">Bank statement</span><span className="font-medium">{csvFileName ?? 'Not imported'}</span></div>
                 </div>
-                <p className="text-[13px] text-white/55">This preview writes only to its own storage — it will never touch your real Clarity data.</p>
+                <p className="text-sm text-white/55">This preview writes only to its own storage — it will never touch your real Clarity data.</p>
               </div>
             )}
             </div>
@@ -619,7 +619,7 @@ export function SetupWizard({ mode = 'demo' }: { mode?: 'demo' | 'onboarding' } 
               <p className="text-sm text-white/55 mt-1">{completed.bank} · {completed.country === 'NZ' ? 'New Zealand' : 'Australia'} · {completed.bills.length} payment{completed.bills.length === 1 ? '' : 's'} tracked</p>
             </div>
             <div className={cn('rounded-xl border p-5', weeklyPreview < 0 ? 'border-rose-500/30 bg-rose-500/5' : 'border-white/10 bg-black/20')}>
-              <div className="text-[13px] uppercase tracking-wider text-white/55 flex items-center justify-center gap-1.5">
+              <div className="text-sm uppercase tracking-wider text-white/55 flex items-center justify-center gap-1.5">
                 <Wallet className="w-3 h-3" /> Rough weekly safe-to-spend
               </div>
               {/* 2026-09-23 — real bug caught reviewing Deep's own walkthrough: a real household
@@ -631,7 +631,7 @@ export function SetupWizard({ mode = 'demo' }: { mode?: 'demo' | 'onboarding' } 
               <div className={cn('text-3xl font-bold tabular-nums mt-1', weeklyPreview < 0 ? 'text-rose-300' : 'bg-gradient-to-r from-cyan-300 to-purple-300 bg-clip-text text-transparent')}>
                 {formatCurrency(weeklyPreview)}
               </div>
-              <p className={cn('text-[13px] mt-1', weeklyPreview < 0 ? 'text-rose-300/70' : 'text-white/55')}>
+              <p className={cn('text-sm mt-1', weeklyPreview < 0 ? 'text-rose-300/70' : 'text-white/55')}>
                 {weeklyPreview < 0
                   ? 'Your bills currently add up to more than your income — exactly the kind of thing Clarity is built to catch early.'
                   : 'Income minus the payments you added, spread weekly.'}
@@ -643,14 +643,14 @@ export function SetupWizard({ mode = 'demo' }: { mode?: 'demo' | 'onboarding' } 
             {/* Honest, not silent — the real per-instance pay-pattern isn't built yet (see the
                 buildDemoSeed comment above), so the dashboard's income figure won't match what
                 was entered on the Pay & Income step. Bills genuinely do carry through correctly. */}
-            <p className="text-[13px] text-white/55 leading-relaxed">Your {completed.bills.length} payment{completed.bills.length === 1 ? '' : 's'} and {completed.payFrequency} pay cycle both carry through to the real dashboard.</p>
+            <p className="text-sm text-white/55 leading-relaxed">Your {completed.bills.length} payment{completed.bills.length === 1 ? '' : 's'} and {completed.payFrequency} pay cycle both carry through to the real dashboard.</p>
             <button type="button" onClick={restart} className="text-sm text-white/55 hover:text-white transition-colors">
               Start over
             </button>
           </div>
         )}
 
-        <p className="text-center text-[13px] text-white/55 mt-6">
+        <p className="text-center text-sm text-white/55 mt-6">
           Preview mode — your real Clarity data is completely separate and untouched.
         </p>
       </div>

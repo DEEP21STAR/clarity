@@ -46,11 +46,11 @@ export function QuickAddHost() {
       <button
         type="button"
         onClick={() => setOpen(true)}
-        aria-label="Add an expense or income (shortcut N)"
+        aria-keyshortcuts="N"
         title="Add an expense or income (N)"
         className="hidden md:flex fixed right-6 bottom-6 z-[55] items-center gap-2 rounded-full bg-gradient-to-r from-cyan-400 to-purple-500 px-5 min-h-12 text-sm font-extrabold text-black shadow-lg shadow-cyan-500/20 hover:scale-105 active:scale-95 transition-transform"
       >
-        <Plus className="w-4 h-4" strokeWidth={3} /> Add <kbd className="rounded bg-black/15 px-1.5 text-[10px] font-bold">N</kbd>
+        <Plus className="w-4 h-4" strokeWidth={3} /> Add<span className="sr-only"> an expense or income</span> <kbd aria-hidden="true" className="rounded bg-black/15 px-1.5 text-xs font-bold">N</kbd>
       </button>
       {open && createPortal(
         <AddSheet

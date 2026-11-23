@@ -321,7 +321,7 @@ export function Transactions() {
                 <Line type="monotone" dataKey="running" stroke="#22d3ee" strokeWidth={2} dot={false} isAnimationActive />
               </LineChart>
             </ResponsiveContainer>
-            <p className="text-[10px] text-white/55 -mt-1">Running balance trend across the imported ledger.</p>
+            <p className="text-xs text-white/55 -mt-1">Running balance trend across the imported ledger.</p>
           </div>
         )}
 
@@ -336,7 +336,7 @@ export function Transactions() {
               className="w-full bg-black/30 border border-white/10 rounded-lg pl-9 pr-3 py-2 text-sm outline-none focus:border-cyan-400/50 placeholder:text-white/50"
             />
             {!query && (
-              <kbd className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] text-white/55 border border-white/10 rounded px-1">/</kbd>
+              <kbd className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-white/55 border border-white/10 rounded px-1">/</kbd>
             )}
           </div>
           {filtered.length > 0 && (

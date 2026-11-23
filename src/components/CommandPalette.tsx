@@ -180,7 +180,7 @@ export function CommandPalette({ tabCommands }: { tabCommands: PaletteCommand[] 
               placeholder="Jump to a tab, plan, bill, or action..."
               className="flex-1 bg-transparent outline-none text-sm text-white placeholder:text-white/50"
             />
-            <kbd className="text-[10px] text-white/55 border border-white/10 rounded px-1.5 py-0.5">Esc</kbd>
+            <kbd className="text-xs text-white/55 border border-white/10 rounded px-1.5 py-0.5">Esc</kbd>
           </div>
           <div className="max-h-72 overflow-y-auto py-2">
             {filtered.length === 0 && <div className="px-4 py-3 text-sm text-white/55">No matches.</div>}
@@ -197,7 +197,7 @@ export function CommandPalette({ tabCommands }: { tabCommands: PaletteCommand[] 
               </button>
             ))}
           </div>
-          <div className="px-4 py-2 border-t border-white/10 flex items-center justify-between text-[10px] text-white/55">
+          <div className="px-4 py-2 border-t border-white/10 flex items-center justify-between text-xs text-white/55">
             <span>{!query.trim() ? 'Sorted by what you actually use' : `Fuzzy-matched · ${filtered.length} result${filtered.length === 1 ? '' : 's'}`}</span>
             <button onClick={() => { setOpen(false); setShowShortcuts(true) }} className="flex items-center gap-1 hover:text-cyan-300">
               <Keyboard className="w-3 h-3" /> Shortcuts <kbd className="border border-white/10 rounded px-1">?</kbd>
@@ -227,12 +227,12 @@ export function CommandPalette({ tabCommands }: { tabCommands: PaletteCommand[] 
             ) : (
               <div className="w-full aspect-[420/280] flex flex-col items-center justify-center gap-1.5 text-white/55 bg-white/[0.02]">
                 <ImageOff className="w-5 h-5" />
-                <span className="text-[10px] text-center px-3">No preview yet — visit this tab once to cache one</span>
+                <span className="text-xs text-center px-3">No preview yet — visit this tab once to cache one</span>
               </div>
             )}
             <div className="px-3 py-2 border-t border-white/10 flex items-center justify-between">
-              <span className="text-[10px] text-white/55">{previewCmd.label}</span>
-              <span className="text-[9px] text-white/55" title="Cached snapshot from the last time you opened this tab — not a live render.">cached</span>
+              <span className="text-xs text-white/55">{previewCmd.label}</span>
+              <span className="text-xs text-white/55" title="Cached snapshot from the last time you opened this tab — not a live render.">cached</span>
             </div>
           </div>
         )}
@@ -272,7 +272,7 @@ function ShortcutsCheatsheet({ onClose }: { onClose: () => void }) {
           {SHORTCUTS.map((s) => (
             <div key={s.keys} className="flex items-center justify-between gap-3 text-xs">
               <span className="text-white/60">{s.desc}</span>
-              <kbd className="shrink-0 text-[10px] text-cyan-200 border border-cyan-400/20 bg-cyan-400/5 rounded px-1.5 py-0.5 whitespace-nowrap">{s.keys}</kbd>
+              <kbd className="shrink-0 text-xs text-cyan-200 border border-cyan-400/20 bg-cyan-400/5 rounded px-1.5 py-0.5 whitespace-nowrap">{s.keys}</kbd>
             </div>
           ))}
         </div>

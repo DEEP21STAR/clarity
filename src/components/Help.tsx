@@ -92,10 +92,10 @@ export function Help() {
               </button>
               <div className="disclosure-body" style={{ maxHeight: isOpen ? 400 : 0, opacity: isOpen ? 1 : 0 }}>
                 <div className="px-3.5 pb-3.5 pt-1">
-                  <ol className="space-y-1.5 text-[11px] text-white/55 leading-relaxed list-decimal list-inside">
+                  <ol className="space-y-1.5 text-xs text-white/55 leading-relaxed list-decimal list-inside">
                     {topic.steps.map((step, i) => <li key={i}>{step}</li>)}
                   </ol>
-                  <div className="mt-3 flex items-center gap-2 rounded-lg border border-dashed border-white/10 bg-white/[0.02] px-3 py-2 text-[10px] text-white/55">
+                  <div className="mt-3 flex items-center gap-2 rounded-lg border border-dashed border-white/10 bg-white/[0.02] px-3 py-2 text-xs text-white/55">
                     <ImageOff className="w-3.5 h-3.5 shrink-0" />
                     Screenshots for this step are coming — not faked with a placeholder image.
                   </div>

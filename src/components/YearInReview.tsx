@@ -32,24 +32,24 @@ export function YearInReview() {
         <div>
           <Receipt className="w-4 h-4 text-cyan-300 mb-1" />
           <div className="text-xl font-bold tabular-nums text-cyan-300"><CountUp value={review.totalPaid} prefix="$" /></div>
-          <p className="text-[10px] text-white/55">paid across {review.paymentCount} recorded payment{review.paymentCount === 1 ? '' : 's'}</p>
+          <p className="text-xs text-white/55">paid across {review.paymentCount} recorded payment{review.paymentCount === 1 ? '' : 's'}</p>
         </div>
         <div>
           <TrendingUp className="w-4 h-4 text-emerald-300 mb-1" />
           <div className={`text-xl font-bold tabular-nums ${review.netWorthChange === null ? 'text-white/55' : review.netWorthChange >= 0 ? 'text-emerald-300' : 'text-rose-300'}`}>
             {review.netWorthChange === null ? '—' : <><span>{review.netWorthChange >= 0 ? '+' : ''}</span><CountUp value={review.netWorthChange} prefix="$" /></>}
           </div>
-          <p className="text-[10px] text-white/55">{review.netWorthChange === null ? 'not enough history yet' : 'net worth change'}</p>
+          <p className="text-xs text-white/55">{review.netWorthChange === null ? 'not enough history yet' : 'net worth change'}</p>
         </div>
         <div>
           <Flame className="w-4 h-4 text-amber-300 mb-1" />
           <div className="text-xl font-bold tabular-nums text-amber-300"><CountUp value={review.bestStreak} decimals={0} /></div>
-          <p className="text-[10px] text-white/55">best on-pace streak (days)</p>
+          <p className="text-xs text-white/55">best on-pace streak (days)</p>
         </div>
         <div>
           <Target className="w-4 h-4 text-purple-300 mb-1" />
           <div className="text-xl font-bold tabular-nums text-purple-300">{review.goalsCompleted}/{review.goalsTotal}</div>
-          <p className="text-[10px] text-white/55">savings goals completed</p>
+          <p className="text-xs text-white/55">savings goals completed</p>
         </div>
       </div>
     </StatCard>

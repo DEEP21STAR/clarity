@@ -49,7 +49,7 @@ export function RecordPaymentButton({ targetType, targetId, targetLabel, default
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="inline-flex items-center gap-1 text-[11px] text-cyan-300 hover:text-cyan-200 border border-cyan-400/20 hover:border-cyan-400/40 rounded-full px-2 py-1"
+        className="inline-flex items-center gap-1 text-xs text-cyan-300 hover:text-cyan-200 border border-cyan-400/20 hover:border-cyan-400/40 rounded-full px-2 py-1"
       >
         <CircleDollarSign className="w-3 h-3" /> Record a payment
       </button>

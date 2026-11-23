@@ -94,11 +94,11 @@ export function DataExportPanel() {
             readOnly
             aria-label="Full export as JSON text"
             value={JSON.stringify(buildFullExportJson(state), null, 2)}
-            className="mt-3 w-full h-40 bg-black/40 border border-white/10 rounded-lg p-2 text-[10px] font-mono text-white/70 outline-none"
+            className="mt-3 w-full h-40 bg-black/40 border border-white/10 rounded-lg p-2 text-xs font-mono text-white/70 outline-none"
             onClick={(e) => (e.target as HTMLTextAreaElement).select()}
           />
         )}
-        <p className="text-[11px] text-white/55 mt-2">
+        <p className="text-xs text-white/55 mt-2">
           Shape documented in <code>EXPORT_SCHEMA.md</code> at the project root, for the separate local-desktop agent consuming this file.
         </p>
       </StatCard>
@@ -115,7 +115,7 @@ export function DataExportPanel() {
             <Printer className="w-4 h-4" /> Print summary (Save as PDF)
           </button>
         </div>
-        <textarea readOnly aria-label="Spending as CSV text" value={csv} className="mt-3 w-full h-28 bg-black/40 border border-white/10 rounded-lg p-2 text-[10px] font-mono text-white/70 outline-none" onClick={(e) => (e.target as HTMLTextAreaElement).select()} />
+        <textarea readOnly aria-label="Spending as CSV text" value={csv} className="mt-3 w-full h-28 bg-black/40 border border-white/10 rounded-lg p-2 text-xs font-mono text-white/70 outline-none" onClick={(e) => (e.target as HTMLTextAreaElement).select()} />
       </StatCard>
 
       {showPrintSummary && (

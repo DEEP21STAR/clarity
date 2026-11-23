@@ -136,7 +136,7 @@ export function Debts() {
               centerLabel={
                 <>
                   <span className="text-2xl font-black tabular-nums text-white">{Math.round(payoffPercent)}%</span>
-                  <span className="text-[10px] text-white/55 uppercase tracking-wide">paid</span>
+                  <span className="text-xs text-white/55 uppercase tracking-wide">paid</span>
                 </>
               }
             />
@@ -149,7 +149,7 @@ export function Debts() {
                 <span className="text-white/50">Still owed today</span>
                 <span className="font-bold tabular-nums text-rose-300">{formatCurrency(totalBalance)}</span>
               </div>
-              <p className="text-[10px] text-white/55 pt-1 border-t border-white/10">
+              <p className="text-xs text-white/55 pt-1 border-t border-white/10">
                 Counts real payments recorded against credit cards/installment plans. Manually-entered debts without a payment log only count toward what's still owed.
               </p>
             </div>

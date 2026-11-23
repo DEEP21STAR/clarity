@@ -86,7 +86,7 @@ export function MobileNavDrawer({ open, onClose, tabs, activeTab, accents, onSel
               if (items.length === 0) return null
               return (
                 <div key={g.label} role="group" aria-label={g.label} className="mb-1">
-                  <div className="px-3 pt-3 pb-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-white/55">{g.label}</div>
+                  <div className="px-3 pt-3 pb-1 text-xs font-semibold uppercase tracking-[0.14em] text-white/55">{g.label}</div>
                   {items.map((t) => {
                     const Icon = t.icon
                     const isActive = activeTab === t.id
@@ -115,7 +115,7 @@ export function MobileNavDrawer({ open, onClose, tabs, activeTab, accents, onSel
             })
           })()}
         </nav>
-        <div className="px-4 py-3 border-t border-white/10 text-[10px] text-white/55">
+        <div className="px-4 py-3 border-t border-white/10 text-xs text-white/55">
           Deep + Mimi · Clarity
         </div>
       </div>

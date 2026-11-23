@@ -79,7 +79,7 @@ export function SpendPaceTracker({
             {state.streak.best > 0 && <span className="text-white/55"> · best {state.streak.best}</span>}
           </span>
           {[7, 30, 100].filter((m) => state.streak.milestonesHit.includes(m)).map((m) => (
-            <span key={m} className="flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-300 border border-amber-400/30 streak-badge-pop">
+            <span key={m} className="flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-300 border border-amber-400/30 streak-badge-pop">
               <Award className="w-3 h-3" /> {MILESTONE_LABEL[m]}
             </span>
           ))}
@@ -101,7 +101,7 @@ export function SpendPaceTracker({
                 className="w-full bg-transparent text-lg font-bold tabular-nums text-white outline-none border-b border-white/10 focus:border-cyan-400/60"
               />
             </div>
-            <p className="text-[11px] text-white/55 mt-1">of {formatCurrency(allocation[cat])} allocated</p>
+            <p className="text-xs text-white/55 mt-1">of {formatCurrency(allocation[cat])} allocated</p>
           </div>
         ))}
       </div>

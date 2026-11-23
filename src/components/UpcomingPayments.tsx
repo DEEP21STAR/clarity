@@ -294,7 +294,7 @@ export function UpcomingPayments() {
           <button
             type="button"
             onClick={() => setShowBalanceEdit((v) => !v)}
-            className="mt-3 inline-flex items-center gap-1.5 text-[11px] font-semibold text-cyan-300/70 hover:text-cyan-200 transition-colors"
+            className="mt-3 inline-flex items-center gap-1.5 text-xs font-semibold text-cyan-300/70 hover:text-cyan-200 transition-colors"
           >
             <Pencil className="w-3 h-3" /> {showBalanceEdit ? 'Hide balances' : 'Edit balances'}
           </button>
@@ -304,7 +304,7 @@ export function UpcomingPayments() {
             </div>
           )}
           {view === 'mimi' && (
-            <p className="mt-1 text-[11px] text-white/55">No income data is tracked for Mimi — this view shows $0 income honestly rather than guessing.</p>
+            <p className="mt-1 text-xs text-white/55">No income data is tracked for Mimi — this view shows $0 income honestly rather than guessing.</p>
           )}
 
           {/* Food / Fuel / Personal breakdown — the whole point of this feature */}
@@ -324,7 +324,7 @@ export function UpcomingPayments() {
               onSplitChange={setPersonalSplit}
             />
           </div>
-          <p className="mt-4 text-[11px] text-white/55 flex items-center justify-center gap-1">
+          <p className="mt-4 text-xs text-white/55 flex items-center justify-center gap-1">
             <Info className="w-3 h-3" /> Split is an editable estimate (sliders below) — adjust to match how you actually spend.
           </p>
         </div>
@@ -555,7 +555,7 @@ function QuickAddButton({ onSubmit, accent, glowColor }: { onSubmit: (amount: nu
         aria-label="Add a manual spend"
         style={{ '--quickadd-glow': glowColor } as CSSProperties}
         className={cn(
-          'quickadd-pulse flex items-center gap-1 rounded-full pl-1.5 pr-2.5 py-1.5 text-[11px] font-bold text-black shrink-0 hover:scale-105 active:scale-95 transition-transform',
+          'quickadd-pulse flex items-center gap-1 rounded-full pl-1.5 pr-2.5 py-1.5 text-xs font-bold text-black shrink-0 hover:scale-105 active:scale-95 transition-transform',
           accent
         )}
       >
@@ -609,7 +609,7 @@ function AllocationTile({ label, amount, spent, pct, glowFrom, glowTo, ringColor
           {over && <AlertTriangle className="w-3 h-3 text-rose-400 animate-pulse" />}
           {close && <AlertTriangle className="w-3 h-3 text-amber-300/80" />}
         </span>
-        <span className="text-[10px] text-white/55">{pct}% guide</span>
+        <span className="text-xs text-white/55">{pct}% guide</span>
       </div>
       <div className="mt-2 flex items-center gap-3">
         <RadialGuideRing pct={spentPct} over={over} gradientId={ringId} colors={ringColors} />
@@ -617,7 +617,7 @@ function AllocationTile({ label, amount, spent, pct, glowFrom, glowTo, ringColor
           <div className={cn('text-2xl font-bold tabular-nums text-transparent bg-clip-text bg-gradient-to-r', over ? 'from-rose-400 to-rose-500' : glowFrom, over ? '' : glowTo)}>
             {formatCurrency(remaining)}
           </div>
-          <p className={cn('text-[10px] mt-0.5', over ? 'text-rose-300' : 'text-white/55')}>
+          <p className={cn('text-xs mt-0.5', over ? 'text-rose-300' : 'text-white/55')}>
             {over ? `${formatCurrency(-remaining)} over ` : ''}{formatCurrency(spent)} of {formatCurrency(amount)} spent
           </p>
         </div>
@@ -629,12 +629,12 @@ function AllocationTile({ label, amount, spent, pct, glowFrom, glowTo, ringColor
       </div>
       {pending && (
         <div className="streak-badge-pop mt-2.5 rounded-lg border border-amber-400/30 bg-amber-500/10 p-2.5">
-          <p className="text-[11px] text-amber-200 leading-relaxed">⚠ {pending.message}</p>
+          <p className="text-xs text-amber-200 leading-relaxed">⚠ {pending.message}</p>
           <div className="mt-2 flex items-center gap-2">
-            <button type="button" onClick={() => { onForceAdd(pending.amount); setPending(null) }} className="text-[11px] font-semibold text-amber-100 bg-amber-500/20 hover:bg-amber-500/30 rounded-md px-2.5 py-1 transition-colors">
+            <button type="button" onClick={() => { onForceAdd(pending.amount); setPending(null) }} className="text-xs font-semibold text-amber-100 bg-amber-500/20 hover:bg-amber-500/30 rounded-md px-2.5 py-1 transition-colors">
               Log it anyway
             </button>
-            <button type="button" onClick={() => setPending(null)} className="text-[11px] text-white/55 hover:text-white/70">
+            <button type="button" onClick={() => setPending(null)} className="text-xs text-white/55 hover:text-white/70">
               Cancel
             </button>
           </div>
@@ -707,7 +707,7 @@ function PersonalAllocationTile({
           {over && <AlertTriangle className="w-3 h-3 text-rose-400 animate-pulse" />}
           {close && <AlertTriangle className="w-3 h-3 text-amber-300/80" />}
         </span>
-        <span className="text-[10px] text-white/55">{pct}% guide</span>
+        <span className="text-xs text-white/55">{pct}% guide</span>
       </button>
       <div className="mt-2 flex items-center gap-3">
         <RadialGuideRing pct={spentPct} over={over} gradientId="ring-personal" colors={['#c084fc', '#ec4899']} />
@@ -715,7 +715,7 @@ function PersonalAllocationTile({
           <div className={cn('text-2xl font-bold tabular-nums text-transparent bg-clip-text bg-gradient-to-r', over ? 'from-rose-400 to-rose-500' : 'from-purple-400 to-pink-500')}>
             {formatCurrency(remaining)}
           </div>
-          <p className={cn('text-[10px] mt-0.5', over ? 'text-rose-300' : 'text-white/55')}>
+          <p className={cn('text-xs mt-0.5', over ? 'text-rose-300' : 'text-white/55')}>
             {over ? `${formatCurrency(-remaining)} over ` : ''}{formatCurrency(spent)} of {formatCurrency(amount)} spent
           </p>
         </div>
@@ -727,12 +727,12 @@ function PersonalAllocationTile({
       </div>
       {pending && (
         <div className="streak-badge-pop mt-2.5 rounded-lg border border-amber-400/30 bg-amber-500/10 p-2.5">
-          <p className="text-[11px] text-amber-200 leading-relaxed">⚠ {pending.message}</p>
+          <p className="text-xs text-amber-200 leading-relaxed">⚠ {pending.message}</p>
           <div className="mt-2 flex items-center gap-2">
-            <button type="button" onClick={() => { onForceAdd(pending.amount); setPending(null) }} className="text-[11px] font-semibold text-amber-100 bg-amber-500/20 hover:bg-amber-500/30 rounded-md px-2.5 py-1 transition-colors">
+            <button type="button" onClick={() => { onForceAdd(pending.amount); setPending(null) }} className="text-xs font-semibold text-amber-100 bg-amber-500/20 hover:bg-amber-500/30 rounded-md px-2.5 py-1 transition-colors">
               Log it anyway
             </button>
-            <button type="button" onClick={() => setPending(null)} className="text-[11px] text-white/55 hover:text-white/70">
+            <button type="button" onClick={() => setPending(null)} className="text-xs text-white/55 hover:text-white/70">
               Cancel
             </button>
           </div>
@@ -753,7 +753,7 @@ function PersonalAllocationTile({
             const subAmount = (amount * split[item.key]) / 100
             return (
               <div key={item.key}>
-                <div className="flex items-center justify-between text-[11px] text-white/50">
+                <div className="flex items-center justify-between text-xs text-white/50">
                   <span>{item.label}</span>
                   <span className="tabular-nums text-white/70">{formatCurrency(subAmount)} · {split[item.key]}%</span>
                 </div>
@@ -768,7 +768,7 @@ function PersonalAllocationTile({
               </div>
             )
           })}
-          <p className="pt-1 text-[10px] text-white/55 flex items-start gap-1">
+          <p className="pt-1 text-xs text-white/55 flex items-start gap-1">
             <PiggyBank className="w-3 h-3 shrink-0 mt-0.5" />
             Saving for a holiday? That's tracked as a Savings Goal, not a Personal slice — add it in Savings Goals below.
           </p>
@@ -951,7 +951,7 @@ function BillsManager({ bills, onUpdate, onAdd, onRemove, view, onViewChange, li
                       className="bg-transparent outline-none border-b border-transparent focus:border-cyan-400/50 w-10 tabular-nums"
                     />
                     {bill.dueDayIsEstimate && (
-                      <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-amber-500/15 text-amber-300 border border-amber-500/30">
+                      <span className="text-xs px-1.5 py-0.5 rounded-full bg-amber-500/15 text-amber-300 border border-amber-500/30">
                         estimated
                       </span>
                     )}
@@ -1030,7 +1030,7 @@ function PaymentMethodBadge({ method }: { method: 'direct-debit' | 'manual' }) {
     return (
       <span
         title="Direct debit — taken automatically. No action needed unless funds are short."
-        className="inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded-full border font-medium whitespace-nowrap bg-cyan-500/10 text-cyan-300 border-cyan-400/30"
+        className="inline-flex items-center gap-1 text-xs px-1.5 py-0.5 rounded-full border font-medium whitespace-nowrap bg-cyan-500/10 text-cyan-300 border-cyan-400/30"
       >
         <RefreshCw className="w-2.5 h-2.5" /> Auto-pay
       </span>
@@ -1039,7 +1039,7 @@ function PaymentMethodBadge({ method }: { method: 'direct-debit' | 'manual' }) {
   return (
     <span
       title="You pay this yourself, by the due date — it won't be taken automatically."
-      className="inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded-full border font-medium whitespace-nowrap bg-violet-500/10 text-violet-300 border-violet-400/30"
+      className="inline-flex items-center gap-1 text-xs px-1.5 py-0.5 rounded-full border font-medium whitespace-nowrap bg-violet-500/10 text-violet-300 border-violet-400/30"
     >
       <HandCoins className="w-2.5 h-2.5" /> You pay this
     </span>
@@ -1070,7 +1070,7 @@ function BillSnapshotCard({ bill, delay, highlighted }: { bill: RecurringBill; d
       {bill.frequency === 'monthly' ? (
         <DueBadge dueDateIso={nextMonthlyDueDate(bill.dueDay, todayIso())} />
       ) : (
-        <span className="text-[10px] text-white/55 capitalize">{bill.frequency}</span>
+        <span className="text-xs text-white/55 capitalize">{bill.frequency}</span>
       )}
       <PaymentMethodBadge method={resolvePaymentMethod(bill)} />
     </div>
