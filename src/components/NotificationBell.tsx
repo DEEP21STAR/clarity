@@ -2,7 +2,8 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { useStore } from '@/lib/store'
 import { buildInsightsTicker } from '@/lib/logic'
 import { todayIso } from '@/lib/utils'
-import { Bell, CalendarClock, AlertTriangle } from 'lucide-react'
+import { Bell, CalendarClock, AlertTriangle, Target } from 'lucide-react'
+import { budgetAlerts, computeBudgetRows } from '@/lib/categoryBudgets'
 
 /**
  * #29 — notification bell with an unread-count badge and a dropdown of
@@ -29,8 +30,10 @@ export function NotificationBell() {
       streak: state.streak,
       todayIso: todayIso(),
     })
-    return items.filter((i) => i.type === 'price' || (i.type === 'bill' && i.severity && i.severity !== 'ok'))
-  }, [state.bills, state.periodicBills, state.sinkingFunds, state.healthScoreHistory, state.streak])
+    const fromTicker: { type: string; severity?: string; text: string }[] = items.filter((i) => i.type === 'price' || (i.type === 'bill' && i.severity && i.severity !== 'ok'))
+    const budget = budgetAlerts(computeBudgetRows(state.categoryBudgets ?? {}, state.transactions, todayIso())).map((b) => ({ type: 'budget', severity: b.severity, text: b.text }))
+    return [...fromTicker, ...budget]
+  }, [state.bills, state.periodicBills, state.sinkingFunds, state.healthScoreHistory, state.streak, state.categoryBudgets, state.transactions])
 
   useEffect(() => {
     if (prevCount.current !== null && alerts.length > prevCount.current) {
@@ -55,7 +58,9 @@ export function NotificationBell() {
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        title={`${alerts.length} alert${alerts.length === 1 ? '' : 's'} — price changes and bills due soon`}
+        aria-label={`${alerts.length} alert${alerts.length === 1 ? '' : 's'} — price changes, bills due soon and budgets`}
+        aria-expanded={open}
+        title={`${alerts.length} alert${alerts.length === 1 ? '' : 's'} — price changes, bills due soon and budgets`}
         className="relative text-white/50 hover:text-cyan-300 transition-colors p-1.5"
       >
         <Bell className={`w-4 h-4 ${rung ? 'bell-ring' : ''}`} />
@@ -74,6 +79,8 @@ export function NotificationBell() {
               <div key={i} className="flex items-start gap-2 px-3 py-2 text-sm border-t border-white/5 first:border-t-0">
                 {a.type === 'price' ? (
                   <AlertTriangle className="w-3.5 h-3.5 text-rose-400 mt-0.5 shrink-0" />
+                ) : a.type === 'budget' ? (
+                  <Target className={`w-3.5 h-3.5 mt-0.5 shrink-0 ${a.severity === 'danger' ? 'text-rose-400' : 'text-amber-400'}`} />
                 ) : (
                   <CalendarClock className={`w-3.5 h-3.5 mt-0.5 shrink-0 ${a.severity === 'danger' ? 'text-rose-400' : 'text-amber-400'}`} />
                 )}

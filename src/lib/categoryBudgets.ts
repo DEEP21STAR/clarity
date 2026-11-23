@@ -108,3 +108,17 @@ export function trimSaving(monthly: number, pct = 0.1): { perMonth: number; perY
   const perMonth = Math.round(monthly * pct * 100) / 100
   return { perMonth, perYear: Math.round(perMonth * 12 * 100) / 100 }
 }
+
+export interface BudgetAlert { category: string; severity: 'danger' | 'warn'; text: string }
+
+const alertMoney = (n: number) => '$' + Math.abs(n).toLocaleString('en-NZ', { minimumFractionDigits: 0, maximumFractionDigits: 2 })
+
+/** Bell alerts for categories that are over their target (danger) or running ahead of pace (warn). Over comes first. */
+export function budgetAlerts(rows: readonly BudgetRow[]): BudgetAlert[] {
+  const out: BudgetAlert[] = []
+  for (const r of rows) {
+    if (r.status === 'over') out.push({ category: r.category, severity: 'danger', text: `${r.category} is over its monthly target by ${alertMoney(r.spent - r.target)}.` })
+    else if (r.status === 'watch') out.push({ category: r.category, severity: 'warn', text: `${r.category} is running ahead of pace: ${alertMoney(r.spent)} of ${alertMoney(r.target)} used.` })
+  }
+  return out.sort((a, b) => (a.severity === b.severity ? 0 : a.severity === 'danger' ? -1 : 1))
+}

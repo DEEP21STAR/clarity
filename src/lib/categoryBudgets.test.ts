@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { computeBudgetRows, daysInMonth, previousMonth, spentInMonth, suggestTarget, trimSaving, withBudget } from './categoryBudgets'
+import { computeBudgetRows, daysInMonth, previousMonth, spentInMonth, budgetAlerts, suggestTarget, trimSaving, withBudget } from './categoryBudgets'
 import type { Transaction } from './types'
 
 const tx = (date: string, amount: number, category: string, id = `${date}-${amount}-${category}`): Transaction => ({ id, date, amount, description: category, category, mode: 'personal' } as Transaction)
@@ -89,5 +89,20 @@ describe('trimSaving', () => {
     expect(trimSaving(-5)).toBeNull()
     expect(trimSaving(100, 0)).toBeNull()
     expect(trimSaving(100, 1)).toBeNull()
+  })
+})
+
+describe('budgetAlerts', () => {
+  const row = (category: string, status: 'ok' | 'watch' | 'over' | 'unset', spent: number, target: number) => ({ category, status, spent, target } as never)
+  it('lists over-target categories first, then ahead-of-pace ones, and ignores the rest', () => {
+    const a = budgetAlerts([row('Food', 'watch', 90, 100), row('Fuel', 'over', 143, 120), row('Fun', 'ok', 5, 100), row('Misc', 'unset', 0, 0)])
+    expect(a.map((x) => x.text)).toEqual([
+      'Fuel is over its monthly target by $23.',
+      'Food is running ahead of pace: $90 of $100 used.',
+    ])
+    expect(a.map((x) => x.severity)).toEqual(['danger', 'warn'])
+  })
+  it('is empty when everything is fine', () => {
+    expect(budgetAlerts([row('Food', 'ok', 10, 100)])).toEqual([])
   })
 })

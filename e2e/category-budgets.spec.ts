@@ -35,6 +35,15 @@ for (const [vpName, vp] of Object.entries(VIEWPORTS)) {
   test.describe(`category budgets @ ${vpName}`, () => {
     test.use({ viewport: vp })
 
+    test('the bell warns about an over-target category', async ({ page }) => {
+      await open(page)
+      const fuel = page.getByRole('listitem').filter({ has: page.getByLabel('Fuel monthly target') })
+      await fuel.getByLabel('Fuel monthly target').fill('25') // $30 already spent this month -> over by $5
+      await fuel.getByLabel('Fuel monthly target').press('Enter')
+      await page.getByRole('button', { name: /alerts? — price changes/ }).click()
+      await expect(page.getByText('Fuel is over its monthly target by $5.')).toBeVisible()
+    })
+
     test('suggestions, typed targets, live status and carry-forward', async ({ page }) => {
       await open(page)
       const food = page.getByRole('listitem').filter({ hasText: 'Food' }).filter({ has: page.getByLabel('Food monthly target') })
