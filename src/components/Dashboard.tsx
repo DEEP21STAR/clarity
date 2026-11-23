@@ -31,9 +31,9 @@ import { GettingStartedCard } from './GettingStartedCard'
  * splitting of a string that stays a single tested value in logic.ts.
  */
 function renderHeadline(headline: string): ReactNode {
-  const parts = headline.split(/(\$[\d.]+|\d+\/100)/g)
+  const parts = headline.split(/(\$[\d,]+(?:\.\d+)?|\d+\/100)/g)
   return parts.map((part, i) =>
-    /^(\$[\d.]+|\d+\/100)$/.test(part) ? (
+    /^(\$[\d,]+(?:\.\d+)?|\d+\/100)$/.test(part) ? (
       <span key={i} className="gradient-heading font-bold">{part}</span>
     ) : (
       <span key={i}>{part}</span>

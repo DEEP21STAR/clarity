@@ -52,7 +52,7 @@ describe('buildInsightsTicker — real rotating content from the actual data mod
   it('flags a real price change, using the actual old/new amounts, tagged as a price-type item', () => {
     const changed: RecurringBill = { ...bills[0], previousAmount: 1800 }
     const items = buildInsightsTicker({ bills: [changed], periodicBills: [], sinkingFunds: [], healthScoreHistory: [], streak: { current: 0, best: 0, lastCheckedDate: '', milestonesHit: [] }, todayIso: '2026-09-10' })
-    const priceItem = items.find((m) => m.text === 'Rent changed from $1800.00 to $1960.00')
+    const priceItem = items.find((m) => m.text === 'Rent changed from $1,800.00 to $1,960.00')
     expect(priceItem).toBeDefined()
     expect(priceItem!.type).toBe('price')
   })
@@ -96,6 +96,12 @@ describe('buildDashboardHeadline — plain-language sentence computed from real 
     const headline = buildDashboardHeadline(500, 70, breakdown)
     expect(headline).toContain('$500.00 ahead')
     expect(headline).toContain('your emergency fund')
+  })
+
+  it('groups thousands like every other dollar figure', () => {
+    expect(buildDashboardHeadline(1534.21, 62, breakdown)).toContain('$1,534.21 ahead')
+    expect(buildDashboardHeadline(1234567.5, 62, breakdown)).toContain('$1,234,567.50 ahead')
+    expect(buildDashboardHeadline(-2500, 40, breakdown)).toContain('by $2,500.00 this month')
   })
 
   it('flips to a "behind" framing when leftover is negative, still naming the real weakest area', () => {

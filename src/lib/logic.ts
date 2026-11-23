@@ -472,7 +472,7 @@ export function generateInsights(params: {
 
   const savingsRate = monthlyIncome > 0 ? (monthlyIncome - monthlyExpenses) / monthlyIncome : 0
   if (savingsRate < 0) {
-    insights.push({ id: 'overspend', severity: 'critical', message: `Spending exceeds income by $${Math.abs(round2((monthlyExpenses - monthlyIncome))).toFixed(2)} this month.` })
+    insights.push({ id: 'overspend', severity: 'critical', message: `Spending exceeds income by $${money2(Math.abs(round2((monthlyExpenses - monthlyIncome))))} this month.` })
   } else if (savingsRate < 0.1) {
     insights.push({ id: 'low-savings-rate', severity: 'warning', message: `Savings rate is ${(savingsRate * 100).toFixed(1)}% — under the healthy 10-20% guideline.` })
   } else {
@@ -1778,7 +1778,7 @@ export function buildInsightsTicker(inputs: InsightsTickerInputs): TickerItem[] 
   // Real price-increase flags.
   for (const b of bills) {
     if (isBillAmountChanged(b)) {
-      items.push({ type: 'price', text: `${b.name} changed from $${b.previousAmount!.toFixed(2)} to $${b.amount.toFixed(2)}` })
+      items.push({ type: 'price', text: `${b.name} changed from $${money2(b.previousAmount!)} to $${money2(b.amount)}` })
     }
   }
 
@@ -1797,12 +1797,15 @@ const HEALTH_BREAKDOWN_LABEL: Record<string, string> = {
   emergencyFund: 'your emergency fund',
 }
 
+/** 1234.5 -> "1,234.50" (the same grouping every other dollar figure in the app uses). */
+const money2 = (n: number) => n.toLocaleString('en-NZ', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+
 export function buildDashboardHeadline(leftover: number, score: number, breakdown: HealthScoreResult['breakdown']): string {
   const weakest = Object.entries(breakdown).sort((a, b) => a[1] - b[1])[0]
   const weakestLabel = HEALTH_BREAKDOWN_LABEL[weakest[0]] ?? 'your finances'
 
   if (leftover < 0) {
-    return `You're behind — fixed bills exceed net income by $${Math.abs(round2(leftover)).toFixed(2)} this month. ${weakestLabel[0].toUpperCase()}${weakestLabel.slice(1)} needs the most attention.`
+    return `You're behind — fixed bills exceed net income by $${money2(Math.abs(round2(leftover)))} this month. ${weakestLabel[0].toUpperCase()}${weakestLabel.slice(1)} needs the most attention.`
   }
-  return `You're $${round2(leftover).toFixed(2)} ahead after fixed bills this month (health score ${score}/100) — ${weakestLabel} is your biggest opportunity.`
+  return `You're $${money2(round2(leftover))} ahead after fixed bills this month (health score ${score}/100) — ${weakestLabel} is your biggest opportunity.`
 }
