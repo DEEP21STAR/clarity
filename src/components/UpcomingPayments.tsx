@@ -612,9 +612,9 @@ function AllocationTile({ label, amount, spent, pct, glowFrom, glowTo, ringColor
         </span>
         <span className="text-xs text-white/55">{pct}% guide</span>
       </div>
-      <div className="mt-2 flex items-center gap-3">
+      <div className="mt-2 flex flex-wrap items-center gap-3">
         <RadialGuideRing pct={spentPct} over={over} gradientId={ringId} colors={ringColors} />
-        <div className="flex-1 min-w-0">
+        <div className="flex-1 min-w-[9rem]">
           <div className={cn('text-2xl font-bold tabular-nums text-transparent bg-clip-text bg-gradient-to-r', over ? 'from-rose-400 to-rose-500' : glowFrom, over ? '' : glowTo)}>
             {formatCurrency(remaining)}
           </div>
@@ -710,9 +710,9 @@ function PersonalAllocationTile({
         </span>
         <span className="text-xs text-white/55">{pct}% guide</span>
       </button>
-      <div className="mt-2 flex items-center gap-3">
+      <div className="mt-2 flex flex-wrap items-center gap-3">
         <RadialGuideRing pct={spentPct} over={over} gradientId="ring-personal" colors={['#c084fc', '#ec4899']} />
-        <div className="flex-1 min-w-0">
+        <div className="flex-1 min-w-[9rem]">
           <div className={cn('text-2xl font-bold tabular-nums text-transparent bg-clip-text bg-gradient-to-r', over ? 'from-rose-400 to-rose-500' : 'from-purple-400 to-pink-500')}>
             {formatCurrency(remaining)}
           </div>
