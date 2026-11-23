@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import { MoneyField } from '@/components/MoneyField'
 import { LineChart, Line, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer, CartesianGrid } from 'recharts'
 import { useStore } from '@/lib/store'
 import { StatCard } from './StatCard'
@@ -211,7 +212,7 @@ export function Debts() {
                 {isCardDebt ? (
                   <span className="w-24 tabular-nums text-right text-white/85">{formatCurrency(debt.balance)}</span>
                 ) : (
-                  <input type="number" step="0.01" aria-label={`${debt.name} balance`} value={debt.balance} onChange={(e) => updateDebt(debt.id, { balance: parseFloat(e.target.value) || 0 })} className="bg-transparent outline-none w-24 tabular-nums text-right" />
+                  <MoneyField label={`${debt.name} balance`} value={debt.balance} onChange={(v) => updateDebt(debt.id, { balance: v })} className="bg-transparent outline-none w-24 tabular-nums text-right" />
                 )}
                 <div className="flex items-center gap-1 w-20 justify-end">
                   {isCardDebt ? (
