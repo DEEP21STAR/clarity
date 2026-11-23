@@ -26,8 +26,12 @@ export async function clearCachesAndReload(): Promise<void> {
  * A missing lazily loaded file (stale cache right after an update) is retried once automatically; anything else shows a plain message.
  * Your data is not touched: it lives in this browser's storage, not in the cached app.
  */
-export class ErrorBoundary extends Component<{ children: ReactNode }, { error: Error | null }> {
+export class ErrorBoundary extends Component<{ children: ReactNode; /** change this (e.g. the active tab) to clear a shown error */ resetKey?: string; /** a card inside the page instead of a full-screen panel, so the rest of the app stays usable */ inline?: boolean }, { error: Error | null }> {
   state = { error: null as Error | null }
+
+  componentDidUpdate(prev: { resetKey?: string }) {
+    if (this.state.error && prev.resetKey !== this.props.resetKey) this.setState({ error: null })
+  }
 
   static getDerivedStateFromError(error: Error) {
     return { error }
@@ -43,8 +47,9 @@ export class ErrorBoundary extends Component<{ children: ReactNode }, { error: E
   render() {
     const { error } = this.state
     if (!error) return this.props.children
+    const { inline } = this.props
     return (
-      <div role="alert" className="flex min-h-screen items-center justify-center bg-[#05060a] px-6 text-center text-white">
+      <div role="alert" className={inline ? 'flex items-center justify-center rounded-2xl border border-white/10 bg-white/[0.04] px-6 py-12 text-center text-white' : 'flex min-h-screen items-center justify-center bg-[#05060a] px-6 text-center text-white'}>
         <div className="max-w-md space-y-4">
           <h1 className="text-xl font-bold">Clarity couldn't load this screen</h1>
           <p className="text-sm leading-relaxed text-white/70">

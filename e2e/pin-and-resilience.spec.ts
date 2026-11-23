@@ -60,4 +60,17 @@ test.describe('a tab file that fails to load must never leave a blank screen', (
     await expect(page.getByRole('button', { name: 'Reload' })).toBeVisible()
     expect((await page.locator('body').innerText()).trim().length).toBeGreaterThan(50)
   })
+
+  test('one broken screen leaves the navigation usable, and switching tab clears the message', async ({ page }) => {
+    await page.addInitScript(quietBoot); await page.addInitScript(unlocked)
+    await page.route(/\/assets\/Budgets-[^/]*\.js/, (route) => route.abort())
+    await page.goto('./?tab=budgets')
+    await expect(page.getByRole('heading', { name: /couldn.t load this screen/i })).toBeVisible({ timeout: 15000 })
+    // the header navigation is still there (a full-screen error panel would have replaced it)
+    const dashboardTab = page.getByRole('button', { name: /^Dashboard$/ }).first()
+    await expect(dashboardTab).toBeVisible()
+    await dashboardTab.click()
+    await expect(page.getByRole('heading', { name: 'Dashboard' }).first()).toBeVisible({ timeout: 15000 })
+    await expect(page.getByRole('heading', { name: /couldn.t load this screen/i })).toHaveCount(0)
+  })
 })

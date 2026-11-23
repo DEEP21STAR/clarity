@@ -1,4 +1,5 @@
 import { lazy, Suspense, useEffect, useMemo, useRef, useState, type CSSProperties } from 'react'
+import { ErrorBoundary } from './components/ErrorBoundary'
 import { StoreProvider, useStore, STORAGE_KEY } from '@/lib/store'
 import { BootSequence } from './components/BootSequence'
 import { greetingFor } from '@/lib/bootMode'
@@ -467,6 +468,8 @@ export function AppContent() {
           </nav>
         </header>
         <main ref={mainRef} className="max-w-6xl mx-auto px-4 pt-8 pb-8 md:pb-28 page-enter">
+          {/* a failure in one screen shows a card here and leaves the header and navigation usable; switching tab clears it */}
+          <ErrorBoundary inline resetKey={tab}>
           <Suspense fallback={<TabSkeleton />}>
           {tab === 'dashboard' && <Dashboard />}
           {tab === 'home' && renderTabContent('home')}
@@ -479,6 +482,7 @@ export function AppContent() {
           {tab === 'shopping' && <ShoppingExpenses />}
           {tab === 'tools' && <Tools />}
           </Suspense>
+          </ErrorBoundary>
         </main>
         {tab !== 'home' && <WhetuFooter name={state.primaryName} />}
       </div>
