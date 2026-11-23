@@ -72,7 +72,7 @@ export function MobileNavDrawer({ open, onClose, tabs, activeTab, accents, onSel
             type="button"
             onClick={onClose}
             aria-label="Close menu"
-            className="w-8 h-8 flex items-center justify-center rounded-lg text-white/40 hover:text-white hover:bg-white/5 transition-colors"
+            className="w-8 h-8 flex items-center justify-center rounded-lg text-white/55 hover:text-white hover:bg-white/5 transition-colors"
           >
             <X className="w-4 h-4" />
           </button>
@@ -86,7 +86,7 @@ export function MobileNavDrawer({ open, onClose, tabs, activeTab, accents, onSel
               if (items.length === 0) return null
               return (
                 <div key={g.label} role="group" aria-label={g.label} className="mb-1">
-                  <div className="px-3 pt-3 pb-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-white/35">{g.label}</div>
+                  <div className="px-3 pt-3 pb-1 text-xs font-semibold uppercase tracking-[0.14em] text-white/55">{g.label}</div>
                   {items.map((t) => {
                     const Icon = t.icon
                     const isActive = activeTab === t.id
@@ -115,7 +115,7 @@ export function MobileNavDrawer({ open, onClose, tabs, activeTab, accents, onSel
             })
           })()}
         </nav>
-        <div className="px-4 py-3 border-t border-white/10 text-[10px] text-white/30">
+        <div className="px-4 py-3 border-t border-white/10 text-xs text-white/55">
           Deep + Mimi · Clarity
         </div>
       </div>

@@ -1,10 +1,13 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { Menu, Plus, X, ArrowDownLeft, ArrowUpRight, Wallet, ChevronRight, AlertTriangle, CheckCircle2, Info } from 'lucide-react'
 import { useStore } from '@/lib/store'
 import { CountUp } from './CountUp'
 import { BillIcon } from './BillIcons'
 import { computeSafeToSpend } from '@/lib/safeToSpend'
+import { readLastCategory, writeLastCategory } from '@/lib/quickAddMemory'
+import { haptic } from '@/lib/haptics'
+import { WeeklyReviewCard } from './WeeklyReviewCard'
 import { computeLiveFunds, applyQuickEntry, undoQuickEntry, type QuickEntry, type QuickCategory } from '@/lib/liveFunds'
 import { addDaysIso, daysBetweenIso, incomeOnDate, nextMonthlyDueDate, nzNetIncome, auNetIncome, monthlyEquivalent, generateInsights } from '@/lib/logic'
 import { cn, formatCurrency, formatShortDate, todayIso } from '@/lib/utils'
@@ -127,13 +130,15 @@ export function MobileHome({ onOpenMenu, onNavigate }: { onOpenMenu: () => void;
                   <span className={cn('text-base font-bold tabular-nums', e.amount > 0 ? 'text-emerald-300' : 'text-amber-200')}>
                     {e.amount > 0 ? '+' : '−'}{formatCurrency(Math.abs(e.amount))}
                   </span>
-                  <ChevronRight className="w-4 h-4 text-white/40 shrink-0" />
+                  <ChevronRight className="w-4 h-4 text-white/55 shrink-0" />
                 </button>
               </li>
             ))}
           </ul>
         )}
       </section>
+
+      <WeeklyReviewCard />
 
       <section aria-label="Next bills">
         <h3 className="text-base font-bold text-white mb-2">Next bills</h3>
@@ -150,7 +155,7 @@ export function MobileHome({ onOpenMenu, onNavigate }: { onOpenMenu: () => void;
                     <span className="block text-sm text-white/65">{b.days === 0 ? 'Due today' : b.days === 1 ? 'Due in 1 day' : `Due in ${b.days} days`} · {formatShortDate(b.date)}</span>
                   </span>
                   <span className="text-base font-bold tabular-nums text-amber-200">{formatCurrency(b.amount)}</span>
-                  <ChevronRight className="w-4 h-4 text-white/40 shrink-0" />
+                  <ChevronRight className="w-4 h-4 text-white/55 shrink-0" />
                 </button>
               </li>
             ))}
@@ -201,12 +206,15 @@ export function MobileHome({ onOpenMenu, onNavigate }: { onOpenMenu: () => void;
   )
 }
 
-function AddSheet({ today, onClose, onSave }: { today: string; onClose: () => void; onSave: (e: QuickEntry) => void }) {
+export function AddSheet({ today, onClose, onSave }: { today: string; onClose: () => void; onSave: (e: QuickEntry) => void }) {
   const [kind, setKind] = useState<'expense' | 'income'>('expense')
   const [amount, setAmount] = useState('')
   const [desc, setDesc] = useState('')
   const [date, setDate] = useState(today)
-  const [cat, setCat] = useState<QuickCategory>('personal')
+  const [cat, setCat] = useState<QuickCategory>(() => readLastCategory(typeof window === 'undefined' ? undefined : window.localStorage) ?? 'personal')
+  const amountRef = useRef<HTMLInputElement>(null)
+  // Open ready to type: the amount is what you came here to enter.
+  useEffect(() => { const t = setTimeout(() => amountRef.current?.focus(), 60); return () => clearTimeout(t) }, [])
   useEffect(() => {
     const prev = document.body.style.overflow
     document.body.style.overflow = 'hidden'
@@ -214,9 +222,18 @@ function AddSheet({ today, onClose, onSave }: { today: string; onClose: () => vo
   }, [])
   const amt = parseFloat(amount)
   const valid = amt > 0
+  const submit = () => {
+    if (!valid) return
+    if (kind === 'expense') writeLastCategory(window.localStorage, cat)
+    haptic('success')
+    onSave({ kind, amount: amt, description: desc.trim(), date, category: kind === 'expense' ? cat : undefined })
+  }
   const field = 'w-full rounded-xl border border-white/15 bg-black/40 px-3 min-h-12 text-base text-white outline-none focus:border-cyan-400/70'
   return (
-    <div className="fixed inset-0 z-[70]" role="dialog" aria-modal="true" aria-label="Add entry">
+    <div className="fixed inset-0 z-[70]" role="dialog" aria-modal="true" aria-label="Add entry" onKeyDown={(e) => {
+      if (e.key === 'Escape') onClose()
+      if (e.key === 'Enter' && (e.target as HTMLElement).tagName === 'INPUT') { e.preventDefault(); submit() }
+    }}>
       <div className="absolute inset-0 bg-black/70" onClick={onClose} aria-hidden="true" />
       <div className="absolute inset-x-0 bottom-0 rounded-t-3xl border-t border-white/15 bg-[#0b0d14] p-5 space-y-4" style={{ paddingBottom: 'calc(1.25rem + env(safe-area-inset-bottom))' }}>
         <div className="flex items-center justify-between">
@@ -234,13 +251,13 @@ function AddSheet({ today, onClose, onSave }: { today: string; onClose: () => vo
         {kind === 'expense' && (
           <div role="group" aria-label="Category" className="flex gap-2 overflow-x-auto -mx-1 px-1 pb-1">
             {([['food', 'Food'], ['fuel', 'Fuel'], ['personal', 'Personal'], ['general', 'General'], ['extraUsage', 'Extra usage']] as const).map(([k, l]) => (
-              <button key={k} type="button" aria-pressed={cat === k} onClick={() => setCat(k)}
+              <button key={k} type="button" aria-pressed={cat === k} onClick={() => { haptic('tap'); setCat(k) }}
                 className={cn('shrink-0 rounded-full border px-4 min-h-11 text-sm font-semibold', cat === k ? 'bg-cyan-400/20 border-cyan-300 text-cyan-100' : 'border-white/15 text-white/70')}>{l}</button>
             ))}
           </div>
         )}
         <label className="block text-sm font-semibold text-white/80">Amount ($)
-          <input className={cn(field, 'mt-1 text-2xl font-bold tabular-nums')} type="number" inputMode="decimal" step="0.01" placeholder="0.00" value={amount} onChange={(e) => setAmount(e.target.value)} autoFocus />
+          <input ref={amountRef} className={cn(field, 'mt-1 text-2xl font-bold tabular-nums')} type="number" inputMode="decimal" step="0.01" placeholder="0.00" value={amount} onChange={(e) => setAmount(e.target.value)} autoFocus />
         </label>
         <label className="block text-sm font-semibold text-white/80">Description
           <input className={cn(field, 'mt-1')} type="text" placeholder={kind === 'expense' ? 'e.g. Lunch' : 'e.g. Refund'} value={desc} onChange={(e) => setDesc(e.target.value)} />
@@ -249,7 +266,7 @@ function AddSheet({ today, onClose, onSave }: { today: string; onClose: () => vo
           <input className={cn(field, 'mt-1')} type="date" value={date} onChange={(e) => setDate(e.target.value || today)} />
         </label>
         {date > today && <p className="text-sm text-white/60">Future date: goes into the forecast only; Live Funds changes when the day arrives.</p>}
-        <button type="button" disabled={!valid} onClick={() => onSave({ kind, amount: amt, description: desc.trim(), date, category: kind === 'expense' ? cat : undefined })}
+        <button type="button" disabled={!valid} onClick={submit}
           className="w-full rounded-xl min-h-14 text-base font-extrabold text-black bg-gradient-to-r from-cyan-400 to-purple-500 disabled:opacity-40">
           Save {kind}
         </button>

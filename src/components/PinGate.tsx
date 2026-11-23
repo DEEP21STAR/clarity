@@ -3,7 +3,7 @@ import gsap from 'gsap'
 import { CLARITY_PIN } from '@/lib/constants'
 import { Lock } from 'lucide-react'
 import { useStore } from '@/lib/store'
-import { AmbientBackground } from './AmbientBackground'
+import { AmbientBackground } from './LazyAmbient'
 
 // ALWAYS sessionStorage, NEVER localStorage — iOS Safari kills localStorage
 // in private browsing, per the same rule every other Whetū Digital dashboard
@@ -83,7 +83,7 @@ export function PinGate({ children }: { children: React.ReactNode }) {
           <Lock className="w-6 h-6" style={{ color: 'var(--theme-1)' }} />
         </div>
         <h1 className="gradient-heading text-xl font-bold tracking-tight mb-1">Clarity</h1>
-        <p className="text-xs text-white/40 mb-6">Enter your PIN</p>
+        <p className="text-xs text-white/55 mb-6">Enter your PIN</p>
 
         <div className={`pin-dots flex justify-center gap-3 mb-8 ${error ? 'text-rose-400' : ''}`}>
           {[0, 1, 2, 3].map((i) => (

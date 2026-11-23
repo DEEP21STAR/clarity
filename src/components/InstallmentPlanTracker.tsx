@@ -52,17 +52,17 @@ export function InstallmentPlanCard({ plan, delay = 0, expiredPlanRate = 0 }: { 
       <div className="flex items-start justify-between gap-2">
         <span className="text-sm font-medium text-white/85">{plan.name}</span>
         {severity === 'red' && (
-          <span className="flex items-center gap-1 text-[10px] font-bold uppercase tracking-wide px-2 py-0.5 rounded-full bg-rose-500/20 text-rose-300 border border-rose-500/40 shrink-0">
+          <span className="flex items-center gap-1 text-xs font-bold uppercase tracking-wide px-2 py-0.5 rounded-full bg-rose-500/20 text-rose-300 border border-rose-500/40 shrink-0">
             <Flame className="w-3 h-3" /> Active High-Interest
           </span>
         )}
         {severity === 'amber' && (
-          <span className="flex items-center gap-1 text-[10px] font-bold uppercase tracking-wide px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-300 border border-amber-400/40 shrink-0">
+          <span className="flex items-center gap-1 text-xs font-bold uppercase tracking-wide px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-300 border border-amber-400/40 shrink-0">
             <AlertTriangle className="w-3 h-3" /> Expiry Risk
           </span>
         )}
         {severity === 'normal' && (
-          <span className="flex items-center gap-1 text-[10px] font-medium uppercase tracking-wide px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-300/80 border border-emerald-400/20 shrink-0">
+          <span className="flex items-center gap-1 text-xs font-medium uppercase tracking-wide px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-300/80 border border-emerald-400/20 shrink-0">
             <CheckCircle2 className="w-3 h-3" /> On Track
           </span>
         )}
@@ -84,9 +84,9 @@ export function InstallmentPlanCard({ plan, delay = 0, expiredPlanRate = 0 }: { 
         <div className="flex-1 min-w-0">
           <div className="flex items-baseline justify-between text-sm">
             <span className="text-white/50">
-              {formatCurrency(plan.remaining)} <span className="text-white/30">of {formatCurrency(plan.total)}</span>
+              {formatCurrency(plan.remaining)} <span className="text-white/55">of {formatCurrency(plan.total)}</span>
             </span>
-            <span className="text-white/40 text-xs shrink-0">
+            <span className="text-white/55 text-xs shrink-0">
               {plan.expired ? 'expired' : `${plan.monthsRemaining}/${plan.monthsTotal} mo left`}
             </span>
           </div>
@@ -97,20 +97,20 @@ export function InstallmentPlanCard({ plan, delay = 0, expiredPlanRate = 0 }: { 
       </div>
 
       {plan.remaining > plan.total && (
-        <p className="mt-2 text-[11px] text-rose-300">
+        <p className="mt-2 text-xs text-rose-300">
           Balance now exceeds the original plan total — interest has already accrued since expiry.
         </p>
       )}
 
       {!plan.expired && (
-        <p className={cn('mt-2 text-[11px]', severity === 'amber' ? 'text-amber-300' : 'text-white/40')}>
+        <p className={cn('mt-2 text-xs', severity === 'amber' ? 'text-amber-300' : 'text-white/55')}>
           Needs ~{formatCurrency(monthly)}/mo to clear on schedule.
         </p>
       )}
 
       <button
         onClick={() => setShowWhatIf((v) => !v)}
-        className="mt-2 flex items-center gap-1 text-[11px] text-cyan-300/80 hover:text-cyan-200"
+        className="mt-2 flex items-center gap-1 text-xs text-cyan-300/80 hover:text-cyan-200"
       >
         <Sliders className="w-3 h-3" /> {showWhatIf ? 'Hide' : 'What if I paid extra?'}
       </button>
@@ -126,12 +126,12 @@ export function InstallmentPlanCard({ plan, delay = 0, expiredPlanRate = 0 }: { 
             onChange={(e) => setExtra(Number(e.target.value))}
             className="w-full mt-2 accent-cyan-400"
           />
-          <p className="mt-2 text-[11px] text-white/60">
+          <p className="mt-2 text-xs text-white/60">
             {Number.isFinite(payoff.months)
               ? <>Payoff in <strong className="text-white">{payoff.months} mo</strong> (was {baselinePayoff.months} mo){plan.expired && <> · interest paid ~{formatCurrency(payoff.totalInterest)}</>}</>
               : 'Add a payment amount to see a payoff estimate.'}
           </p>
-          {plan.expired && <p className="mt-1 text-[10px] text-white/30">Expired-plan estimate assumes a baseline payment of max($25, 2% of balance) plus your extra — Latitude doesn't expose a real per-plan minimum once expired.</p>}
+          {plan.expired && <p className="mt-1 text-xs text-white/55">Expired-plan estimate assumes a baseline payment of max($25, 2% of balance) plus your extra — Latitude doesn't expose a real per-plan minimum once expired.</p>}
         </div>
       )}
     </div>
@@ -166,15 +166,15 @@ export function CreditCardAccountPanel({ card, delay = 0 }: { card: CreditCardAc
     <StatCard label={card.name} glow="purple" delay={delay}>
       <div className="mt-4 grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
         <div>
-          <div className="text-xs text-white/40 uppercase tracking-wide">Balance</div>
+          <div className="text-xs text-white/55 uppercase tracking-wide">Balance</div>
           <div className="text-lg font-bold tabular-nums text-white">{formatCurrency(card.balance)}</div>
         </div>
         <div>
-          <div className="text-xs text-white/40 uppercase tracking-wide">Available</div>
+          <div className="text-xs text-white/55 uppercase tracking-wide">Available</div>
           <div className="text-lg font-bold tabular-nums text-cyan-300">{formatCurrency(card.availableToSpend)}</div>
         </div>
         <div>
-          <div className="text-xs text-white/40 uppercase tracking-wide">Min Payment</div>
+          <div className="text-xs text-white/55 uppercase tracking-wide">Min Payment</div>
           {card.minPayment > 0 ? (
             <div className="flex items-center gap-2 mt-1">
               <RadialProgress
@@ -190,7 +190,7 @@ export function CreditCardAccountPanel({ card, delay = 0 }: { card: CreditCardAc
                 ) : (
                   <>
                     <div className="text-lg font-bold tabular-nums text-amber-300">{formatCurrency(minStatus.remaining)}</div>
-                    <div className="text-[10px] text-white/35">of {formatCurrency(card.minPayment)} still owed this cycle</div>
+                    <div className="text-xs text-white/55">of {formatCurrency(card.minPayment)} still owed this cycle</div>
                   </>
                 )}
               </div>
@@ -205,7 +205,7 @@ export function CreditCardAccountPanel({ card, delay = 0 }: { card: CreditCardAc
           )}
         </div>
         <div>
-          <div className="text-xs text-white/40 uppercase tracking-wide">Expired Plan Rate</div>
+          <div className="text-xs text-white/55 uppercase tracking-wide">Expired Plan Rate</div>
           <div className="text-lg font-bold tabular-nums text-rose-300">{(card.rates.expiredPlanRate * 100).toFixed(2)}% p.a.</div>
         </div>
       </div>
@@ -271,9 +271,9 @@ export function DeviceRepaymentCard({
           ) : (
             formatCurrency(device.monthlyAmount)
           )}
-          <span className="text-sm text-white/40">/mo</span>
+          <span className="text-sm text-white/55">/mo</span>
         </span>
-        <span className="text-white/40 text-xs flex items-center gap-1">
+        <span className="text-white/55 text-xs flex items-center gap-1">
           {paidOff ? (
             <span className="text-emerald-300 font-medium">Paid off</span>
           ) : onUpdate ? (
@@ -306,19 +306,19 @@ export function DeviceRepaymentCard({
           color={paidOff ? '#34d399' : '#22d3ee'}
           size={56}
           strokeWidth={5}
-          centerLabel={<span className="text-[11px] font-bold tabular-nums text-white">{Math.round(progress)}%</span>}
+          centerLabel={<span className="text-xs font-bold tabular-nums text-white">{Math.round(progress)}%</span>}
         />
         <div className="flex-1 min-w-0">
           <div className="h-2 rounded-full bg-white/5 overflow-hidden">
             <div className="h-full rounded-full bg-gradient-to-r from-cyan-400 to-purple-500" style={{ width: `${progress}%` }} />
           </div>
-          <p className="mt-2 text-xs text-white/40">{formatCurrency(device.remaining)} remaining — plain repayment, no interest.</p>
+          <p className="mt-2 text-xs text-white/55">{formatCurrency(device.remaining)} remaining — plain repayment, no interest.</p>
         </div>
       </div>
       <div className="mt-2 flex items-center justify-between gap-2">
         <RecordPaymentButton targetType="deviceRepayment" targetId={device.id} targetLabel={device.name} defaultAmount={device.monthlyAmount} />
         {onRemove && (
-          <button onClick={onRemove} title="Remove this device repayment" className="text-white/30 hover:text-rose-400 shrink-0">
+          <button onClick={onRemove} title="Remove this device repayment" className="text-white/55 hover:text-rose-400 shrink-0">
             <Trash2 className="w-3.5 h-3.5" />
           </button>
         )}

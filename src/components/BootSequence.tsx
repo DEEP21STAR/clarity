@@ -11,6 +11,9 @@ interface Particle {
   sy: number
   size: number
   hue: number
+  /** Where this particle lands in the header logo during the handoff. */
+  lx?: number
+  ly?: number
 }
 
 /**
@@ -73,12 +76,14 @@ function sampleDollarSignPoints(rawWidth: number, rawHeight: number, count: numb
   return points
 }
 
-export function BootSequence({ onDone }: { onDone: () => void }) {
+export function BootSequence({ onDone, greeting }: { onDone: () => void; greeting?: string }) {
   const ref = useRef<HTMLDivElement>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
+  const bgRef = useRef<HTMLDivElement>(null)
   const [visible, setVisible] = useState(true)
   const progressRef = useRef({ t: 0 }) // 0 = scattered, 1 = fully formed
   const burstRef = useRef({ p: -1 }) // shockwave ring progress; -1 = not triggered yet
+  const handoffRef = useRef({ t: 0 }) // 0 = particles forming the glyph, 1 = settled into the header logo
 
   useEffect(() => {
     const canvas = canvasRef.current
@@ -152,7 +157,7 @@ export function BootSequence({ onDone }: { onDone: () => void }) {
       // only happened to clear each other on some screens.
       glyphBoxSize = Math.min(Math.max(w, h) * 0.85, h * 0.58)
       glyphOffsetX = w / 2 - glyphBoxSize / 2
-      glyphOffsetY = h * 0.3 - glyphBoxSize / 2
+      glyphOffsetY = h * 0.38 - glyphBoxSize / 2 // lower than before so the "$" and the wordmark block read as one centred composition
       glyphCenterX = w / 2
       glyphCenterY = glyphOffsetY + glyphBoxSize / 2
       const targets = sampleDollarSignPoints(glyphBoxSize, glyphBoxSize, 460)
@@ -202,8 +207,13 @@ export function BootSequence({ onDone }: { onDone: () => void }) {
       // accumulated a full-strength glow every frame instead of just fading dark. Must reset
       // before the plain background fill, every frame.
       ctx.shadowBlur = 0
-      ctx.fillStyle = 'rgba(5,6,10,0.22)'
-      ctx.fillRect(0, 0, w, h)
+      if (handoffRef.current.t > 0) {
+        // Handoff: the canvas goes transparent so the real app shows through as the backdrop fades.
+        ctx.clearRect(0, 0, w, h)
+      } else {
+        ctx.fillStyle = 'rgba(5,6,10,0.22)'
+        ctx.fillRect(0, 0, w, h)
+      }
       const t = progressRef.current.t
       // Ease the convergence (cubic ease-out) so particles decelerate into place rather than
       // arriving linearly — reads as "settling," not sliding.
@@ -221,16 +231,22 @@ export function BootSequence({ onDone }: { onDone: () => void }) {
       for (const p of particles) {
         p.x = p.sx + (p.tx - p.sx) * eased
         p.y = p.sy + (p.ty - p.sy) * eased
-        const glow = (0.4 + eased * 0.6) * pulse
+        // Handoff: each particle flies from its place in the "$" to a point inside the real header logo, shrinking as it lands.
+        const hf = handoffRef.current.t
+        const he = hf * hf * (3 - 2 * hf)
+        const px = he > 0 && p.lx !== undefined ? p.x + (p.lx - p.x) * he : p.x
+        const py = he > 0 && p.ly !== undefined ? p.y + ((p.ly as number) - p.y) * he : p.y
+        const sz = p.size * (1 - 0.5 * he)
+        const glow = (0.4 + eased * 0.6) * pulse * (1 - 0.25 * he)
         // Glow drawn as a wide soft disc under a bright core. The old per-particle shadowBlur re-blurred the whole
         // canvas for every particle on every frame (460 blurs x 60 fps), which froze the main thread for seconds.
         ctx.beginPath()
         ctx.fillStyle = `hsla(${p.hue}, 90%, 65%, ${glow * 0.16})`
-        ctx.arc(p.x, p.y, p.size * 3.2, 0, Math.PI * 2)
+        ctx.arc(px, py, sz * 3.2, 0, Math.PI * 2)
         ctx.fill()
         ctx.beginPath()
         ctx.fillStyle = `hsla(${p.hue}, 90%, 72%, ${glow})`
-        ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2)
+        ctx.arc(px, py, sz, 0, Math.PI * 2)
         ctx.fill()
       }
 
@@ -263,25 +279,44 @@ export function BootSequence({ onDone }: { onDone: () => void }) {
         onDone()
       },
     })
-    if (!reduceMotion && full) {
-      tl.to(progressRef.current, { t: 1, duration: 1.3, ease: 'power3.out' })
-      tl.to(burstRef.current, { p: 1, duration: 0.7, ease: 'power2.out' })
-      tl.to({}, { duration: 0.5 }) // hold, fully formed, breathing glow running
+    // The full cinematic: converge into the "$", burst, wordmark + greeting arrive, hold a beat, then the particles fly into the
+    // real header logo while the backdrop dissolves, so the splash hands over to the app instead of fading out. About 2.9 s;
+    // the app is mounted underneath the whole time and becomes tappable the moment the handoff starts.
+    const cinematic = full && !reduceMotion
+    // Where the header logo is: measured once up front (and again if the window is resized), not in the middle of the animation,
+    // so the handoff never forces a layout of the whole page while particles are in flight.
+    let logoTarget = { cx: 40, cy: 36, rw: 14, rh: 14 }
+    const measureLogo = () => {
+      const logo = document.querySelector('[data-brand-logo]') as HTMLElement | null
+      const r = logo?.getBoundingClientRect()
+      if (r && r.width > 0 && r.height > 0) logoTarget = { cx: r.left + r.width / 2, cy: r.top + r.height / 2, rw: r.width * 0.7, rh: r.height * 0.7 }
     }
-    // Punchier reveal: scale + glow in, not just a fade-up — reads as the wordmark arriving with
-    // weight rather than politely appearing.
-    if (full) {
+    measureLogo()
+    window.addEventListener('resize', measureLogo)
+    const prepareHandoff = () => {
+      for (const p of particles) {
+        p.lx = logoTarget.cx + (Math.random() - 0.5) * logoTarget.rw
+        p.ly = logoTarget.cy + (Math.random() - 0.5) * logoTarget.rh
+      }
+      if (ref.current) ref.current.style.pointerEvents = 'none'
+    }
+    if (cinematic) {
+      tl.to(progressRef.current, { t: 1, duration: 1.1, ease: 'power3.out' })
+      tl.fromTo(burstRef.current, { p: 0 }, { p: 1, duration: 0.6, ease: 'power2.out' })
       tl.fromTo(
         '.boot-line',
-        { opacity: 0, y: 10, scale: 0.85, filter: 'brightness(2.2)' },
-        { opacity: 1, y: 0, scale: 1, filter: 'brightness(1)', duration: 0.45, stagger: 0.12, ease: 'back.out(1.7)' }
+        { opacity: 0, y: 10, scale: 0.9, filter: 'brightness(2.2)' },
+        { opacity: 1, y: 0, scale: 1, filter: 'brightness(1)', duration: 0.45, stagger: 0.1, ease: 'back.out(1.6)' },
+        '<0.05'
       )
-      tl.to({}, { duration: 0.45 }) // hold on the formed wordmark
-      tl.to('.boot-line', { opacity: 0, duration: 0.3 })
-      tl.to(canvas, { opacity: 0, duration: 0.35 }, '<')
-      tl.to(ref.current, { opacity: 0, duration: 0.4, onComplete: () => setVisible(false) })
+      tl.to({}, { duration: 0.45 }) // hold, fully formed, breathing glow running
+      tl.add(prepareHandoff)
+      tl.to('.boot-line', { opacity: 0, y: -8, duration: 0.3, stagger: 0.03 })
+      tl.to(handoffRef.current, { t: 1, duration: 0.8, ease: 'power2.inOut' }, '<')
+      tl.to(bgRef.current, { opacity: 0, duration: 0.65, ease: 'power1.in' }, '<0.1')
+      tl.to(ref.current, { opacity: 0, duration: 0.15, onComplete: () => setVisible(false) })
     } else {
-      // Quick relaunch: wordmark in, a beat, out. About 0.7 s in total.
+      // Quick relaunch (and reduced motion): wordmark in, a beat, out. About 0.7 s in total.
       tl.fromTo('.boot-line', { opacity: 0, y: 6 }, { opacity: 1, y: 0, duration: 0.2, stagger: 0.04, ease: 'power2.out' })
       tl.to({}, { duration: 0.15 })
       tl.to(ref.current, { opacity: 0, duration: 0.2, onComplete: () => setVisible(false) })
@@ -291,6 +326,7 @@ export function BootSequence({ onDone }: { onDone: () => void }) {
       tl.kill()
       cancelAnimationFrame(raf)
       window.removeEventListener('keydown', onKey)
+      window.removeEventListener('resize', measureLogo)
       window.removeEventListener('resize', resync)
       window.removeEventListener('orientationchange', resync)
     }
@@ -314,7 +350,9 @@ export function BootSequence({ onDone }: { onDone: () => void }) {
     // sequence (confirmed via computed styles + a Playwright screenshot showing the PIN
     // keypad visible right through the "opaque" boot overlay). z-[110] guarantees this always
     // wins regardless of what PinGate's own z-index is or becomes later.
-    <div ref={ref} className="fixed inset-0 z-[110] flex items-center justify-center bg-[#05060a] cursor-pointer overflow-hidden" onClick={skip}>
+    <div ref={ref} className="fixed inset-0 z-[110] flex items-center justify-center cursor-pointer overflow-hidden" onClick={skip}>
+      {/* The solid backdrop is its own layer so the handoff can fade it with a cheap opacity change (compositor-friendly) instead of repainting a background colour. */}
+      <div ref={bgRef} className="absolute inset-0 bg-[#05060a]" style={{ willChange: 'opacity' }} />
       <canvas ref={canvasRef} className="absolute inset-0" style={{ width: '100vw', height: '100vh' }} />
       {/* 2026-09-24 — bottom-anchored instead of flex-centered + margin-top: guarantees this
           block sits in its own fixed zone near the bottom edge, clear of the glyph above
@@ -324,9 +362,9 @@ export function BootSequence({ onDone }: { onDone: () => void }) {
         <div className="boot-line text-3xl font-black tracking-widest text-transparent bg-clip-text bg-gradient-to-r from-cyan-300 via-purple-300 to-pink-300">
           CLARITY
         </div>
-        <div className="boot-line text-xs text-white/40 mt-2 tracking-[0.3em]">BUDGET SYSTEM — INITIALISING</div>
-        <div className="boot-line text-[10px] text-cyan-300/60 mt-4">loading tax engine · payday model · insights</div>
-        <div className="boot-line text-[10px] text-white/25 mt-6">tap anywhere or press any key to skip</div>
+        <div className="boot-line text-lg font-semibold text-white/90 mt-3 tracking-wide">{greeting ?? 'Welcome back'}</div>
+        <div className="boot-line text-xs text-white/55 mt-2 tracking-[0.3em]">YOUR MONEY, MADE CLEAR</div>
+        <div className="boot-line text-xs text-white/55 mt-6">tap anywhere or press any key to skip</div>
       </div>
     </div>
   )

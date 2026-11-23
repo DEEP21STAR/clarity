@@ -24,10 +24,17 @@ const TIPS: string[] = [
   'Paying a card balance to $0 the same day it posts (rather than waiting for the statement due date) costs nothing extra and removes any risk of a forgotten due date ever mattering.',
 ]
 
-export function FinancialTipOfDay() {
+/** Tips prefixed "NZ:" or "AU:" only show for that country; unprefixed tips are for everyone. */
+export function tipsForCountry(country: 'NZ' | 'AU', tips: readonly string[] = TIPS): string[] {
+  const other = country === 'NZ' ? 'AU:' : 'NZ:'
+  return tips.filter((t) => !t.startsWith(other))
+}
+
+export function FinancialTipOfDay({ country = 'NZ' }: { country?: 'NZ' | 'AU' }) {
   const today = todayIso()
   const dayOfYear = Math.floor((new Date(today + 'T00:00:00Z').getTime() - new Date(today.slice(0, 4) + '-01-01T00:00:00Z').getTime()) / 86400000)
-  const tip = TIPS[((dayOfYear % TIPS.length) + TIPS.length) % TIPS.length]
+  const pool = tipsForCountry(country)
+  const tip = pool[((dayOfYear % pool.length) + pool.length) % pool.length]
   const dismissKey = `clarity:tip-dismissed:${today}`
 
   const [dismissed, setDismissed] = useState(() => {
@@ -45,7 +52,7 @@ export function FinancialTipOfDay() {
     <div className="result-reveal flex items-start gap-2.5 rounded-xl border border-amber-400/20 bg-amber-400/5 px-4 py-3 text-sm">
       <Lightbulb className="w-4 h-4 text-amber-300 shrink-0 mt-0.5" />
       <p className="flex-1 text-white/70 leading-snug">{tip}</p>
-      <button onClick={dismiss} title="Dismiss today's tip" className="text-white/25 hover:text-white/60 shrink-0">
+      <button onClick={dismiss} title="Dismiss today's tip" className="text-white/55 hover:text-white/60 shrink-0">
         <X className="w-3.5 h-3.5" />
       </button>
     </div>

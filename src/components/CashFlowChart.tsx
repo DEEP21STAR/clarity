@@ -60,7 +60,7 @@ export function CashFlowChart() {
   return (
     <StatCard label="Cash-Flow Forecast" glow={lowestPoint < 0 ? 'danger' : 'cyan'}>
       <div className="mt-4 flex items-center justify-between">
-        <p className="text-xs text-white/40">Projected balance from HSBC + Overdraft, walking forward real paydays and bills.</p>
+        <p className="text-xs text-white/55">Projected balance from HSBC + Overdraft, walking forward real paydays and bills.</p>
         <div className="flex rounded-full border border-white/10 overflow-hidden">
           {[30, 90].map((h) => (
             <button
@@ -80,14 +80,14 @@ export function CashFlowChart() {
             <CartesianGrid stroke="rgba(255,255,255,0.06)" vertical={false} />
             <XAxis
               dataKey="date"
-              stroke="rgba(255,255,255,0.5)"
+              stroke="rgba(255,255,255,0.55)"
               fontSize={12}
               tickLine={false}
               minTickGap={28}
               padding={{ left: 14, right: 4 }}
               tickFormatter={(v) => formatShortDate(String(v))}
             />
-            <YAxis stroke="rgba(255,255,255,0.5)" fontSize={12} tickLine={false} width={48} tickFormatter={(v) => compactMoney(Number(v))} />
+            <YAxis stroke="rgba(255,255,255,0.55)" fontSize={12} tickLine={false} width={48} tickFormatter={(v) => compactMoney(Number(v))} />
             <ReferenceLine y={0} stroke="rgba(255,45,85,0.5)" strokeDasharray="4 4" />
             <ReferenceLine x={today} stroke="rgba(255,255,255,0.7)" strokeWidth={1.5} />
             <ReferenceDot x={today} y={chartData[0].balance} r={6} fill="none" stroke="#fff" strokeWidth={2} ifOverflow="visible" label={{ value: 'Today', position: 'bottom', fill: '#fff', fontSize: 12, fontWeight: 600 }} />

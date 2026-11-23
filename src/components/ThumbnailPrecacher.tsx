@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { getCachedThumbnail, captureThumbnail } from '@/lib/thumbnailCache'
-import { shouldCaptureThumbnails, currentThumbEnv, PRECACHE_START_DELAY_MS } from '@/lib/thumbnailPolicy'
+import { shouldCaptureThumbnails, currentThumbEnv, thumbsWanted, PRECACHE_START_DELAY_MS, THUMBS_WANTED_EVENT } from '@/lib/thumbnailPolicy'
+import { whenBooted } from '@/lib/bootSignal'
 
 const STAGGER_MS = 400
 // Shorter than the 900ms on-visit capture in App.tsx — these mounts never actually go through
@@ -35,12 +36,22 @@ export function ThumbnailPrecacher({
   const hostRef = useRef<HTMLDivElement>(null)
   const currentId = queue[index]
   // Off entirely on touch/data-saver/low-memory devices; elsewhere it only starts after the app has been open a while.
-  const [enabled] = useState(() => shouldCaptureThumbnails(currentThumbEnv()))
+  const [envOk] = useState(() => shouldCaptureThumbnails(currentThumbEnv()))
+  // ...and only once the Cmd+K palette has been used on this device (the previews' only consumer).
+  const [wanted, setWanted] = useState(() => thumbsWanted(window.localStorage))
+  useEffect(() => {
+    const on = () => setWanted(true)
+    window.addEventListener(THUMBS_WANTED_EVENT, on)
+    return () => window.removeEventListener(THUMBS_WANTED_EVENT, on)
+  }, [])
+  const enabled = envOk && wanted
   const [started, setStarted] = useState(false)
   useEffect(() => {
     if (!enabled) return
-    const t = window.setTimeout(() => setStarted(true), PRECACHE_START_DELAY_MS)
-    return () => window.clearTimeout(t)
+    let t = 0
+    // The delay counts from the end of the intro, never from launch.
+    const cancelBoot = whenBooted(() => { t = window.setTimeout(() => setStarted(true), PRECACHE_START_DELAY_MS) })
+    return () => { cancelBoot(); window.clearTimeout(t) }
   }, [enabled])
   const active = enabled && started
 

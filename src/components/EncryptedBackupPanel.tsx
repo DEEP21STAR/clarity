@@ -41,7 +41,7 @@ export function EncryptedBackupPanel() {
   const ready = pass.length >= 8
   return (
     <StatCard label="Encrypted Backup" glow="cyan">
-      <p className="mt-4 text-xs text-white/40 flex items-start gap-2"><Lock className="w-4 h-4 shrink-0" />
+      <p className="mt-4 text-xs text-white/55 flex items-start gap-2"><Lock className="w-4 h-4 shrink-0" />
         Locks everything with a passphrase (AES-256). The passphrase is not stored anywhere: if you lose it, the file cannot be opened.</p>
       <input type="password" value={pass} onChange={(e) => setPass(e.target.value)} placeholder="Passphrase (8+ characters)" autoComplete="off"
         className="mt-3 w-full bg-black/40 border border-white/10 rounded-lg px-3 py-2 text-sm text-white outline-none" data-testid="backup-pass" />
@@ -50,7 +50,7 @@ export function EncryptedBackupPanel() {
         <button disabled={!ready || busy || !text} onClick={test} className="flex items-center gap-2 px-4 py-2 rounded-lg border border-white/10 text-sm text-white/80 disabled:opacity-40"><ShieldCheck className="w-4 h-4" />Test it</button>
         <button disabled={!ready || busy || !text} onClick={() => (armed ? restore() : setArmed(true))} className="px-4 py-2 rounded-lg border border-amber-400/40 text-sm text-amber-200 disabled:opacity-40">{armed ? 'Click again: replaces ALL current data' : 'Restore from it'}</button>
       </div>
-      <textarea value={text} onChange={(e) => setText(e.target.value)} placeholder="To test or restore a saved backup, paste its contents here" className="mt-3 w-full h-20 bg-black/40 border border-white/10 rounded-lg p-2 text-[10px] font-mono text-white/70 outline-none" />
+      <textarea value={text} onChange={(e) => setText(e.target.value)} placeholder="To test or restore a saved backup, paste its contents here" className="mt-3 w-full h-20 bg-black/40 border border-white/10 rounded-lg p-2 text-xs font-mono text-white/70 outline-none" />
       {msg && <p role="status" className={`mt-2 text-xs ${msg.ok ? 'text-emerald-300' : 'text-red-300'}`}>{msg.text}</p>}
     </StatCard>
   )

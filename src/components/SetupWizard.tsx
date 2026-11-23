@@ -5,7 +5,7 @@ import { StoreProvider, DEFAULT_STATE, STORAGE_KEY, type AppState, type NameColo
 import { ToastProvider } from './Toast'
 import { AppContent } from '../App'
 import { BootSequence } from './BootSequence'
-import { AmbientBackground } from './AmbientBackground'
+import { AmbientBackground } from './LazyAmbient'
 import { cn, formatCurrency, todayIso } from '@/lib/utils'
 import { round2 } from '@/lib/logic'
 import type { Country, RecurringBill } from '@/lib/types'
@@ -130,10 +130,10 @@ function IdentityColorPicker({ value, onChange }: { value: NameColor; onChange: 
           type="button"
           onClick={() => onChange(opt.value)}
           className={cn(
-            'flex-1 flex items-center justify-center gap-1.5 text-[13px] font-medium rounded-lg px-2 py-1.5 border transition-colors',
+            'flex-1 flex items-center justify-center gap-1.5 text-sm font-medium rounded-lg px-2 py-1.5 border transition-colors',
             value === opt.value
               ? cn('border-white/40 bg-white/10', NAME_COLOR_STYLE[opt.value].text)
-              : 'border-white/10 text-white/40 hover:border-white/20 hover:text-white/60'
+              : 'border-white/10 text-white/55 hover:border-white/20 hover:text-white/60'
           )}
         >
           <span className={cn('w-2 h-2 rounded-full shrink-0', NAME_COLOR_STYLE[opt.value].swatch)} />
@@ -395,7 +395,7 @@ export function SetupWizard({ mode = 'demo' }: { mode?: 'demo' | 'onboarding' } 
         <div className="flex items-center gap-2 justify-center mb-6 md:mb-8">
           <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-cyan-400 to-purple-500" />
           <span className="gradient-heading font-bold text-xl tracking-tight">Clarity</span>
-          <span className="text-[13px] uppercase tracking-wider text-white/30 border border-white/10 rounded-full px-2 py-0.5 ml-1">
+          <span className="text-sm uppercase tracking-wider text-white/55 border border-white/10 rounded-full px-2 py-0.5 ml-1">
             Wizard preview
           </span>
         </div>
@@ -406,7 +406,7 @@ export function SetupWizard({ mode = 'demo' }: { mode?: 'demo' | 'onboarding' } 
               {STEP_LABELS.map((label, i) => (
                 <div key={label} className="flex-1 flex flex-col items-center gap-1.5">
                   <div className={cn('h-1 w-full rounded-full transition-colors', i <= step ? 'bg-gradient-to-r from-cyan-400 to-purple-500' : 'bg-white/10')} />
-                  <span className={cn('text-[12px] text-center leading-tight', i === step ? 'text-white/70' : 'text-white/25')}>{label}</span>
+                  <span className={cn('text-xs text-center leading-tight', i === step ? 'text-white/70' : 'text-white/55')}>{label}</span>
                 </div>
               ))}
             </div>
@@ -419,7 +419,7 @@ export function SetupWizard({ mode = 'demo' }: { mode?: 'demo' | 'onboarding' } 
             {step === 0 && (
               <div className="space-y-4">
                 <h2 className="text-xl font-semibold">Who's this for?</h2>
-                <p className="text-sm text-white/40">Just a name — add a second person for a shared household, or leave it blank for a single view.</p>
+                <p className="text-sm text-white/55">Just a name — add a second person for a shared household, or leave it blank for a single view.</p>
                 <div>
                   <label className="text-sm text-white/50">Your name</label>
                   <input value={primaryName} onChange={(e) => setPrimaryName(e.target.value)} placeholder="Your first name" className="mt-1 w-full bg-black/30 border border-white/10 rounded-lg px-3 py-2 text-base outline-none focus:border-cyan-400/50" />
@@ -436,7 +436,7 @@ export function SetupWizard({ mode = 'demo' }: { mode?: 'demo' | 'onboarding' } 
             {step === 1 && (
               <div className="space-y-4">
                 <h2 className="text-xl font-semibold">Where do you bank?</h2>
-                <p className="text-sm text-white/40">Picking your bank lines up the right CSV format for statement imports — no login, ever, just a file you export yourself.</p>
+                <p className="text-sm text-white/55">Picking your bank lines up the right CSV format for statement imports — no login, ever, just a file you export yourself.</p>
                 <SegmentedControl value={country} onChange={(v) => { setCountry(v); setBank('') }} options={[{ value: 'NZ', label: '🇳🇿 New Zealand' }, { value: 'AU', label: '🇦🇺 Australia' }]} />
                 <div className="grid grid-cols-2 gap-2 mt-3">
                   {banks.map((b) => (
@@ -461,7 +461,7 @@ export function SetupWizard({ mode = 'demo' }: { mode?: 'demo' | 'onboarding' } 
                     Income, {payFrequency === 'weekly' ? 'per week' : payFrequency === 'fortnightly' ? 'per fortnight' : 'per month'}
                   </label>
                   <div className="mt-1 flex items-center gap-2 bg-black/30 border border-white/10 rounded-lg px-3 py-2.5 focus-within:border-cyan-400/50">
-                    <span className="text-white/40">$</span>
+                    <span className="text-white/55">$</span>
                     <input
                       type="number"
                       value={payAmount || ''}
@@ -469,10 +469,10 @@ export function SetupWizard({ mode = 'demo' }: { mode?: 'demo' | 'onboarding' } 
                       placeholder={payFrequency === 'weekly' ? 'Weekly income' : payFrequency === 'fortnightly' ? 'Fortnightly income' : 'Monthly income'}
                       className="w-full bg-transparent outline-none tabular-nums text-base"
                     />
-                    <span className="text-white/30 text-sm">/{payFrequency === 'weekly' ? 'week' : payFrequency === 'fortnightly' ? 'fortnight' : 'month'}</span>
+                    <span className="text-white/55 text-sm">/{payFrequency === 'weekly' ? 'week' : payFrequency === 'fortnightly' ? 'fortnight' : 'month'}</span>
                   </div>
                   {payFrequency !== 'monthly' && payAmount > 0 && (
-                    <p className="text-[13px] text-cyan-300/70 mt-1.5">≈ {formatCurrency(monthlyIncome)}/month — worked out automatically</p>
+                    <p className="text-sm text-cyan-300/70 mt-1.5">≈ {formatCurrency(monthlyIncome)}/month — worked out automatically</p>
                   )}
                 </div>
               </div>
@@ -481,12 +481,12 @@ export function SetupWizard({ mode = 'demo' }: { mode?: 'demo' | 'onboarding' } 
             {step === 3 && (
               <div className="space-y-4">
                 <h2 className="text-xl font-semibold">What payments do you already have?</h2>
-                <p className="text-sm text-white/40">Rent, subscriptions, insurance — anything recurring. Add as many as you like, or skip and add them once you're in.</p>
+                <p className="text-sm text-white/55">Rent, subscriptions, insurance — anything recurring. Add as many as you like, or skip and add them once you're in.</p>
                 <div className="grid grid-cols-1 gap-2 bg-black/20 border border-white/10 rounded-lg p-3">
                   <input value={billName} onChange={(e) => setBillName(e.target.value)} placeholder="e.g. Rent" className="bg-black/30 border border-white/10 rounded-lg px-3 py-2 text-sm outline-none focus:border-cyan-400/50" />
                   <div className="grid grid-cols-2 gap-2">
                     <div className="flex items-center gap-1 bg-black/30 border border-white/10 rounded-lg px-2.5 py-2">
-                      <span className="text-white/40 text-sm">$</span>
+                      <span className="text-white/55 text-sm">$</span>
                       <input type="number" step="0.01" value={billAmount || ''} onChange={(e) => setBillAmount(parseFloat(e.target.value) || 0)} placeholder="Amount" className="w-full bg-transparent outline-none tabular-nums text-sm" />
                     </div>
                     <select value={billFreq} onChange={(e) => setBillFreq(e.target.value as Frequency)} className="bg-black/30 border border-white/10 rounded-lg px-2 text-sm outline-none">
@@ -494,14 +494,14 @@ export function SetupWizard({ mode = 'demo' }: { mode?: 'demo' | 'onboarding' } 
                     </select>
                   </div>
                   {billDueUnknown ? (
-                    <div className="flex items-center justify-between bg-black/30 border border-white/10 rounded-lg px-3 py-2 text-sm text-white/40">
+                    <div className="flex items-center justify-between bg-black/30 border border-white/10 rounded-lg px-3 py-2 text-sm text-white/55">
                       <span>Due date not set yet — that's fine.</span>
                       <button type="button" onClick={() => setBillDueUnknown(false)} className="text-cyan-300 hover:text-cyan-200 shrink-0 ml-2">Set a date</button>
                     </div>
                   ) : (
                     <div className="flex items-center gap-2">
                       <DateField ariaLabel="Bill due date" value={billDue} onChange={setBillDue} inputClassName="w-full bg-black/30 border border-white/10 rounded-lg px-3 py-2 text-sm outline-none focus:border-cyan-400/50" overlayClassName="px-3 text-sm" />
-                      <button type="button" onClick={() => setBillDueUnknown(true)} className="text-[13px] text-white/35 hover:text-white/60 whitespace-nowrap shrink-0">
+                      <button type="button" onClick={() => setBillDueUnknown(true)} className="text-sm text-white/55 hover:text-white/60 whitespace-nowrap shrink-0">
                         Not sure — skip
                       </button>
                     </div>
@@ -516,9 +516,9 @@ export function SetupWizard({ mode = 'demo' }: { mode?: 'demo' | 'onboarding' } 
                       <div key={b.id} className="flex items-center justify-between text-sm bg-black/20 rounded-lg px-3 py-2 border border-white/5">
                         <div>
                           <span className="font-medium">{b.name}</span>
-                          <span className="text-white/40"> · {formatCurrency(b.amount)} {b.frequency}{b.dueUnknown ? ' · due date not set' : ''}</span>
+                          <span className="text-white/55"> · {formatCurrency(b.amount)} {b.frequency}{b.dueUnknown ? ' · due date not set' : ''}</span>
                         </div>
-                        <button type="button" onClick={() => removeBill(b.id)} className="text-white/30 hover:text-rose-400">
+                        <button type="button" onClick={() => removeBill(b.id)} className="text-white/55 hover:text-rose-400">
                           <Trash2 className="w-3.5 h-3.5" />
                         </button>
                       </div>
@@ -531,35 +531,35 @@ export function SetupWizard({ mode = 'demo' }: { mode?: 'demo' | 'onboarding' } 
             {step === 4 && (
               <div className="space-y-4">
                 <h2 className="text-xl font-semibold">Import a bank statement</h2>
-                <div className="rounded-lg border border-cyan-400/20 bg-cyan-400/5 p-3 text-[13px] text-white/60 leading-relaxed">
+                <div className="rounded-lg border border-cyan-400/20 bg-cyan-400/5 p-3 text-sm text-white/60 leading-relaxed">
                   <p className="flex items-center gap-1.5 text-cyan-300 font-semibold mb-1"><Info className="w-3 h-3" /> How to get the file</p>
                   Log into {bank || 'your bank'}'s website or app, look for <b className="text-white/80">"Export," "Download transactions,"</b> or <b className="text-white/80">"Statements,"</b> choose <b className="text-white/80">CSV</b> as the format (not PDF), pick the last 30–90 days, then download.
-                  <p className="mt-1.5 text-white/40">Exact wording varies by bank — this is the general pattern every online banking site follows.</p>
+                  <p className="mt-1.5 text-white/55">Exact wording varies by bank — this is the general pattern every online banking site follows.</p>
                 </div>
                 <button type="button" onClick={() => fileInputRef.current?.click()} className="w-full flex flex-col items-center gap-2 border border-dashed border-white/15 hover:border-cyan-400/40 rounded-xl py-6 text-white/50 hover:text-white transition-colors">
                   <Upload className="w-5 h-5" />
                   <span className="text-sm">{csvFileName ? 'Choose a different file' : 'Tap to choose your CSV file'}</span>
                 </button>
                 <input ref={fileInputRef} type="file" accept=".csv" className="hidden" onChange={(e) => handleFile(e.target.files?.[0] ?? null)} />
-                {csvError && <p className="text-[13px] text-rose-300">{csvError}</p>}
+                {csvError && <p className="text-sm text-rose-300">{csvError}</p>}
                 {csvFileName && csvPreview && (
                   <div className="rounded-lg border border-white/10 bg-black/20 p-3">
                     <p className="flex items-center gap-1.5 text-sm text-emerald-300 mb-2"><FileText className="w-3.5 h-3.5" /> {csvFileName} — first {csvPreview.length} row{csvPreview.length === 1 ? '' : 's'}</p>
                     <div className="overflow-x-auto">
-                      <table className="text-[13px] tabular-nums w-full">
+                      <table className="text-sm tabular-nums w-full">
                         <tbody>
                           {csvPreview.map((row, i) => (
-                            <tr key={i} className={i === 0 ? 'text-white/70 font-semibold' : 'text-white/45'}>
+                            <tr key={i} className={i === 0 ? 'text-white/70 font-semibold' : 'text-white/55'}>
                               {row.map((cell, j) => <td key={j} className="pr-3 py-0.5 whitespace-nowrap">{cell}</td>)}
                             </tr>
                           ))}
                         </tbody>
                       </table>
                     </div>
-                    <p className="mt-2 text-[13px] text-white/30">This is a raw preview only — automatic column matching for {bank || 'your bank'}'s exact format needs a real sample from you to build accurately, not a guess. Not wired into any real import yet.</p>
+                    <p className="mt-2 text-sm text-white/55">This is a raw preview only — automatic column matching for {bank || 'your bank'}'s exact format needs a real sample from you to build accurately, not a guess. Not wired into any real import yet.</p>
                   </div>
                 )}
-                <p className="text-[13px] text-white/30 text-center">Optional — skip this and add transactions manually once you're in.</p>
+                <p className="text-sm text-white/55 text-center">Optional — skip this and add transactions manually once you're in.</p>
               </div>
             )}
 
@@ -567,19 +567,19 @@ export function SetupWizard({ mode = 'demo' }: { mode?: 'demo' | 'onboarding' } 
               <div className="space-y-4">
                 <h2 className="text-xl font-semibold">Ready to go</h2>
                 <div className="rounded-xl border border-white/10 bg-black/20 p-4 space-y-2 text-sm">
-                  <div className="flex justify-between"><span className="text-white/40">Set up for</span><span className="font-medium">{primaryName}{secondaryName ? ` + ${secondaryName}` : ''}</span></div>
-                  <div className="flex justify-between"><span className="text-white/40">Bank</span><span className="font-medium">{bank} · {country}</span></div>
-                  <div className="flex justify-between"><span className="text-white/40">Pay cycle</span><span className="font-medium capitalize">{payFrequency}, {formatCurrency(monthlyIncome)}/mo</span></div>
-                  <div className="flex justify-between"><span className="text-white/40">Recurring payments</span><span className="font-medium">{bills.length === 0 ? 'None added' : `${bills.length} added`}</span></div>
-                  <div className="flex justify-between"><span className="text-white/40">Bank statement</span><span className="font-medium">{csvFileName ?? 'Not imported'}</span></div>
+                  <div className="flex justify-between"><span className="text-white/55">Set up for</span><span className="font-medium">{primaryName}{secondaryName ? ` + ${secondaryName}` : ''}</span></div>
+                  <div className="flex justify-between"><span className="text-white/55">Bank</span><span className="font-medium">{bank} · {country}</span></div>
+                  <div className="flex justify-between"><span className="text-white/55">Pay cycle</span><span className="font-medium capitalize">{payFrequency}, {formatCurrency(monthlyIncome)}/mo</span></div>
+                  <div className="flex justify-between"><span className="text-white/55">Recurring payments</span><span className="font-medium">{bills.length === 0 ? 'None added' : `${bills.length} added`}</span></div>
+                  <div className="flex justify-between"><span className="text-white/55">Bank statement</span><span className="font-medium">{csvFileName ?? 'Not imported'}</span></div>
                 </div>
-                <p className="text-[13px] text-white/30">This preview writes only to its own storage — it will never touch your real Clarity data.</p>
+                <p className="text-sm text-white/55">This preview writes only to its own storage — it will never touch your real Clarity data.</p>
               </div>
             )}
             </div>
 
             <div className="flex items-center justify-between mt-6">
-              <button type="button" onClick={() => setStep((s) => Math.max(0, s - 1))} disabled={step === 0} className="flex items-center gap-1 text-sm text-white/40 hover:text-white disabled:opacity-0 transition-colors">
+              <button type="button" onClick={() => setStep((s) => Math.max(0, s - 1))} disabled={step === 0} className="flex items-center gap-1 text-sm text-white/55 hover:text-white disabled:opacity-0 transition-colors">
                 <ChevronLeft className="w-3.5 h-3.5" /> Back
               </button>
               <div className="flex items-center gap-4">
@@ -587,12 +587,12 @@ export function SetupWizard({ mode = 'demo' }: { mode?: 'demo' | 'onboarding' } 
                     both) — an explicit "Skip" makes that obvious instead of making someone
                     guess whether Next with nothing filled in is allowed. */}
                 {(step === 3 || step === 4) && (
-                  <button type="button" onClick={() => setStep((s) => s + 1)} className="text-sm text-white/35 hover:text-white/60 transition-colors">
+                  <button type="button" onClick={() => setStep((s) => s + 1)} className="text-sm text-white/55 hover:text-white/60 transition-colors">
                     Skip{step === 3 ? ' — add payments later' : ' — import later'}
                   </button>
                 )}
                 {step < 5 ? (
-                  <button type="button" onClick={() => canAdvance && setStep((s) => s + 1)} disabled={!canAdvance} className={cn('flex items-center gap-1 text-base font-semibold rounded-lg px-4 py-2 transition-colors', canAdvance ? 'bg-gradient-to-r from-cyan-400 to-purple-500 text-black' : 'bg-white/5 text-white/20 cursor-not-allowed')}>
+                  <button type="button" onClick={() => canAdvance && setStep((s) => s + 1)} disabled={!canAdvance} className={cn('flex items-center gap-1 text-base font-semibold rounded-lg px-4 py-2 transition-colors', canAdvance ? 'bg-gradient-to-r from-cyan-400 to-purple-500 text-black' : 'bg-white/5 text-white/55 cursor-not-allowed')}>
                     Next <ChevronRight className="w-3.5 h-3.5" />
                   </button>
                 ) : (
@@ -616,10 +616,10 @@ export function SetupWizard({ mode = 'demo' }: { mode?: 'demo' | 'onboarding' } 
                 )}
                 , you're set up
               </h2>
-              <p className="text-sm text-white/40 mt-1">{completed.bank} · {completed.country === 'NZ' ? 'New Zealand' : 'Australia'} · {completed.bills.length} payment{completed.bills.length === 1 ? '' : 's'} tracked</p>
+              <p className="text-sm text-white/55 mt-1">{completed.bank} · {completed.country === 'NZ' ? 'New Zealand' : 'Australia'} · {completed.bills.length} payment{completed.bills.length === 1 ? '' : 's'} tracked</p>
             </div>
             <div className={cn('rounded-xl border p-5', weeklyPreview < 0 ? 'border-rose-500/30 bg-rose-500/5' : 'border-white/10 bg-black/20')}>
-              <div className="text-[13px] uppercase tracking-wider text-white/40 flex items-center justify-center gap-1.5">
+              <div className="text-sm uppercase tracking-wider text-white/55 flex items-center justify-center gap-1.5">
                 <Wallet className="w-3 h-3" /> Rough weekly safe-to-spend
               </div>
               {/* 2026-09-23 — real bug caught reviewing Deep's own walkthrough: a real household
@@ -631,7 +631,7 @@ export function SetupWizard({ mode = 'demo' }: { mode?: 'demo' | 'onboarding' } 
               <div className={cn('text-3xl font-bold tabular-nums mt-1', weeklyPreview < 0 ? 'text-rose-300' : 'bg-gradient-to-r from-cyan-300 to-purple-300 bg-clip-text text-transparent')}>
                 {formatCurrency(weeklyPreview)}
               </div>
-              <p className={cn('text-[13px] mt-1', weeklyPreview < 0 ? 'text-rose-300/70' : 'text-white/30')}>
+              <p className={cn('text-sm mt-1', weeklyPreview < 0 ? 'text-rose-300/70' : 'text-white/55')}>
                 {weeklyPreview < 0
                   ? 'Your bills currently add up to more than your income — exactly the kind of thing Clarity is built to catch early.'
                   : 'Income minus the payments you added, spread weekly.'}
@@ -643,14 +643,14 @@ export function SetupWizard({ mode = 'demo' }: { mode?: 'demo' | 'onboarding' } 
             {/* Honest, not silent — the real per-instance pay-pattern isn't built yet (see the
                 buildDemoSeed comment above), so the dashboard's income figure won't match what
                 was entered on the Pay & Income step. Bills genuinely do carry through correctly. */}
-            <p className="text-[13px] text-white/30 leading-relaxed">Your {completed.bills.length} payment{completed.bills.length === 1 ? '' : 's'} and {completed.payFrequency} pay cycle both carry through to the real dashboard.</p>
-            <button type="button" onClick={restart} className="text-sm text-white/40 hover:text-white transition-colors">
+            <p className="text-sm text-white/55 leading-relaxed">Your {completed.bills.length} payment{completed.bills.length === 1 ? '' : 's'} and {completed.payFrequency} pay cycle both carry through to the real dashboard.</p>
+            <button type="button" onClick={restart} className="text-sm text-white/55 hover:text-white transition-colors">
               Start over
             </button>
           </div>
         )}
 
-        <p className="text-center text-[13px] text-white/25 mt-6">
+        <p className="text-center text-sm text-white/55 mt-6">
           Preview mode — your real Clarity data is completely separate and untouched.
         </p>
       </div>
