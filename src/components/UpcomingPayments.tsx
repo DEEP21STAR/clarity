@@ -1,4 +1,5 @@
 import { lazy, Suspense, useEffect, useMemo, useRef, useState, type CSSProperties } from 'react'
+import { allocationCaption } from '@/lib/allocationCaption'
 import gsap from 'gsap'
 import { haptic } from '@/lib/haptics'
 import { useStore } from '@/lib/store'
@@ -618,7 +619,7 @@ function AllocationTile({ label, amount, spent, pct, glowFrom, glowTo, ringColor
             {formatCurrency(remaining)}
           </div>
           <p className={cn('text-xs mt-0.5', over ? 'text-rose-300' : 'text-white/55')}>
-            {over ? `${formatCurrency(-remaining)} over ` : ''}{formatCurrency(spent)} of {formatCurrency(amount)} spent
+            {allocationCaption(amount, spent)}
           </p>
         </div>
         <QuickAddButton
@@ -716,7 +717,7 @@ function PersonalAllocationTile({
             {formatCurrency(remaining)}
           </div>
           <p className={cn('text-xs mt-0.5', over ? 'text-rose-300' : 'text-white/55')}>
-            {over ? `${formatCurrency(-remaining)} over ` : ''}{formatCurrency(spent)} of {formatCurrency(amount)} spent
+            {allocationCaption(amount, spent)}
           </p>
         </div>
         <QuickAddButton
