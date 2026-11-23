@@ -41,3 +41,10 @@ test('no card when there is no previous month of data', async ({ page }) => {
   await page.getByRole('heading', { name: 'Budgets' }).waitFor()
   await expect(page.locator('section[aria-label$="in review"]')).toHaveCount(0)
 })
+
+test('the recap also shows on the phone Home screen', async ({ page }) => {
+  await page.setViewportSize(VIEWPORTS.phone)
+  await page.addInitScript((seed) => { try { if (!sessionStorage.getItem('e2e-seeded')) { localStorage.setItem('clarity-dashboard-state-v5', JSON.stringify(seed)); sessionStorage.setItem('e2e-seeded', '1') } sessionStorage.setItem('clarity-pin-unlocked', '1'); localStorage.setItem('clarity-last-boot', String(Date.now() - 60_000)) } catch { /* ignore */ } }, SEED)
+  await page.goto('./')
+  await expect(page.getByRole('region', { name: `${label} in review` })).toBeVisible()
+})
