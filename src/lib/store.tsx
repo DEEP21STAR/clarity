@@ -156,15 +156,22 @@ function backfillPaymentMethod(bills: RecurringBill[]): RecurringBill[] {
   })
 }
 
+/**
+ * Shared by loading from storage and restoring from a backup. Merges with the defaults so fields added in later versions exist
+ * (an old backup would otherwise lack them), and repairs malformed transaction fields so one bad row cannot crash a screen.
+ * Keeps every row.
+ */
+export function normaliseState(parsed: Partial<AppState>, fallback: AppState): AppState {
+  const merged: AppState = { ...fallback, ...parsed }
+  return { ...merged, bills: backfillPaymentMethod(merged.bills), transactions: sanitizeTransactions(merged.transactions) }
+}
+
 function loadState(key: string, fallback: AppState): AppState {
   try {
     const raw = localStorage.getItem(key)
     if (!raw) return fallback
     const parsed = JSON.parse(raw)
-    // Merge with defaults so new fields introduced later don't crash old saved state.
-    const merged: AppState = { ...fallback, ...parsed }
-    // Old or hand-edited data must never crash a screen: repair malformed transaction fields (keeps every row).
-    return { ...merged, bills: backfillPaymentMethod(merged.bills), transactions: sanitizeTransactions(merged.transactions) }
+    return normaliseState(parsed, fallback)
   } catch {
     return fallback
   }
@@ -403,7 +410,7 @@ export function StoreProvider({ children, storageKey = STORAGE_KEY, seedState = 
         }
         return { ...s, creditCards, periodicBills, deviceRepayments, paymentRecords: s.paymentRecords.filter((r) => r.id !== id) }
       }),
-    restoreState: (snapshot) => setState(snapshot),
+    restoreState: (snapshot) => setState(normaliseState(snapshot, seedState)),
     setSoundEnabled: (enabled) => setState((s) => ({ ...s, soundEnabled: enabled })),
     setCelebrationLevel: (level) => setState((s) => ({ ...s, celebrationLevel: level })),
     setTextScale: (scale) => setState((s) => ({ ...s, textScale: scale })),
