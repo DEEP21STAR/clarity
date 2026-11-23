@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { computeBudgetRows, daysInMonth, previousMonth, spentInMonth, budgetAlerts, suggestTarget, trimSaving, withBudget } from './categoryBudgets'
+import { computeBudgetRows, daysInMonth, previousMonth, spentInMonth, budgetAlerts, suggestionsToApply, suggestTarget, trimSaving, withBudget } from './categoryBudgets'
 import type { Transaction } from './types'
 
 const tx = (date: string, amount: number, category: string, id = `${date}-${amount}-${category}`): Transaction => ({ id, date, amount, description: category, category, mode: 'personal' } as Transaction)
@@ -104,5 +104,19 @@ describe('budgetAlerts', () => {
   })
   it('is empty when everything is fine', () => {
     expect(budgetAlerts([row('Food', 'ok', 10, 100)])).toEqual([])
+  })
+})
+
+describe('suggestionsToApply', () => {
+  const r = (category: string, monthly: number, suggested: number | null) => ({ category, monthly, suggested } as never)
+  it('picks only categories with no target and a history-based suggestion', () => {
+    expect(suggestionsToApply([r('Food', 0, 200), r('Fuel', 50, 60), r('Fun', 0, null), r('Gifts', 0, 0), r('Rent', 0, 1200)])).toEqual([
+      { category: 'Food', monthly: 200 },
+      { category: 'Rent', monthly: 1200 },
+    ])
+  })
+  it('is empty when nothing qualifies', () => {
+    expect(suggestionsToApply([])).toEqual([])
+    expect(suggestionsToApply([r('Fuel', 50, 60)])).toEqual([])
   })
 })

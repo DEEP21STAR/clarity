@@ -35,6 +35,24 @@ for (const [vpName, vp] of Object.entries(VIEWPORTS)) {
   test.describe(`category budgets @ ${vpName}`, () => {
     test.use({ viewport: vp })
 
+    test('one click sets every suggested target from history', async ({ page }) => {
+      await open(page)
+      const food = page.getByRole('listitem').filter({ has: page.getByLabel('Food monthly target') })
+      const fuel = page.getByRole('listitem').filter({ has: page.getByLabel('Fuel monthly target') })
+      const money = (t: string | null) => Number((t ?? '').replace(/[^0-9.]/g, ''))
+      const foodSuggest = money(await food.getByRole('button', { name: /Set to \$/ }).textContent())
+      const fuelSuggest = money(await fuel.getByRole('button', { name: /Set to \$/ }).textContent())
+      expect(foodSuggest).toBe(200) // last month's Food spend in the seed
+      expect(fuelSuggest).toBeGreaterThan(0)
+      const all = page.getByRole('button', { name: /^Set \d+ targets? from my history$/ })
+      await expect(all).toBeVisible()
+      await all.click()
+      await expect(food.getByLabel('Food monthly target')).toHaveValue(String(foodSuggest))
+      await expect(fuel.getByLabel('Fuel monthly target')).toHaveValue(String(fuelSuggest))
+      await expect(page.getByText(/Set \d+ targets? from last month/)).toBeVisible()
+      await expect(all).toHaveCount(0) // nothing left to suggest, so the button goes away
+    })
+
     test('the bell warns about an over-target category', async ({ page }) => {
       await open(page)
       const fuel = page.getByRole('listitem').filter({ has: page.getByLabel('Fuel monthly target') })

@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import { Target } from 'lucide-react'
 import { useStore } from '@/lib/store'
-import { computeBudgetRows, daysInMonth, trimSaving, type BudgetRow, type BudgetStatus } from '@/lib/categoryBudgets'
+import { computeBudgetRows, daysInMonth, suggestionsToApply, trimSaving, type BudgetRow, type BudgetStatus } from '@/lib/categoryBudgets'
 import { categoryColor } from '@/lib/logic'
 import { cn, formatCurrency, todayIso } from '@/lib/utils'
 import { StatCard } from './StatCard'
@@ -36,6 +36,12 @@ export function CategoryBudgets() {
   const idle = rows.filter((r) => r.status === 'unset' && r.spent === 0)
   const visibleIdle = showAll || active.length === 0 ? idle.slice(0, showAll ? idle.length : 5) : []
 
+  const toApply = suggestionsToApply(rows)
+  const [applied, setApplied] = useState<number | null>(null)
+  const applyAll = () => {
+    toApply.forEach((t) => setCategoryBudget(t.category, { monthly: t.monthly }))
+    setApplied(toApply.length)
+  }
   const budgeted = rows.filter((r) => r.target > 0)
   const totalTarget = budgeted.reduce((s, r) => s + r.target, 0)
   const totalSpent = budgeted.reduce((s, r) => s + r.spent, 0)
@@ -110,6 +116,16 @@ export function CategoryBudgets() {
           ? <>You have spent <strong className="text-white">{formatCurrency(totalSpent)}</strong> of <strong className="text-white">{formatCurrency(totalTarget)}</strong> budgeted · day {day} of {dim}</>
           : <span className="flex items-center gap-2"><Target className="h-4 w-4 text-cyan-300" aria-hidden="true" /> Pick a category and type a monthly target. Rollover is off until you switch it on.</span>}
       </div>
+      {(toApply.length > 0 || applied !== null) && (
+        <div className="mt-3 flex flex-wrap items-center gap-3" aria-live="polite">
+          {toApply.length > 0 && (
+            <button type="button" onClick={applyAll} className="min-h-11 rounded-full border border-cyan-300/40 px-4 text-sm font-semibold text-cyan-200 transition-colors hover:bg-cyan-400/10">
+              Set {toApply.length} {toApply.length === 1 ? 'target' : 'targets'} from my history
+            </button>
+          )}
+          {applied !== null && toApply.length === 0 && <span className="text-sm text-white/70">Set {applied} {applied === 1 ? 'target' : 'targets'} from last month. Change or clear any of them below.</span>}
+        </div>
+      )}
       <ul className="mt-4 space-y-3">
         {active.map(renderRow)}
         {visibleIdle.map(renderRow)}

@@ -122,3 +122,8 @@ export function budgetAlerts(rows: readonly BudgetRow[]): BudgetAlert[] {
   }
   return out.sort((a, b) => (a.severity === b.severity ? 0 : a.severity === 'danger' ? -1 : 1))
 }
+
+/** The targets "set all from my history" would apply: categories with no target yet that have a history-based suggestion. */
+export function suggestionsToApply(rows: readonly BudgetRow[]): { category: string; monthly: number }[] {
+  return rows.filter((r) => r.monthly === 0 && r.suggested !== null && r.suggested > 0).map((r) => ({ category: r.category, monthly: r.suggested as number }))
+}
