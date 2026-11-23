@@ -45,6 +45,9 @@ for (const [vpName, vp] of Object.entries(VIEWPORTS)) {
       await expect(food).toContainText('On track')
       await expect(food.getByRole('progressbar')).toHaveAttribute('aria-valuenow', '10') // 20 of 200
       await expect(food).toContainText('$180')
+      // what a 10% trim would free up: 10% of 200 = $20 a month, $240 a year
+      await expect(food).toContainText('Trim 10% and you free up $20.00 a month, $240.00 a year.')
+      await expect(fuel).not.toContainText('Trim 10%') // no target yet, so no trim line
       // a typed target that is already exceeded
       await fuel.getByLabel('Fuel monthly target').fill('25')
       await fuel.getByLabel('Fuel monthly target').press('Enter')

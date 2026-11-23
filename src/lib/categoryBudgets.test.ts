@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { computeBudgetRows, daysInMonth, previousMonth, spentInMonth, suggestTarget, withBudget } from './categoryBudgets'
+import { computeBudgetRows, daysInMonth, previousMonth, spentInMonth, suggestTarget, trimSaving, withBudget } from './categoryBudgets'
 import type { Transaction } from './types'
 
 const tx = (date: string, amount: number, category: string, id = `${date}-${amount}-${category}`): Transaction => ({ id, date, amount, description: category, category, mode: 'personal' } as Transaction)
@@ -75,5 +75,19 @@ describe('suggestTarget and withBudget', () => {
     const c = withBudget(b, 'Food', { rollover: true })
     expect(c.Food).toEqual({ monthly: 250.46, rollover: true })
     expect(withBudget(c, 'Food', { monthly: 0 })).toEqual({})
+  })
+})
+
+describe('trimSaving', () => {
+  it('works out a 10% trim per month and per year', () => {
+    expect(trimSaving(400)).toEqual({ perMonth: 40, perYear: 480 })
+    expect(trimSaving(123.45)).toEqual({ perMonth: 12.35, perYear: 148.2 })
+    expect(trimSaving(200, 0.25)).toEqual({ perMonth: 50, perYear: 600 })
+  })
+  it('gives nothing for no target or nonsense percentages', () => {
+    expect(trimSaving(0)).toBeNull()
+    expect(trimSaving(-5)).toBeNull()
+    expect(trimSaving(100, 0)).toBeNull()
+    expect(trimSaving(100, 1)).toBeNull()
   })
 })

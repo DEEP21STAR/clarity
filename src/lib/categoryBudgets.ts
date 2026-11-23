@@ -101,3 +101,10 @@ export function withBudget(budgets: CategoryBudgets, category: string, patch: Pa
   else next[category] = { monthly: round2(merged.monthly), ...(merged.rollover ? { rollover: true } : {}) }
   return next
 }
+
+/** What trimming a monthly target by `pct` (default 10%) would free up. Pure arithmetic on the target, rounded to cents. */
+export function trimSaving(monthly: number, pct = 0.1): { perMonth: number; perYear: number } | null {
+  if (!(monthly > 0) || !(pct > 0) || pct >= 1) return null
+  const perMonth = Math.round(monthly * pct * 100) / 100
+  return { perMonth, perYear: Math.round(perMonth * 12 * 100) / 100 }
+}

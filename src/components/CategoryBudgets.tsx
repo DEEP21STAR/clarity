@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import { Target } from 'lucide-react'
 import { useStore } from '@/lib/store'
-import { computeBudgetRows, daysInMonth, type BudgetRow, type BudgetStatus } from '@/lib/categoryBudgets'
+import { computeBudgetRows, daysInMonth, trimSaving, type BudgetRow, type BudgetStatus } from '@/lib/categoryBudgets'
 import { categoryColor } from '@/lib/logic'
 import { cn, formatCurrency, todayIso } from '@/lib/utils'
 import { StatCard } from './StatCard'
@@ -53,6 +53,7 @@ export function CategoryBudgets() {
 
   const renderRow = (r: BudgetRow) => {
     const pct = Math.min(100, Math.round(r.pctSpent * 100))
+    const trim = trimSaving(r.monthly)
     return (
       <li key={r.category} className="rounded-xl border border-white/10 bg-black/25 p-3">
         <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
@@ -97,6 +98,7 @@ export function CategoryBudgets() {
             )}
           </span>
         </div>
+        {trim && <p className="mt-1 text-xs text-white/55">Trim 10% and you free up {formatCurrency(trim.perMonth)} a month, {formatCurrency(trim.perYear)} a year.</p>}
       </li>
     )
   }
