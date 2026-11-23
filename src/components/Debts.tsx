@@ -112,10 +112,8 @@ export function Debts() {
         <StatCard label="Extra Monthly Budget" glow="cyan" delay={0.1}>
           <div className="mt-4 flex items-center gap-2">
             <span className="text-white/55">$</span>
-            <input
-              type="number"
-              aria-label="Extra monthly budget" value={extraBudget}
-              onChange={(e) => setExtraBudget(parseFloat(e.target.value) || 0)}
+            <MoneyField
+              label="Extra monthly budget" value={extraBudget} onChange={setExtraBudget}
               className="bg-transparent text-2xl font-bold tabular-nums text-cyan-200 outline-none border-b border-white/10 focus:border-cyan-400/60 w-full"
             />
           </div>

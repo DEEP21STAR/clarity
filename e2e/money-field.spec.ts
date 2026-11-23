@@ -45,3 +45,13 @@ test('dashboard headline groups thousands and highlights the whole figure', asyn
   await expect(headline.locator('.gradient-heading').first()).toHaveText('$1,534.21')
   await headline.screenshot({ path: 'test-results/headline.png' })
 })
+
+test('Debts extra monthly budget groups thousands', async ({ page }) => {
+  await page.addInitScript(() => { try { localStorage.setItem('clarity-dashboard-state-v5', '{}'); sessionStorage.setItem('clarity-pin-unlocked', '1'); localStorage.setItem('clarity-last-boot', String(Date.now() - 60_000)) } catch { /* ignore */ } })
+  await page.goto('./?tab=debts')
+  const box = page.getByLabel('Extra monthly budget')
+  await expect(box).toHaveValue('100')
+  await box.fill('')
+  await box.pressSequentially('2500')
+  await expect(box).toHaveValue('2,500')
+})
