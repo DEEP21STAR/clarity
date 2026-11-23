@@ -17,3 +17,19 @@ export function groupMoney(text: string): string {
   const grouped = intPart.replace(/\B(?=(\d{3})+(?!\d))/g, ',')
   return dec === null ? grouped : `${grouped || '0'}.${dec}`
 }
+
+/** Where the caret belongs after reformatting: right after the same number of digits/decimal points that were before it. */
+export function caretAfterDigits(formatted: string, digitsBefore: number): number {
+  if (digitsBefore <= 0) return 0
+  let seen = 0
+  for (let i = 0; i < formatted.length; i++) {
+    if (/[0-9.]/.test(formatted[i])) seen++
+    if (seen === digitsBefore) return i + 1
+  }
+  return formatted.length
+}
+
+/** How many digits/decimal points of `text` come before index `caret`. */
+export function digitsBeforeCaret(text: string, caret: number): number {
+  return (text.slice(0, caret).match(/[0-9.]/g) ?? []).length
+}

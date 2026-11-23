@@ -26,7 +26,8 @@ export async function dismissSplash(page: Page) {
   const splash = page.getByText(SPLASH_TEXT)
   try {
     await splash.waitFor({ state: 'visible', timeout: 3000 })
-    await splash.click({ force: true })
+    // short timeouts: the intro can remove this text between the check and the click, and an unbounded click would then wait forever
+    await splash.click({ force: true, timeout: 2000 })
     await splash.waitFor({ state: 'detached', timeout: 8000 })
   } catch { /* no splash this load */ }
   await page.waitForTimeout(400)

@@ -55,3 +55,17 @@ test('Debts extra monthly budget groups thousands', async ({ page }) => {
   await box.pressSequentially('2500')
   await expect(box).toHaveValue('2,500')
 })
+
+test('editing in the middle of a number keeps the caret where you are', async ({ page }) => {
+  await page.addInitScript(() => { try { localStorage.setItem('clarity-dashboard-state-v5', '{}'); sessionStorage.setItem('clarity-pin-unlocked', '1'); localStorage.setItem('clarity-last-boot', String(Date.now() - 60_000)) } catch { /* ignore */ } })
+  await page.goto('./?tab=debts')
+  const box = page.getByLabel('Extra monthly budget')
+  await box.fill('')
+  await box.pressSequentially('123')
+  await box.press('Home')
+  await box.press('ArrowRight') // caret after the "1"
+  await box.pressSequentially('9') // 1,923: a comma now sits before the caret
+  await expect(box).toHaveValue('1,923')
+  await box.pressSequentially('8') // the caret must be right after the 9 (digits 1 9 8 23 -> 19,823)
+  await expect(box).toHaveValue('19,823')
+})
