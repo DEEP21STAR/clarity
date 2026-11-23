@@ -17,7 +17,7 @@ export function AccountsPanel({ compact = false }: { compact?: boolean }) {
   return (
     <StatCard label="Accounts" glow="purple">
       <div className="mt-4">
-        <div className="text-xs font-semibold uppercase tracking-wide text-white/40 mb-2">Liquid Accounts</div>
+        <div className="text-xs font-semibold uppercase tracking-wide text-white/55 mb-2">Liquid Accounts</div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {liquid.map((a) => (
             <AccountInput key={a.id} name={a.name} value={a.value} onChange={(v) => updateAccount(a.id, { value: v })} />
@@ -27,9 +27,9 @@ export function AccountsPanel({ compact = false }: { compact?: boolean }) {
 
       {!compact && (
         <div className="mt-6">
-          <div className="text-xs font-semibold uppercase tracking-wide text-white/40 mb-2 flex items-center gap-1.5">
+          <div className="text-xs font-semibold uppercase tracking-wide text-white/55 mb-2 flex items-center gap-1.5">
             Non-Liquid Assets
-            <span className="flex items-center gap-1 text-[10px] font-normal text-amber-300/80 normal-case tracking-normal">
+            <span className="flex items-center gap-1 text-xs font-normal text-amber-300/80 normal-case tracking-normal">
               <AlertCircle className="w-3 h-3" /> manually maintained — never a live market value
             </span>
           </div>
@@ -49,7 +49,7 @@ function AccountInput({ name, value, onChange }: { name: string; value: number; 
     <div className="rounded-xl border border-white/10 bg-black/30 p-4">
       <label className="text-xs font-semibold uppercase tracking-wide text-white/60">{name}</label>
       <div className="mt-2 flex items-center gap-1">
-        <span className="text-white/40">$</span>
+        <span className="text-white/55">$</span>
         <input
           type="number"
           step="0.01"

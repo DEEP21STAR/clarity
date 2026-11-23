@@ -30,7 +30,7 @@ export function SinkingFundsSection() {
           </button>
         )}
       </div>
-      <p className="text-xs text-white/40 mb-3">For any irregular lump-sum expense — car WOF/rego, Christmas, annual subscriptions — smoothed into fortnightly set-asides, same math as the Periodic Bills above.</p>
+      <p className="text-xs text-white/55 mb-3">For any irregular lump-sum expense — car WOF/rego, Christmas, annual subscriptions — smoothed into fortnightly set-asides, same math as the Periodic Bills above.</p>
 
       {showAdd && (
         <div className="mb-4">
@@ -58,12 +58,12 @@ function FundCard({ fund, today, onUpdate, onRemove }: { fund: SinkingFund; toda
   const progress = fund.targetAmount > 0 ? Math.min(100, (fund.currentSaved / fund.targetAmount) * 100) : 0
   return (
     <StatCard label={fund.name} glow="amber">
-      <button onClick={onRemove} className="absolute top-3 right-3 z-20 text-white/30 hover:text-rose-400" aria-label={`Remove ${fund.name}`}>
+      <button onClick={onRemove} className="absolute top-3 right-3 z-20 text-white/55 hover:text-rose-400" aria-label={`Remove ${fund.name}`}>
         <Trash2 className="w-3.5 h-3.5" />
       </button>
       <div className="mt-4 flex justify-between text-sm text-white/60">
         <span>{formatCurrency(fund.currentSaved)} of {formatCurrency(fund.targetAmount)}</span>
-        <span className="text-white/40">due {formatShortDate(fund.targetDate)}</span>
+        <span className="text-white/55">due {formatShortDate(fund.targetDate)}</span>
       </div>
       <div className="mt-2 h-2 rounded-full bg-white/5 overflow-hidden">
         <div className="h-full rounded-full bg-gradient-to-r from-amber-400 to-orange-500" style={{ width: `${progress}%` }} />
@@ -76,7 +76,7 @@ function FundCard({ fund, today, onUpdate, onRemove }: { fund: SinkingFund; toda
       </div>
       <div className="mt-3 flex items-center gap-2">
         <label className="text-xs text-white/50">Saved so far</label>
-        <span className="text-white/40">$</span>
+        <span className="text-white/55">$</span>
         <input
           type="number" step="0.01" value={fund.currentSaved}
           onChange={(e) => onUpdate({ currentSaved: parseFloat(e.target.value) || 0 })}
@@ -96,7 +96,7 @@ function FundForm({ onCancel, onSave }: { onCancel: () => void; onSave: (v: { na
     <StatCard label="Add Irregular Expense" glow="amber">
       <div className="mt-4 space-y-3">
         <div className="flex justify-end">
-          <button onClick={onCancel} className="text-white/30 hover:text-white"><X className="w-4 h-4" /></button>
+          <button onClick={onCancel} className="text-white/55 hover:text-white"><X className="w-4 h-4" /></button>
         </div>
         <div>
           <label className="text-xs text-white/50">Name</label>
@@ -106,7 +106,7 @@ function FundForm({ onCancel, onSave }: { onCancel: () => void; onSave: (v: { na
           <div>
             <label className="text-xs text-white/50">Target amount</label>
             <div className="mt-1 flex items-center gap-1 bg-black/30 border border-white/10 rounded-lg px-3 py-2">
-              <span className="text-white/40">$</span>
+              <span className="text-white/55">$</span>
               <input type="number" step="0.01" value={targetAmount} onChange={(e) => setTargetAmount(parseFloat(e.target.value) || 0)} className="w-full bg-transparent outline-none tabular-nums" />
             </div>
           </div>

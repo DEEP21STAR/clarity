@@ -49,7 +49,7 @@ export function RecordPaymentButton({ targetType, targetId, targetLabel, default
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="inline-flex items-center gap-1 text-[11px] text-cyan-300 hover:text-cyan-200 border border-cyan-400/20 hover:border-cyan-400/40 rounded-full px-2 py-1"
+        className="inline-flex items-center gap-1 text-xs text-cyan-300 hover:text-cyan-200 border border-cyan-400/20 hover:border-cyan-400/40 rounded-full px-2 py-1"
       >
         <CircleDollarSign className="w-3 h-3" /> Record a payment
       </button>
@@ -59,7 +59,7 @@ export function RecordPaymentButton({ targetType, targetId, targetLabel, default
   return (
     <div className="mt-2 flex flex-wrap items-center gap-2 rounded-lg border border-cyan-400/20 bg-black/30 p-2">
       <div className={`flex items-center gap-1 bg-black/30 border border-white/10 rounded-lg px-2 py-1 ${shake ? 'shake-invalid' : ''}`}>
-        <span className="text-white/40 text-xs">$</span>
+        <span className="text-white/55 text-xs">$</span>
         <input
           type="number"
           step="0.01"
@@ -79,7 +79,7 @@ export function RecordPaymentButton({ targetType, targetId, targetLabel, default
       <button onClick={submit} className="px-3 py-1 rounded-lg bg-gradient-to-r from-cyan-400 to-purple-500 text-black text-xs font-semibold hover:opacity-90">
         Record
       </button>
-      <button onClick={() => setOpen(false)} className="text-white/30 hover:text-white"><X className="w-3.5 h-3.5" /></button>
+      <button onClick={() => setOpen(false)} className="text-white/55 hover:text-white"><X className="w-3.5 h-3.5" /></button>
     </div>
   )
 }

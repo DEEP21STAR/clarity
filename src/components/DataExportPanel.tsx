@@ -70,7 +70,7 @@ export function DataExportPanel() {
   return (
     <>
       <StatCard label="Data Export" glow="cyan">
-        <div className="mt-4 flex items-center gap-2 text-xs text-white/40">
+        <div className="mt-4 flex items-center gap-2 text-xs text-white/55">
           <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
           Data last exported: {state.lastExportedAt ? new Date(state.lastExportedAt).toLocaleString('en-NZ') : 'never'}
         </div>
@@ -94,11 +94,11 @@ export function DataExportPanel() {
             readOnly
             aria-label="Full export as JSON text"
             value={JSON.stringify(buildFullExportJson(state), null, 2)}
-            className="mt-3 w-full h-40 bg-black/40 border border-white/10 rounded-lg p-2 text-[10px] font-mono text-white/70 outline-none"
+            className="mt-3 w-full h-40 bg-black/40 border border-white/10 rounded-lg p-2 text-xs font-mono text-white/70 outline-none"
             onClick={(e) => (e.target as HTMLTextAreaElement).select()}
           />
         )}
-        <p className="text-[11px] text-white/30 mt-2">
+        <p className="text-xs text-white/55 mt-2">
           Shape documented in <code>EXPORT_SCHEMA.md</code> at the project root, for the separate local-desktop agent consuming this file.
         </p>
       </StatCard>
@@ -106,7 +106,7 @@ export function DataExportPanel() {
       <EncryptedBackupPanel />
 
       <StatCard label="Accountant-Ready Export" glow="purple">
-        <p className="mt-4 text-xs text-white/40">Categorised totals for {state.mode === 'personal' ? 'Personal' : 'Business'} transactions — respects the Personal/Business toggle.</p>
+        <p className="mt-4 text-xs text-white/55">Categorised totals for {state.mode === 'personal' ? 'Personal' : 'Business'} transactions — respects the Personal/Business toggle.</p>
         <div className="mt-3 flex flex-wrap gap-2">
           <button onClick={exportCsv} className="flex items-center gap-2 px-4 py-2 rounded-lg bg-gradient-to-r from-purple-400 to-pink-500 text-black text-sm font-semibold hover:opacity-90">
             {csvStatus !== 'idle' ? <CheckCircle2 className="w-4 h-4" /> : <Download className="w-4 h-4" />} {csvLabel}
@@ -115,7 +115,7 @@ export function DataExportPanel() {
             <Printer className="w-4 h-4" /> Print summary (Save as PDF)
           </button>
         </div>
-        <textarea readOnly aria-label="Spending as CSV text" value={csv} className="mt-3 w-full h-28 bg-black/40 border border-white/10 rounded-lg p-2 text-[10px] font-mono text-white/70 outline-none" onClick={(e) => (e.target as HTMLTextAreaElement).select()} />
+        <textarea readOnly aria-label="Spending as CSV text" value={csv} className="mt-3 w-full h-28 bg-black/40 border border-white/10 rounded-lg p-2 text-xs font-mono text-white/70 outline-none" onClick={(e) => (e.target as HTMLTextAreaElement).select()} />
       </StatCard>
 
       {showPrintSummary && (

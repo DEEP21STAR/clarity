@@ -30,7 +30,7 @@ export function DueBadge({ dueDateIso, className }: { dueDateIso: string; classN
   return (
     <span
       title={`Due ${dueDateIso} — ${dueInLabel(daysUntil)}`}
-      className={cn('inline-flex items-center gap-1.5 text-[10px] px-1.5 py-0.5 rounded-full border font-medium whitespace-nowrap', classes[severity], className)}
+      className={cn('inline-flex items-center gap-1.5 text-xs px-1.5 py-0.5 rounded-full border font-medium whitespace-nowrap', classes[severity], className)}
     >
       <span className={cn('w-1.5 h-1.5 rounded-full shrink-0', dot[severity], severity !== 'ok' && 'animate-pulse')} />
       <span className="font-semibold">{formatShortDate(dueDateIso)}</span>

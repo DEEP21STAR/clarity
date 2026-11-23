@@ -1,5 +1,6 @@
-import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react'
+import { lazy, Suspense, useEffect, useMemo, useRef, useState, type CSSProperties } from 'react'
 import gsap from 'gsap'
+import { haptic } from '@/lib/haptics'
 import { useStore } from '@/lib/store'
 import { StatCard } from './StatCard'
 import { CountUp } from './CountUp'
@@ -16,7 +17,8 @@ import { AccountsPanel } from './AccountsPanel'
 import { SavingsGoalsSection } from './SavingsGoals'
 import { SinkingFundsSection } from './SinkingFunds'
 import { SpendPaceTracker } from './SpendPaceTracker'
-import { CashFlowChart } from './CashFlowChart'
+// The chart pulls in the charting library; it loads right after the page, behind a same-size placeholder so nothing shifts.
+const CashFlowChart = lazy(() => import('./CashFlowChart').then((m) => ({ default: m.CashFlowChart })))
 import { HouseholdSplit } from './HouseholdSplit'
 import { BillIcon } from './BillIcons'
 import { SegmentedControl } from './SegmentedControl'
@@ -292,7 +294,7 @@ export function UpcomingPayments() {
           <button
             type="button"
             onClick={() => setShowBalanceEdit((v) => !v)}
-            className="mt-3 inline-flex items-center gap-1.5 text-[11px] font-semibold text-cyan-300/70 hover:text-cyan-200 transition-colors"
+            className="mt-3 inline-flex items-center gap-1.5 text-xs font-semibold text-cyan-300/70 hover:text-cyan-200 transition-colors"
           >
             <Pencil className="w-3 h-3" /> {showBalanceEdit ? 'Hide balances' : 'Edit balances'}
           </button>
@@ -302,7 +304,7 @@ export function UpcomingPayments() {
             </div>
           )}
           {view === 'mimi' && (
-            <p className="mt-1 text-[11px] text-white/35">No income data is tracked for Mimi — this view shows $0 income honestly rather than guessing.</p>
+            <p className="mt-1 text-xs text-white/55">No income data is tracked for Mimi — this view shows $0 income honestly rather than guessing.</p>
           )}
 
           {/* Food / Fuel / Personal breakdown — the whole point of this feature */}
@@ -322,7 +324,7 @@ export function UpcomingPayments() {
               onSplitChange={setPersonalSplit}
             />
           </div>
-          <p className="mt-4 text-[11px] text-white/35 flex items-center justify-center gap-1">
+          <p className="mt-4 text-xs text-white/55 flex items-center justify-center gap-1">
             <Info className="w-3 h-3" /> Split is an editable estimate (sliders below) — adjust to match how you actually spend.
           </p>
         </div>
@@ -349,7 +351,7 @@ export function UpcomingPayments() {
           <div className="mt-4 text-3xl font-bold text-emerald-300 tabular-nums">
             <CountUp value={incomeInWindow} prefix="$" />
           </div>
-          <p className="text-xs text-white/45 mt-2">
+          <p className="text-xs text-white/55 mt-2">
             {/* 2026-09-23 — was hardcoded to Deep's own exact pattern; now describes whatever
                 state.incomeAnchor actually is, so a wizard-seeded instance with a different
                 pattern doesn't show a caption describing someone else's pay schedule. */}
@@ -367,13 +369,15 @@ export function UpcomingPayments() {
           <div className="mt-4 text-3xl font-bold text-amber-300 tabular-nums">
             <CountUp value={billsInWindow} prefix="$" />
           </div>
-          <p className="text-xs text-white/45 mt-2">
+          <p className="text-xs text-white/55 mt-2">
             A smoothed estimate — bills (prorated), plus set-asides for periodic bills, sinking funds, and savings goals funded this period.
           </p>
         </StatCard>
       </div>
 
-      <CashFlowChart />
+      <Suspense fallback={<div aria-hidden="true" className="h-[517px] md:h-[444px] rounded-2xl border border-white/10 bg-white/[0.04]" />}>
+        <CashFlowChart />
+      </Suspense>
 
       <SpendPaceTracker
         allocation={{ food: foodAmount, fuel: fuelAmount, personal: personalAmount }}
@@ -551,7 +555,7 @@ function QuickAddButton({ onSubmit, accent, glowColor }: { onSubmit: (amount: nu
         aria-label="Add a manual spend"
         style={{ '--quickadd-glow': glowColor } as CSSProperties}
         className={cn(
-          'quickadd-pulse flex items-center gap-1 rounded-full pl-1.5 pr-2.5 py-1.5 text-[11px] font-bold text-black shrink-0 hover:scale-105 active:scale-95 transition-transform',
+          'quickadd-pulse flex items-center gap-1 rounded-full pl-1.5 pr-2.5 py-1.5 text-xs font-bold text-black shrink-0 hover:scale-105 active:scale-95 transition-transform',
           accent
         )}
       >
@@ -565,7 +569,7 @@ function QuickAddButton({ onSubmit, accent, glowColor }: { onSubmit: (amount: nu
 
   return (
     <div className="flex items-center gap-1 shrink-0">
-      <span className="text-white/40 text-xs">$</span>
+      <span className="text-white/55 text-xs">$</span>
       <input
         aria-label="Amount to add" ref={inputRef}
         type="number"
@@ -605,7 +609,7 @@ function AllocationTile({ label, amount, spent, pct, glowFrom, glowTo, ringColor
           {over && <AlertTriangle className="w-3 h-3 text-rose-400 animate-pulse" />}
           {close && <AlertTriangle className="w-3 h-3 text-amber-300/80" />}
         </span>
-        <span className="text-[10px] text-white/35">{pct}% guide</span>
+        <span className="text-xs text-white/55">{pct}% guide</span>
       </div>
       <div className="mt-2 flex items-center gap-3">
         <RadialGuideRing pct={spentPct} over={over} gradientId={ringId} colors={ringColors} />
@@ -613,7 +617,7 @@ function AllocationTile({ label, amount, spent, pct, glowFrom, glowTo, ringColor
           <div className={cn('text-2xl font-bold tabular-nums text-transparent bg-clip-text bg-gradient-to-r', over ? 'from-rose-400 to-rose-500' : glowFrom, over ? '' : glowTo)}>
             {formatCurrency(remaining)}
           </div>
-          <p className={cn('text-[10px] mt-0.5', over ? 'text-rose-300' : 'text-white/35')}>
+          <p className={cn('text-xs mt-0.5', over ? 'text-rose-300' : 'text-white/55')}>
             {over ? `${formatCurrency(-remaining)} over ` : ''}{formatCurrency(spent)} of {formatCurrency(amount)} spent
           </p>
         </div>
@@ -625,12 +629,12 @@ function AllocationTile({ label, amount, spent, pct, glowFrom, glowTo, ringColor
       </div>
       {pending && (
         <div className="streak-badge-pop mt-2.5 rounded-lg border border-amber-400/30 bg-amber-500/10 p-2.5">
-          <p className="text-[11px] text-amber-200 leading-relaxed">⚠ {pending.message}</p>
+          <p className="text-xs text-amber-200 leading-relaxed">⚠ {pending.message}</p>
           <div className="mt-2 flex items-center gap-2">
-            <button type="button" onClick={() => { onForceAdd(pending.amount); setPending(null) }} className="text-[11px] font-semibold text-amber-100 bg-amber-500/20 hover:bg-amber-500/30 rounded-md px-2.5 py-1 transition-colors">
+            <button type="button" onClick={() => { onForceAdd(pending.amount); setPending(null) }} className="text-xs font-semibold text-amber-100 bg-amber-500/20 hover:bg-amber-500/30 rounded-md px-2.5 py-1 transition-colors">
               Log it anyway
             </button>
-            <button type="button" onClick={() => setPending(null)} className="text-[11px] text-white/40 hover:text-white/70">
+            <button type="button" onClick={() => setPending(null)} className="text-xs text-white/55 hover:text-white/70">
               Cancel
             </button>
           </div>
@@ -699,11 +703,11 @@ function PersonalAllocationTile({
       <button type="button" onClick={onToggleOpen} className="w-full flex items-center justify-between text-left" aria-expanded={open}>
         <span className="text-xs font-semibold uppercase tracking-wide text-white/60 flex items-center gap-1.5">
           Personal
-          <ChevronDown className={cn('w-3 h-3 transition-transform text-white/35', open && 'rotate-180')} />
+          <ChevronDown className={cn('w-3 h-3 transition-transform text-white/55', open && 'rotate-180')} />
           {over && <AlertTriangle className="w-3 h-3 text-rose-400 animate-pulse" />}
           {close && <AlertTriangle className="w-3 h-3 text-amber-300/80" />}
         </span>
-        <span className="text-[10px] text-white/35">{pct}% guide</span>
+        <span className="text-xs text-white/55">{pct}% guide</span>
       </button>
       <div className="mt-2 flex items-center gap-3">
         <RadialGuideRing pct={spentPct} over={over} gradientId="ring-personal" colors={['#c084fc', '#ec4899']} />
@@ -711,7 +715,7 @@ function PersonalAllocationTile({
           <div className={cn('text-2xl font-bold tabular-nums text-transparent bg-clip-text bg-gradient-to-r', over ? 'from-rose-400 to-rose-500' : 'from-purple-400 to-pink-500')}>
             {formatCurrency(remaining)}
           </div>
-          <p className={cn('text-[10px] mt-0.5', over ? 'text-rose-300' : 'text-white/35')}>
+          <p className={cn('text-xs mt-0.5', over ? 'text-rose-300' : 'text-white/55')}>
             {over ? `${formatCurrency(-remaining)} over ` : ''}{formatCurrency(spent)} of {formatCurrency(amount)} spent
           </p>
         </div>
@@ -723,12 +727,12 @@ function PersonalAllocationTile({
       </div>
       {pending && (
         <div className="streak-badge-pop mt-2.5 rounded-lg border border-amber-400/30 bg-amber-500/10 p-2.5">
-          <p className="text-[11px] text-amber-200 leading-relaxed">⚠ {pending.message}</p>
+          <p className="text-xs text-amber-200 leading-relaxed">⚠ {pending.message}</p>
           <div className="mt-2 flex items-center gap-2">
-            <button type="button" onClick={() => { onForceAdd(pending.amount); setPending(null) }} className="text-[11px] font-semibold text-amber-100 bg-amber-500/20 hover:bg-amber-500/30 rounded-md px-2.5 py-1 transition-colors">
+            <button type="button" onClick={() => { onForceAdd(pending.amount); setPending(null) }} className="text-xs font-semibold text-amber-100 bg-amber-500/20 hover:bg-amber-500/30 rounded-md px-2.5 py-1 transition-colors">
               Log it anyway
             </button>
-            <button type="button" onClick={() => setPending(null)} className="text-[11px] text-white/40 hover:text-white/70">
+            <button type="button" onClick={() => setPending(null)} className="text-xs text-white/55 hover:text-white/70">
               Cancel
             </button>
           </div>
@@ -749,7 +753,7 @@ function PersonalAllocationTile({
             const subAmount = (amount * split[item.key]) / 100
             return (
               <div key={item.key}>
-                <div className="flex items-center justify-between text-[11px] text-white/50">
+                <div className="flex items-center justify-between text-xs text-white/50">
                   <span>{item.label}</span>
                   <span className="tabular-nums text-white/70">{formatCurrency(subAmount)} · {split[item.key]}%</span>
                 </div>
@@ -764,7 +768,7 @@ function PersonalAllocationTile({
               </div>
             )
           })}
-          <p className="pt-1 text-[10px] text-white/35 flex items-start gap-1">
+          <p className="pt-1 text-xs text-white/55 flex items-start gap-1">
             <PiggyBank className="w-3 h-3 shrink-0 mt-0.5" />
             Saving for a holiday? That's tracked as a Savings Goal, not a Personal slice — add it in Savings Goals below.
           </p>
@@ -786,6 +790,7 @@ function PaidToggle({ billId, billName, dueDateIso, amount }: { billId: string; 
   const toggle = () => {
     if (existing) {
       deletePaymentRecord(existing.id)
+      haptic('tap')
       showToast(`${billName} marked unpaid`, { tone: 'info' })
     } else {
       const id = recordPayment({ targetType: 'recurringBill', targetId: billId, targetLabel: billName, amount, date: todayIso(), dueDateIso })
@@ -793,6 +798,7 @@ function PaidToggle({ billId, billName, dueDateIso, amount }: { billId: string; 
       // despite the earlier table note claiming it already had it — genuine gap, not
       // redundant with anything.
       fireConfetti()
+      haptic('success')
       chimeBillPaid(state.soundEnabled)
       showToast(`${billName} marked paid — $${amount.toFixed(2)} recorded for ${formatShortDate(dueDateIso)}`, { tone: 'success', actionLabel: 'Undo', onAction: () => deletePaymentRecord(id) })
     }
@@ -833,13 +839,13 @@ function BillsManager({ bills, onUpdate, onAdd, onRemove, view, onViewChange, li
   return (
     <StatCard label="Recurring Bills" glow="cyan" tilt={false}>
       <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
-        <div className="text-xs text-white/40">{activeBills.length} active bills</div>
+        <div className="text-xs text-white/55">{activeBills.length} active bills</div>
         {/* Same Live Funds Available figure as the hero card above — reused, not
             recomputed, so it can never drift from it. A second, quieter surface
             of the number right where the bills themselves are being reviewed. */}
         <div className="flex items-center gap-1.5 text-xs">
           <Wallet className={cn('w-3.5 h-3.5', isOverspent ? 'text-rose-300' : 'text-cyan-300')} />
-          <span className="text-white/40">Live funds this {window_}:</span>
+          <span className="text-white/55">Live funds this {window_}:</span>
           <span className={cn('font-semibold tabular-nums', isOverspent ? 'text-rose-300' : 'text-cyan-300')}>
             {formatCurrency(liveFundsAvailable)}
           </span>
@@ -860,7 +866,7 @@ function BillsManager({ bills, onUpdate, onAdd, onRemove, view, onViewChange, li
 
       {view === 'snapshot' ? (
         <div className="mt-4 grid grid-cols-2 sm:grid-cols-3 gap-3">
-          {activeBills.length === 0 && <p className="text-sm text-white/35 col-span-full">No active bills.</p>}
+          {activeBills.length === 0 && <p className="text-sm text-white/55 col-span-full">No active bills.</p>}
           {activeBills.map((bill, i) => (
             <BillSnapshotCard key={bill.id} bill={bill} delay={i * 0.04} highlighted={highlightedBillIds.has(bill.id)} />
           ))}
@@ -869,7 +875,7 @@ function BillsManager({ bills, onUpdate, onAdd, onRemove, view, onViewChange, li
       <div className="mt-4 overflow-x-auto">
         <table className="w-full text-sm">
           <thead>
-            <tr className="text-left text-white/40 text-xs uppercase tracking-wide">
+            <tr className="text-left text-white/55 text-xs uppercase tracking-wide">
               <th className="pb-2 pr-2">Name</th>
               <th className="pb-2 pr-2">Amount</th>
               <th className="pb-2 pr-2">Frequency</th>
@@ -894,7 +900,7 @@ function BillsManager({ bills, onUpdate, onAdd, onRemove, view, onViewChange, li
                     />
                     {bill.note && (
                       <span title={bill.note} className="shrink-0">
-                        <Info className="w-3 h-3 text-white/30" aria-label={bill.note} />
+                        <Info className="w-3 h-3 text-white/55" aria-label={bill.note} />
                       </span>
                     )}
                     {isBillAmountChanged(bill) && (
@@ -906,7 +912,7 @@ function BillsManager({ bills, onUpdate, onAdd, onRemove, view, onViewChange, li
                 </td>
                 <td className="py-2 pr-2">
                   <div className="flex items-center gap-1">
-                    <span className="text-white/40">$</span>
+                    <span className="text-white/55">$</span>
                     <input
                       type="number"
                       step="0.01"
@@ -945,7 +951,7 @@ function BillsManager({ bills, onUpdate, onAdd, onRemove, view, onViewChange, li
                       className="bg-transparent outline-none border-b border-transparent focus:border-cyan-400/50 w-10 tabular-nums"
                     />
                     {bill.dueDayIsEstimate && (
-                      <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-amber-500/15 text-amber-300 border border-amber-500/30">
+                      <span className="text-xs px-1.5 py-0.5 rounded-full bg-amber-500/15 text-amber-300 border border-amber-500/30">
                         estimated
                       </span>
                     )}
@@ -977,11 +983,11 @@ function BillsManager({ bills, onUpdate, onAdd, onRemove, view, onViewChange, li
                   {bill.active && bill.frequency === 'monthly' ? (
                     <PaidToggle billId={bill.id} billName={bill.name} dueDateIso={nextMonthlyDueDate(bill.dueDay, todayIso())} amount={bill.amount} />
                   ) : (
-                    <span className="text-white/20 text-xs">—</span>
+                    <span className="text-white/55 text-xs">—</span>
                   )}
                 </td>
                 <td className="py-2">
-                  <button onClick={() => withUndo(`${bill.name} removed`, () => onRemove(bill.id))} className="text-white/30 hover:text-rose-400">
+                  <button onClick={() => withUndo(`${bill.name} removed`, () => onRemove(bill.id))} className="text-white/55 hover:text-rose-400">
                     <Trash2 className="w-4 h-4" />
                   </button>
                 </td>
@@ -1024,7 +1030,7 @@ function PaymentMethodBadge({ method }: { method: 'direct-debit' | 'manual' }) {
     return (
       <span
         title="Direct debit — taken automatically. No action needed unless funds are short."
-        className="inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded-full border font-medium whitespace-nowrap bg-cyan-500/10 text-cyan-300 border-cyan-400/30"
+        className="inline-flex items-center gap-1 text-xs px-1.5 py-0.5 rounded-full border font-medium whitespace-nowrap bg-cyan-500/10 text-cyan-300 border-cyan-400/30"
       >
         <RefreshCw className="w-2.5 h-2.5" /> Auto-pay
       </span>
@@ -1033,7 +1039,7 @@ function PaymentMethodBadge({ method }: { method: 'direct-debit' | 'manual' }) {
   return (
     <span
       title="You pay this yourself, by the due date — it won't be taken automatically."
-      className="inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded-full border font-medium whitespace-nowrap bg-violet-500/10 text-violet-300 border-violet-400/30"
+      className="inline-flex items-center gap-1 text-xs px-1.5 py-0.5 rounded-full border font-medium whitespace-nowrap bg-violet-500/10 text-violet-300 border-violet-400/30"
     >
       <HandCoins className="w-2.5 h-2.5" /> You pay this
     </span>
@@ -1064,7 +1070,7 @@ function BillSnapshotCard({ bill, delay, highlighted }: { bill: RecurringBill; d
       {bill.frequency === 'monthly' ? (
         <DueBadge dueDateIso={nextMonthlyDueDate(bill.dueDay, todayIso())} />
       ) : (
-        <span className="text-[10px] text-white/35 capitalize">{bill.frequency}</span>
+        <span className="text-xs text-white/55 capitalize">{bill.frequency}</span>
       )}
       <PaymentMethodBadge method={resolvePaymentMethod(bill)} />
     </div>

@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import { markThumbsWanted } from '@/lib/thumbnailPolicy'
 import { useStore } from '@/lib/store'
 import { Search, ImageOff, Keyboard } from 'lucide-react'
 import { cn, formatCurrency, prefersReducedMotion } from '@/lib/utils'
@@ -108,6 +109,8 @@ export function CommandPalette({ tabCommands }: { tabCommands: PaletteCommand[] 
 
   useEffect(() => { setSelected(0) }, [query])
   useEffect(() => { if (!open) setHoveredId(null) }, [open])
+  // Opening the palette is the signal that tab previews are wanted: from now on they are captured in the background.
+  useEffect(() => { if (open) markThumbsWanted(window.localStorage, (n) => window.dispatchEvent(new Event(n))) }, [open])
 
   // Coordinator follow-up — Deep found the preview too small to actually identify a
   // destination at a glance, just confirm one exists. Real fix: the preview pops in small,
@@ -164,7 +167,7 @@ export function CommandPalette({ tabCommands }: { tabCommands: PaletteCommand[] 
           onClick={(e) => e.stopPropagation()}
         >
           <div className="flex items-center gap-2 px-4 py-3 border-b border-white/10">
-            <Search className="w-4 h-4 text-white/40" />
+            <Search className="w-4 h-4 text-white/55" />
             <input
               autoFocus
               value={query}
@@ -175,12 +178,12 @@ export function CommandPalette({ tabCommands }: { tabCommands: PaletteCommand[] 
                 if (e.key === 'Enter') runSelected()
               }}
               placeholder="Jump to a tab, plan, bill, or action..."
-              className="flex-1 bg-transparent outline-none text-sm text-white placeholder:text-white/30"
+              className="flex-1 bg-transparent outline-none text-sm text-white placeholder:text-white/50"
             />
-            <kbd className="text-[10px] text-white/30 border border-white/10 rounded px-1.5 py-0.5">Esc</kbd>
+            <kbd className="text-xs text-white/55 border border-white/10 rounded px-1.5 py-0.5">Esc</kbd>
           </div>
           <div className="max-h-72 overflow-y-auto py-2">
-            {filtered.length === 0 && <div className="px-4 py-3 text-sm text-white/30">No matches.</div>}
+            {filtered.length === 0 && <div className="px-4 py-3 text-sm text-white/55">No matches.</div>}
             {filtered.map((cmd, i) => (
               <button
                 key={cmd.id}
@@ -190,11 +193,11 @@ export function CommandPalette({ tabCommands }: { tabCommands: PaletteCommand[] 
                 className={`w-full text-left px-4 py-2 text-sm flex items-center justify-between ${i === selected ? 'bg-cyan-400/10 text-cyan-200' : 'text-white/70 hover:bg-white/5'}`}
               >
                 <span>{cmd.label}</span>
-                {cmd.hint && <span className="text-xs text-white/30">{cmd.hint}</span>}
+                {cmd.hint && <span className="text-xs text-white/55">{cmd.hint}</span>}
               </button>
             ))}
           </div>
-          <div className="px-4 py-2 border-t border-white/10 flex items-center justify-between text-[10px] text-white/25">
+          <div className="px-4 py-2 border-t border-white/10 flex items-center justify-between text-xs text-white/55">
             <span>{!query.trim() ? 'Sorted by what you actually use' : `Fuzzy-matched · ${filtered.length} result${filtered.length === 1 ? '' : 's'}`}</span>
             <button onClick={() => { setOpen(false); setShowShortcuts(true) }} className="flex items-center gap-1 hover:text-cyan-300">
               <Keyboard className="w-3 h-3" /> Shortcuts <kbd className="border border-white/10 rounded px-1">?</kbd>
@@ -222,14 +225,14 @@ export function CommandPalette({ tabCommands }: { tabCommands: PaletteCommand[] 
             {hoveredThumb ? (
               <img src={hoveredThumb} alt="" className="w-full aspect-[420/280] object-cover object-top" />
             ) : (
-              <div className="w-full aspect-[420/280] flex flex-col items-center justify-center gap-1.5 text-white/25 bg-white/[0.02]">
+              <div className="w-full aspect-[420/280] flex flex-col items-center justify-center gap-1.5 text-white/55 bg-white/[0.02]">
                 <ImageOff className="w-5 h-5" />
-                <span className="text-[10px] text-center px-3">No preview yet — visit this tab once to cache one</span>
+                <span className="text-xs text-center px-3">No preview yet — visit this tab once to cache one</span>
               </div>
             )}
             <div className="px-3 py-2 border-t border-white/10 flex items-center justify-between">
-              <span className="text-[10px] text-white/40">{previewCmd.label}</span>
-              <span className="text-[9px] text-white/25" title="Cached snapshot from the last time you opened this tab — not a live render.">cached</span>
+              <span className="text-xs text-white/55">{previewCmd.label}</span>
+              <span className="text-xs text-white/55" title="Cached snapshot from the last time you opened this tab — not a live render.">cached</span>
             </div>
           </div>
         )}
@@ -269,7 +272,7 @@ function ShortcutsCheatsheet({ onClose }: { onClose: () => void }) {
           {SHORTCUTS.map((s) => (
             <div key={s.keys} className="flex items-center justify-between gap-3 text-xs">
               <span className="text-white/60">{s.desc}</span>
-              <kbd className="shrink-0 text-[10px] text-cyan-200 border border-cyan-400/20 bg-cyan-400/5 rounded px-1.5 py-0.5 whitespace-nowrap">{s.keys}</kbd>
+              <kbd className="shrink-0 text-xs text-cyan-200 border border-cyan-400/20 bg-cyan-400/5 rounded px-1.5 py-0.5 whitespace-nowrap">{s.keys}</kbd>
             </div>
           ))}
         </div>
