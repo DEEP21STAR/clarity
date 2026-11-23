@@ -16,6 +16,8 @@ for (const width of [320, 360, 390]) {
     await page.getByRole('button', { name: /^annual$/i }).click()
     const annual = await page.getByRole('button', { name: /^annual$/i }).boundingBox()
     expect(annual!.x + annual!.width).toBeLessThanOrEqual(width + 1)
+    // with room to spare inside the box at 390px (a different machine's fonts can be wider than ours)
+    if (width >= 390) expect(await track.evaluate((t) => t.scrollWidth - t.clientWidth), 'no hidden overflow at 390px').toBeLessThanOrEqual(0)
     await track.screenshot({ path: `test-results/segmented-${width}.png` })
   })
 }

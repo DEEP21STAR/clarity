@@ -74,7 +74,7 @@ export function SegmentedControl<T extends string>({
   }, [value])
 
   return (
-    <div ref={trackRef} className={cn('segmented-track relative inline-flex max-w-full rounded-full border border-white/10 p-0.5 max-sm:overflow-x-auto max-sm:[scrollbar-width:none]', size === 'sm' ? 'text-xs' : 'text-xs')}>
+    <div ref={trackRef} className={cn('segmented-track relative inline-flex max-w-full rounded-full border border-white/10 p-0.5 max-sm:overflow-x-auto max-sm:[scrollbar-width:none] max-sm:[&>button:last-child]:mr-1.5', size === 'sm' ? 'text-xs' : 'text-xs')}>
       {thumb && (
         <div
           className="segmented-thumb"
@@ -88,7 +88,7 @@ export function SegmentedControl<T extends string>({
           onClick={() => onChange(o.value)}
           className={cn(
             'relative z-10 capitalize whitespace-nowrap',
-            size === 'sm' ? 'px-2.5 py-1' : 'px-2 py-1.5 sm:px-3',
+            size === 'sm' ? 'px-2.5 py-1' : 'px-1.5 py-1.5 sm:px-3',
             // Active label: solid black + semibold on the light cyan->purple thumb (see .segmented-thumb
             // comment in index.css for the real contrast fix this pairs with — both endpoints verified >=11.8:1).
             value === o.value ? 'text-black font-semibold' : 'text-white/50 font-medium hover:text-white'
