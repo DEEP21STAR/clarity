@@ -104,7 +104,7 @@ export function AppContent() {
   // child (Add button, toasts, drawer, palette), pinning them to the end of the page. On the root element they stay anchored to the screen.
   useEffect(() => {
     const el = document.documentElement
-    const classes = ['ambient-drift', tint]
+    const classes = ['ambient-drift', tint].filter(Boolean) // tint is '' outside the morning/evening windows; classList.add('') throws and blanks the app
     el.classList.add(...classes)
     return () => el.classList.remove(...classes)
   }, [tint])
