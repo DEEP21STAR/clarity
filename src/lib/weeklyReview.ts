@@ -44,7 +44,7 @@ export function buildWeeklyReview(i: WeeklyReviewInput): WeeklyReview {
     return {
       headline: 'Your week, once you add a statement',
       hasData: false,
-      lines: ['Import a bank statement on the Transactions tab and this review fills in with your spending, your budgets and what is safe to spend.'],
+      lines: ['Import a bank statement on Transactions and this fills in with your spending, budgets and what is safe to spend.'],
     }
   }
 
