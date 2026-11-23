@@ -23,7 +23,7 @@ export interface BudgetRow {
 
 const round2 = (n: number) => Math.round(n * 100) / 100
 
-export function monthOf(iso: string): string { return iso.slice(0, 7) }
+export function monthOf(iso: string): string { return String(iso ?? "").slice(0, 7) }
 export function daysInMonth(monthIso: string): number {
   const [y, m] = monthIso.split('-').map(Number)
   return new Date(Date.UTC(y, m, 0)).getUTCDate()

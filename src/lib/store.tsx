@@ -1,4 +1,5 @@
 import type { CelebrationLevel } from './confetti'
+import { sanitizeTransactions } from './sanitize'
 import { withBudget, type CategoryBudget, type CategoryBudgets } from './categoryBudgets'
 import React, { createContext, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import type {
@@ -162,7 +163,8 @@ function loadState(key: string, fallback: AppState): AppState {
     const parsed = JSON.parse(raw)
     // Merge with defaults so new fields introduced later don't crash old saved state.
     const merged: AppState = { ...fallback, ...parsed }
-    return { ...merged, bills: backfillPaymentMethod(merged.bills) }
+    // Old or hand-edited data must never crash a screen: repair malformed transaction fields (keeps every row).
+    return { ...merged, bills: backfillPaymentMethod(merged.bills), transactions: sanitizeTransactions(merged.transactions) }
   } catch {
     return fallback
   }

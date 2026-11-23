@@ -68,6 +68,22 @@ export function PinGate({ children }: { children: React.ReactNode }) {
 
   const backspace = () => setDigits((d) => d.slice(0, -1))
 
+  // Keyboard entry: the number row and the numpad (e.code is NumpadN with NumLock on or off), Backspace/Delete to undo.
+  useEffect(() => {
+    if (unlocked) return
+    const onKey = (e: KeyboardEvent) => {
+      if (e.ctrlKey || e.metaKey || e.altKey) return
+      const m = /^(?:Digit|Numpad)([0-9])$/.exec(e.code)
+      const digit = m ? m[1] : /^[0-9]$/.test(e.key) ? e.key : null
+      if (digit !== null) { e.preventDefault(); pressKey(digit) }
+      else if (e.key === 'Backspace' || e.key === 'Delete') { e.preventDefault(); backspace() }
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+    // pressKey closes over the current digits, so re-bind when they change
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [unlocked, digits])
+
   if (unlocked) return <>{children}</>
 
   return (

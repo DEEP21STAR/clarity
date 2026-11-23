@@ -660,7 +660,8 @@ export function totalQuickLogSpendInWindow(
 
 const TRANSACTION_CATEGORY_PALETTE = ['#22d3ee', '#a855f7', '#ec4899', '#34d399', '#f59e0b', '#60a5fa', '#f472b6', '#4ade80']
 
-export function categoryColor(category: string): string {
+export function categoryColor(rawCategory: string): string {
+  const category = typeof rawCategory === 'string' ? rawCategory : '' // a row with no category must not crash the chart
   let hash = 0
   for (let i = 0; i < category.length; i++) {
     hash = (hash * 31 + category.charCodeAt(i)) >>> 0
