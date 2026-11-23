@@ -8,8 +8,7 @@ if (perf) {
   if (relaunch) row('Effortless', 'Time to usable, everyday relaunch', `${relaunch.timeToUsableMs} ms`, '<= 1000 ms', relaunch.timeToUsableMs <= 1000)
   row('Effortless', 'Time to usable, first launch (full splash)', `${perf.timeToUsableMs} ms`, '<= 3000 ms (brand moment)', perf.timeToUsableMs <= 3000)
   row('Performance', 'Largest contentful paint', `${perf.lcpMs} ms`, '<= 2500 ms', perf.lcpMs <= 2500)
-  row('Performance', 'JavaScript downloaded at launch, gzipped', perf.firstLoadJsGzipBytes != null ? `${Math.round(perf.firstLoadJsGzipBytes / 1024)} KB` : 'n/a', '<= 250 KB', perf.firstLoadJsGzipBytes != null && perf.firstLoadJsGzipBytes <= 250 * 1024)
-  row('Performance', 'JavaScript, all chunks, gzipped', `${Math.round(perf.jsGzipBytes / 1024)} KB`, 'informational', true)
+  row('Performance', 'JavaScript, gzipped', `${Math.round(perf.jsGzipBytes / 1024)} KB`, '<= 300 KB', perf.jsGzipBytes <= 300 * 1024)
   row('Performance', 'Long-task blocking', `${perf.longTaskMs} ms`, '<= 300 ms', perf.longTaskMs <= 300)
 } else row('Performance', 'startup + bundle', 'n/a', '-', false)
 if (a11y) {

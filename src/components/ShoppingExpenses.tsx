@@ -28,7 +28,7 @@ export function ShoppingExpenses() {
             <ShoppingCart className="cart-fill-icon w-8 h-8 text-cyan-300" />
           </div>
           <p className="text-white/70 font-medium">3D fridge view — coming back soon</p>
-          <p className="text-xs text-white/55 mt-2 max-w-sm">
+          <p className="text-xs text-white/40 mt-2 max-w-sm">
             The interactive 3D fridge & pantry scene is set aside for now by request. This
             placeholder is honest about that rather than a rebuilt half-version — this whole
             tab is just this placeholder for now; a real shopping list isn't built yet.

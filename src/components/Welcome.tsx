@@ -48,7 +48,7 @@ export function Welcome({ onContinue }: { onContinue: () => void }) {
         >
           Get started
         </button>
-        <p className="mt-3 text-xs text-white/55">Takes about 2 minutes</p>
+        <p className="mt-3 text-[10px] text-white/25">Takes about 2 minutes</p>
       </div>
     </div>
   )

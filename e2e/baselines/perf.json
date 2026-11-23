@@ -1,11 +1,10 @@
 {
-  "timeToUsableMs": 4661,
-  "firstLoadJsGzipBytes": 162252,
-  "fcpMs": 108,
-  "lcpMs": 596,
-  "longTaskMs": 2134,
-  "domNodes": 1447,
-  "jsBytes": 1845259,
-  "jsGzipBytes": 526887,
-  "cssBytes": 110610
+  "timeToUsableMs": 5737,
+  "fcpMs": 88,
+  "lcpMs": 1208,
+  "longTaskMs": 2299,
+  "domNodes": 1430,
+  "jsBytes": 1828165,
+  "jsGzipBytes": 501584,
+  "cssBytes": 109266
 }

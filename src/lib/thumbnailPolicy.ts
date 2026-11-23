@@ -42,19 +42,3 @@ export function whenIdle(fn: () => void, timeoutMs = 4000): () => void {
   const id = window.setTimeout(fn, 200)
   return () => window.clearTimeout(id)
 }
-
-/**
- * The tab previews only appear in the Cmd+K palette, and capturing one freezes the page for most of a second. So nothing is captured
- * until the palette has been opened at least once on this device; from then on previews warm up quietly as you use the app.
- */
-export const THUMBS_WANTED_KEY = 'clarity-thumbs-wanted'
-export const THUMBS_WANTED_EVENT = 'clarity:thumbs-wanted'
-
-export function thumbsWanted(storage: Pick<Storage, 'getItem'> | undefined): boolean {
-  try { return storage?.getItem(THUMBS_WANTED_KEY) === '1' } catch { return false }
-}
-
-export function markThumbsWanted(storage: Pick<Storage, 'setItem'> | undefined, notify?: (name: string) => void) {
-  try { storage?.setItem(THUMBS_WANTED_KEY, '1') } catch { /* blocked storage: previews just stay off */ }
-  notify?.(THUMBS_WANTED_EVENT)
-}

@@ -1,5 +1,3 @@
-import type { CelebrationLevel } from './confetti'
-import { withBudget, type CategoryBudget, type CategoryBudgets } from './categoryBudgets'
 import React, { createContext, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import type {
   RecurringBill, Mode, Country, Transaction, Debt, CreditCardAccount, DeviceRepayment, PeriodicBill,
@@ -59,8 +57,6 @@ export interface AppState {
   sinkingFunds: SinkingFund[]
   householdView: HouseholdView
   spendTracker: SpendTracker
-  /** Monthly target per spending category (Budgets tab). Missing in older saved data: loadState fills it from the default. */
-  categoryBudgets: CategoryBudgets
   streak: StreakState
   lastExportedAt: string | null
   /** One health-score reading per real calendar day — feeds the "score up/down X points" ticker line. */
@@ -71,8 +67,6 @@ export interface AppState {
   paymentRecords: PaymentRecord[]
   /** #38 — real sound design toggle, OFF by default per the explicit ask. */
   soundEnabled: boolean
-  /** How big celebrations are: Off, Subtle (default) or Showtime. */
-  celebrationLevel: CelebrationLevel
   /** 2026-09-23 round 6 — real per-instance names, set once during onboarding (see
    * SetupWizard.tsx's buildDemoSeed). Defaults preserve Deep's own existing account's exact
    * current display (his real saved state has no such key, so loadState's merge falls back to
@@ -119,14 +113,12 @@ export const DEFAULT_STATE: AppState = {
   sinkingFunds: [],
   householdView: 'combined',
   spendTracker: { food: 0, fuel: 0, personal: 0, periodStart: todayIso() },
-  categoryBudgets: {},
   streak: { current: 0, best: 0, lastCheckedDate: '', milestonesHit: [] },
   lastExportedAt: null,
   healthScoreHistory: [],
   dashboardCardOrder: ['stats', 'health', 'tax', 'insights'],
   paymentRecords: [],
   soundEnabled: false,
-  celebrationLevel: 'subtle',
   primaryName: 'Deep',
   secondaryName: 'Mimi',
   primaryColor: 'neutral',
@@ -202,8 +194,6 @@ interface StoreContextValue {
   removeSinkingFund: (id: string) => void
   setHouseholdView: (view: HouseholdView) => void
   updateSpendTracker: (patch: Partial<SpendTracker>) => void
-  /** Sets or clears one category's monthly target and rollover switch. A target of 0 removes it. */
-  setCategoryBudget: (category: string, patch: Partial<CategoryBudget>) => void
   resetSpendTracker: (periodStart: string) => void
   setStreak: (streak: StreakState) => void
   setLastExportedAt: (iso: string) => void
@@ -214,7 +204,6 @@ interface StoreContextValue {
   removeDeviceRepayment: (id: string) => void
   setDashboardCardOrder: (order: string[]) => void
   setSoundEnabled: (enabled: boolean) => void
-  setCelebrationLevel: (level: CelebrationLevel) => void
   /** 2026-09-23 round 7 — "ability to increase font sizes with 3 options" (Deep). Tailwind's
    * text-* utilities are all rem-based, so scaling the root <html> font-size (see the CSS rules
    * this drives) scales every existing size across the whole app for free, no per-component
@@ -351,7 +340,6 @@ export function StoreProvider({ children, storageKey = STORAGE_KEY, seedState = 
     removeSinkingFund: (id) => setState((s) => ({ ...s, sinkingFunds: s.sinkingFunds.filter((f) => f.id !== id) })),
     setHouseholdView: (view) => setState((s) => ({ ...s, householdView: view })),
     updateSpendTracker: (patch) => setState((s) => ({ ...s, spendTracker: { ...s.spendTracker, ...patch } })),
-    setCategoryBudget: (category, patch) => setState((s) => ({ ...s, categoryBudgets: withBudget(s.categoryBudgets ?? {}, category, patch) })),
     resetSpendTracker: (periodStart) => setState((s) => ({ ...s, spendTracker: { food: 0, fuel: 0, personal: 0, periodStart } })),
     setStreak: (streak) => setState((s) => ({ ...s, streak })),
     setLastExportedAt: (iso) => setState((s) => ({ ...s, lastExportedAt: iso })),
@@ -403,7 +391,6 @@ export function StoreProvider({ children, storageKey = STORAGE_KEY, seedState = 
       }),
     restoreState: (snapshot) => setState(snapshot),
     setSoundEnabled: (enabled) => setState((s) => ({ ...s, soundEnabled: enabled })),
-    setCelebrationLevel: (level) => setState((s) => ({ ...s, celebrationLevel: level })),
     setTextScale: (scale) => setState((s) => ({ ...s, textScale: scale })),
     setBillAlertsEnabled: (enabled) => setState((s) => ({ ...s, billAlertsEnabled: enabled })),
     setAccentTheme: (theme) => setState((s) => ({ ...s, accentTheme: theme })),

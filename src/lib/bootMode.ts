@@ -30,10 +30,3 @@ export function readLastBoot(storage: Pick<Storage, 'getItem'> | undefined): num
 export function writeLastBoot(storage: Pick<Storage, 'setItem'> | undefined, now: number) {
   try { storage?.setItem(BOOT_KEY, String(now)) } catch { /* private mode / blocked storage: just play the full splash next time */ }
 }
-
-/** The greeting on the intro: time-of-day aware, using the name on the profile. Late night and a missing name fall back gracefully. */
-export function greetingFor(hour: number, name: string | undefined | null): string {
-  const n = (name ?? '').trim()
-  const word = hour >= 5 && hour < 12 ? 'Good morning' : hour >= 12 && hour < 18 ? 'Good afternoon' : hour >= 18 && hour < 22 ? 'Good evening' : 'Welcome back'
-  return n ? `${word}, ${n}` : word
-}

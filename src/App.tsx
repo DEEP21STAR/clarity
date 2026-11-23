@@ -1,25 +1,19 @@
-import { lazy, Suspense, useEffect, useMemo, useRef, useState, type CSSProperties } from 'react'
+import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react'
 import { StoreProvider, useStore, STORAGE_KEY } from '@/lib/store'
 import { BootSequence } from './components/BootSequence'
-import { greetingFor } from '@/lib/bootMode'
-import { markBooted, whenBooted } from '@/lib/bootSignal'
-const Dashboard = lazy(() => import('./components/Dashboard').then((m) => ({ default: m.Dashboard })))
+import { Dashboard } from './components/Dashboard'
 import { UpcomingPayments } from './components/UpcomingPayments'
-const Transactions = lazy(() => import('./components/Transactions').then((m) => ({ default: m.Transactions })))
-const Budgets = lazy(() => import('./components/Budgets').then((m) => ({ default: m.Budgets })))
-const Debts = lazy(() => import('./components/Debts').then((m) => ({ default: m.Debts })))
-const NetWorth = lazy(() => import('./components/NetWorth').then((m) => ({ default: m.NetWorth })))
-const BillCalendar = lazy(() => import('./components/BillCalendar').then((m) => ({ default: m.BillCalendar })))
-const ShoppingExpenses = lazy(() => import('./components/ShoppingExpenses').then((m) => ({ default: m.ShoppingExpenses })))
-const Tools = lazy(() => import('./components/Tools').then((m) => ({ default: m.Tools })))
+import { Transactions } from './components/Transactions'
+import { Budgets } from './components/Budgets'
+import { Debts } from './components/Debts'
+import { NetWorth } from './components/NetWorth'
+import { BillCalendar } from './components/BillCalendar'
+import { ShoppingExpenses } from './components/ShoppingExpenses'
+import { Tools } from './components/Tools'
 import { PinGate } from './components/PinGate'
-// Three.js is large; the animated backdrop loads (via LazyAmbient) once the page is usable, not before.
-import { AmbientBackground } from './components/LazyAmbient'
-import { TabSkeleton } from './components/TabSkeleton'
+import { AmbientBackground } from './components/AmbientBackground'
 import { CommandPalette, type PaletteCommand } from './components/CommandPalette'
 import { ThumbnailPrecacher } from './components/ThumbnailPrecacher'
-import { QuickAddHost } from './components/QuickAddHost'
-import { setCelebrationLevel } from '@/lib/confetti'
 import { SegmentedControl } from './components/SegmentedControl'
 import { ToastProvider, useToast } from './components/Toast'
 import { NotificationBell } from './components/NotificationBell'
@@ -33,7 +27,7 @@ import { computeCurrentHealthScore, calcNetWorth, dueTodayBills } from '@/lib/lo
 import { cn, formatCurrency, todayIso } from '@/lib/utils'
 import { billsDueForAlert, sendDueBillNotifications } from '@/lib/notifications'
 import { captureThumbnail } from '@/lib/thumbnailCache'
-import { shouldCaptureThumbnails, currentThumbEnv, whenIdle, thumbsWanted, ON_VISIT_CAPTURE_DELAY_MS } from '@/lib/thumbnailPolicy'
+import { shouldCaptureThumbnails, currentThumbEnv, whenIdle, ON_VISIT_CAPTURE_DELAY_MS } from '@/lib/thumbnailPolicy'
 import {
   LayoutDashboard, CalendarClock, Receipt, PieChart, CreditCard, ShoppingCart, Wrench, TrendingUp, CalendarDays, Command, WifiOff, Check, Menu, Home,
 } from 'lucide-react'
@@ -100,14 +94,6 @@ export function AppContent() {
   const [tab, setTab] = useState<TabId>(initialTab)
   const mainRef = useRef<HTMLDivElement>(null)
   const tint = useTimeOfDayTint()
-  // The colour drift and time-of-day tint are CSS filters. A filter on an ordinary wrapper turns it into the anchor for every fixed
-  // child (Add button, toasts, drawer, palette), pinning them to the end of the page. On the root element they stay anchored to the screen.
-  useEffect(() => {
-    const el = document.documentElement
-    const classes = ['ambient-drift', tint]
-    el.classList.add(...classes)
-    return () => el.classList.remove(...classes)
-  }, [tint])
   const [isOnline, setIsOnline] = useState(() => (typeof navigator === 'undefined' ? true : navigator.onLine))
   const [justSaved, setJustSaved] = useState(false)
   // 2026-09-23 — mobile nav drawer. The desktop tab bar (9 tabs, scroll-to-discover) is a real
@@ -147,9 +133,6 @@ export function AppContent() {
     document.documentElement.dataset.accentTheme = state.accentTheme
   }, [state.accentTheme])
 
-  // The saved celebration level (Off / Subtle / Showtime) scales every confetti burst.
-  useEffect(() => { setCelebrationLevel(state.celebrationLevel ?? 'subtle') }, [state.celebrationLevel])
-
   // Round 21, item #3 — caches a thumbnail of whichever tab is genuinely open, for the
   // ⌘K palette's hover preview. Waits for the entrance animation to settle (~900ms) so the
   // captured frame shows the tab at rest, not mid fly-in. See thumbnailCache.ts's doc comment
@@ -159,14 +142,10 @@ export function AppContent() {
     if (!el) return
     // Desktop hover-pointer feature only, and only once the browser is idle: capturing on launch froze the
     // main thread for over a second while the app was trying to become usable (measured with a CPU profile).
-    if (!shouldCaptureThumbnails(currentThumbEnv()) || !thumbsWanted(window.localStorage)) return
+    if (!shouldCaptureThumbnails(currentThumbEnv())) return
     let cancelIdle = () => {}
-    let timer = 0
-    // Only once the intro has finished: this capture rasterises the whole page and would freeze the splash animation.
-    const cancelBoot = whenBooted(() => {
-      timer = window.setTimeout(() => { cancelIdle = whenIdle(() => { captureThumbnail(tab, el) }) }, ON_VISIT_CAPTURE_DELAY_MS)
-    })
-    return () => { cancelBoot(); window.clearTimeout(timer); cancelIdle() }
+    const timer = window.setTimeout(() => { cancelIdle = whenIdle(() => { captureThumbnail(tab, el) }) }, ON_VISIT_CAPTURE_DELAY_MS)
+    return () => { window.clearTimeout(timer); cancelIdle() }
   }, [tab])
 
   // Single scroll listener drives every glass panel's subtle depth-shift sheen
@@ -310,8 +289,8 @@ export function AppContent() {
   }
 
   return (
-    <div className="min-h-screen relative">
-      <IdleMount delayMs={700}><AmbientBackground healthScore={healthScore} /></IdleMount>
+    <div className={cn('min-h-screen relative ambient-drift', tint)}>
+      <AmbientBackground healthScore={healthScore} />
       <CursorGlow />
       <CommandPalette tabCommands={tabCommands} />
       <div className="relative z-10 page-enter-3d">
@@ -328,14 +307,14 @@ export function AppContent() {
               >
                 <Menu className="w-4.5 h-4.5" />
               </button>
-              <div data-brand-logo className="w-8 h-8 rounded-lg bg-gradient-to-br from-cyan-400 to-purple-500" />
+              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-cyan-400 to-purple-500" />
               <span className="gradient-heading font-bold text-lg tracking-tight hidden min-[430px]:inline">Clarity</span>
             </div>
             <div className="flex items-center gap-2 sm:gap-3 shrink-0">
               {/* Round 21, item #21 — real debounced "Saved" pulse, not permanent chrome. */}
               <span
                 className={cn(
-                  'hidden md:inline-flex items-center gap-1 text-xs text-emerald-300/80 transition-opacity duration-500',
+                  'hidden md:inline-flex items-center gap-1 text-[10px] text-emerald-300/80 transition-opacity duration-500',
                   justSaved ? 'opacity-100' : 'opacity-0 pointer-events-none'
                 )}
                 aria-live="polite"
@@ -345,7 +324,7 @@ export function AppContent() {
               {/* Round 21, item #15 — honest online/offline state; this app works fine offline
                   (everything's localStorage), this just says so instead of staying silent. */}
               {!isOnline && (
-                <span title="You're offline — everything still saves locally, nothing is lost." className="hidden md:inline-flex items-center gap-1 text-xs text-amber-300/80 border border-amber-400/20 rounded-full px-2 py-0.5">
+                <span title="You're offline — everything still saves locally, nothing is lost." className="hidden md:inline-flex items-center gap-1 text-[10px] text-amber-300/80 border border-amber-400/20 rounded-full px-2 py-0.5">
                   <WifiOff className="w-3 h-3" /> Offline
                 </span>
               )}
@@ -402,11 +381,11 @@ export function AppContent() {
                 type="button"
                 onClick={() => window.dispatchEvent(new CustomEvent('clarity:open-command-palette'))}
                 title="Quick actions: search and jump straight to any tab, or open a specific GEM VISA installment plan — press ⌘K (Ctrl+K) anytime, or click here."
-                className="hidden md:inline-flex items-center gap-1.5 text-xs text-white/55 hover:text-cyan-300 border border-white/10 hover:border-cyan-400/30 rounded-full px-2.5 py-1 transition-colors"
+                className="hidden md:inline-flex items-center gap-1.5 text-xs text-white/40 hover:text-cyan-300 border border-white/10 hover:border-cyan-400/30 rounded-full px-2.5 py-1 transition-colors"
               >
                 <Command className="w-3 h-3" />
                 <span>Quick actions</span>
-                <kbd className="text-xs text-white/55 border border-white/10 rounded px-1 ml-0.5">⌘K</kbd>
+                <kbd className="text-[10px] text-white/30 border border-white/10 rounded px-1 ml-0.5">⌘K</kbd>
               </button>
               <NotificationBell />
             </div>
@@ -456,7 +435,7 @@ export function AppContent() {
                           ? `${billsDueTodayList[0].name} due today — click to see it`
                           : `${billsDueToday} bills due today: ${billsDueTodayList.map((b) => b.name).join(', ')} — click to see them`
                       }
-                      className="absolute -top-1 -right-1 min-w-[15px] h-[15px] px-[3px] rounded-full bg-rose-500 text-white text-xs font-bold flex items-center justify-center leading-none shadow-[0_0_8px_-1px_rgba(255,45,85,0.8)]"
+                      className="absolute -top-1 -right-1 min-w-[15px] h-[15px] px-[3px] rounded-full bg-rose-500 text-white text-[9px] font-bold flex items-center justify-center leading-none shadow-[0_0_8px_-1px_rgba(255,45,85,0.8)]"
                     >
                       {billsDueToday}
                     </span>
@@ -466,8 +445,7 @@ export function AppContent() {
             })}
           </nav>
         </header>
-        <main ref={mainRef} className="max-w-6xl mx-auto px-4 pt-8 pb-8 md:pb-28 page-enter">
-          <Suspense fallback={<TabSkeleton />}>
+        <main ref={mainRef} className="max-w-6xl mx-auto px-4 py-8 page-enter">
           {tab === 'dashboard' && <Dashboard />}
           {tab === 'home' && renderTabContent('home')}
           {tab === 'upcoming' && <UpcomingPayments />}
@@ -478,7 +456,6 @@ export function AppContent() {
           {tab === 'debts' && <Debts />}
           {tab === 'shopping' && <ShoppingExpenses />}
           {tab === 'tools' && <Tools />}
-          </Suspense>
         </main>
         {tab !== 'home' && <WhetuFooter name={state.primaryName} />}
       </div>
@@ -486,8 +463,7 @@ export function AppContent() {
           worked, but only cached a thumbnail AFTER a real visit, so most tabs legitimately
           showed "No preview yet" on a genuine first use. Pre-warms every NOT-YET-CACHED tab
           off-screen, one at a time, staggered — see ThumbnailPrecacher.tsx's doc comment. */}
-      <Suspense fallback={null}><ThumbnailPrecacher tabIds={TABS.map((t) => t.id)} skipId={tab} renderTab={renderTabContent} /></Suspense>
-      <QuickAddHost />
+      <ThumbnailPrecacher tabIds={TABS.map((t) => t.id)} skipId={tab} renderTab={renderTabContent} />
       <MobileNavDrawer
         open={mobileNavOpen}
         onClose={() => setMobileNavOpen(false)}
@@ -498,26 +474,6 @@ export function AppContent() {
       />
     </div>
   )
-}
-
-/** The intro with a time-of-day greeting using the profile name (rendered inside the store, so it can read it). */
-function BootWithGreeting({ onDone }: { onDone: () => void }) {
-  const { state } = useStore()
-  const [greeting] = useState(() => greetingFor(new Date().getHours(), state.primaryName))
-  return <BootSequence onDone={onDone} greeting={greeting} />
-}
-
-/** Mounts its children shortly after first paint, when the browser is idle, so heavy decorative work stays off the startup path. */
-function IdleMount({ children, delayMs = 500 }: { children: React.ReactNode; delayMs?: number }) {
-  const [on, setOn] = useState(false)
-  useEffect(() => {
-    let cancelIdle = () => {}
-    let t = 0
-    // Only after the intro has finished, so the 3D backdrop's start-up never competes with the splash animation.
-    const cancelBoot = whenBooted(() => { t = window.setTimeout(() => { cancelIdle = whenIdle(() => setOn(true), 3000) }, delayMs) })
-    return () => { cancelBoot(); window.clearTimeout(t); cancelIdle() }
-  }, [delayMs])
-  return on ? <>{children}</> : null
 }
 
 function App() {
@@ -544,7 +500,7 @@ function App() {
   const [onboardingStage, setOnboardingStage] = useState<'welcome' | 'wizard' | 'done'>(isFirstRun ? 'welcome' : 'done')
 
   if (onboardingStage !== 'done') {
-    if (!booted) return <BootSequence onDone={() => { setBooted(true); markBooted() }} />
+    if (!booted) return <BootSequence onDone={() => setBooted(true)} />
     if (onboardingStage === 'welcome') return <Welcome onContinue={() => setOnboardingStage('wizard')} />
     return <SetupWizard mode="onboarding" />
   }
@@ -552,7 +508,7 @@ function App() {
   return (
     <StoreProvider>
       <ToastProvider>
-        {!booted && <BootWithGreeting onDone={() => { setBooted(true); markBooted() }} />}
+        {!booted && <BootSequence onDone={() => setBooted(true)} />}
         <PinGate>
           <AppContent />
         </PinGate>

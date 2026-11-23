@@ -1,5 +1,4 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
-import { MoneyField } from '@/components/MoneyField'
 import { useStore } from '@/lib/store'
 import { StatCard } from './StatCard'
 import { CountUp } from './CountUp'
@@ -21,7 +20,6 @@ import { YearInReview } from './YearInReview'
 import { DashboardForecastCard } from './DashboardForecastCard'
 import { TakeawaySavings } from './TakeawaySavings'
 import { FinancialTipOfDay } from './FinancialTipOfDay'
-import { WeeklyReviewCard } from './WeeklyReviewCard'
 import { GettingStartedCard } from './GettingStartedCard'
 
 /**
@@ -178,13 +176,15 @@ export function Dashboard() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <StatCard label="Gross Annual Income" glow="cyan">
           <div className="mt-4 flex items-center gap-2">
-            <span className="text-white/55">$</span>
-            <MoneyField
-              label="Gross annual income" value={grossAnnualIncome} onChange={setGrossAnnualIncome}
+            <span className="text-white/40">$</span>
+            <input
+              type="number"
+              aria-label="Gross annual income" value={grossAnnualIncome}
+              onChange={(e) => setGrossAnnualIncome(parseFloat(e.target.value) || 0)}
               className="bg-transparent text-3xl font-bold tabular-nums text-cyan-200 outline-none border-b border-white/10 focus:border-cyan-400/60 w-full"
             />
           </div>
-          <p className="text-xs text-white/55 mt-2">Editable — drives tax/net calculations below.</p>
+          <p className="text-xs text-white/40 mt-2">Editable — drives tax/net calculations below.</p>
         </StatCard>
         <StatCard label="Net Monthly Income" glow="success" delay={0.05}>
           <div className="mt-4 text-3xl font-bold tabular-nums ux-hero-number">
@@ -202,7 +202,7 @@ export function Dashboard() {
               </div>
             </div>
           )}
-          <p className="text-xs text-white/55 mt-2">
+          <p className="text-xs text-white/40 mt-2">
             After {country} tax {country === 'NZ' ? '+ ACC levy' : '+ Medicare levy − LITO'}.
           </p>
         </StatCard>
@@ -215,7 +215,7 @@ export function Dashboard() {
               <CountUp value={monthlyBills} prefix="$" />
             </div>
           </div>
-          <p className="text-xs text-white/55 mt-2">{bills.filter((b) => b.active).length} active recurring bills.</p>
+          <p className="text-xs text-white/40 mt-2">{bills.filter((b) => b.active).length} active recurring bills.</p>
         </StatCard>
       </div>
     ),
@@ -234,9 +234,9 @@ export function Dashboard() {
             ) : (
               <p className="mt-1 text-xs text-white/60">Trend appears after 2 days of data</p>
             )}
-            <p className="text-xs text-white/55 mt-1">
+            <p className="text-xs text-white/40 mt-1">
               Savings rate {healthScore.breakdown.savingsRate.toFixed(0)} · Debt-to-income {healthScore.breakdown.debtToIncome.toFixed(0)} · Bill coverage {healthScore.breakdown.billCoverage.toFixed(0)} · Emergency fund {healthScore.breakdown.emergencyFund.toFixed(0)}
-              <span className="block mt-1 text-white/55">Weighted 30/25/25/20 — see calcFinancialHealthScore() for the exact documented formula.</span>
+              <span className="block mt-1 text-white/30">Weighted 30/25/25/20 — see calcFinancialHealthScore() for the exact documented formula.</span>
               {efRunwayDate && (
                 <span className="flex items-center gap-1 mt-1.5 text-cyan-300/80">
                   <Clock className="w-3 h-3" /> Savings alone cover fixed bills until ≈ {formatShortDate(efRunwayDate)} at zero income.
@@ -294,7 +294,7 @@ export function Dashboard() {
                 <button
                   onClick={() => { snoozeInsight(insight.id, today); setSnoozeVersion((v) => v + 1) }}
                   title="Snooze this insight for 7 days"
-                  className="opacity-0 group-hover:opacity-100 text-white/55 hover:text-cyan-300 shrink-0 transition-opacity"
+                  className="opacity-0 group-hover:opacity-100 text-white/25 hover:text-cyan-300 shrink-0 transition-opacity"
                 >
                   <Clock className="w-3.5 h-3.5" />
                 </button>
@@ -351,8 +351,7 @@ export function Dashboard() {
 
       <GettingStartedCard />
 
-      <WeeklyReviewCard />
-      <FinancialTipOfDay country={country} />
+      <FinancialTipOfDay />
 
       <InsightsTicker />
 
@@ -373,7 +372,7 @@ export function Dashboard() {
             dragOverId === id && draggingId !== id && 'drag-over drag-ghost'
           )}
         >
-          <div className="drag-handle flex items-center gap-1.5 mb-1.5 text-xs text-white/55 uppercase tracking-wide">
+          <div className="drag-handle flex items-center gap-1.5 mb-1.5 text-[10px] text-white/25 uppercase tracking-wide">
             <GripVertical className="w-3 h-3" /> drag to reorder
             {/* Round 21, item #14 — native HTML5 drag-and-drop has no keyboard or touch
                 equivalent at all; these buttons are a real second way to reorder, always
@@ -466,7 +465,7 @@ function TaxBar({ net, tax, levy, levyLabel }: { net: number; tax: number; levy:
 function Metric({ label, value, tone }: { label: string; value: number; tone?: 'danger' | 'success' }) {
   return (
     <div>
-      <div className="text-xs text-white/55 uppercase tracking-wide">{label}</div>
+      <div className="text-xs text-white/40 uppercase tracking-wide">{label}</div>
       <div className={`text-lg font-bold tabular-nums ${tone === 'danger' ? 'text-rose-300' : tone === 'success' ? 'text-emerald-300' : 'text-white'}`}>
         {formatCurrency(value)}
       </div>

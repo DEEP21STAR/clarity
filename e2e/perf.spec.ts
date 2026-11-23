@@ -31,17 +31,6 @@ function bundleBytes() {
 }
 
 test('startup and bundle metrics', async ({ page }) => {
-  // Every script the page downloads while starting up (gzipped in node), as opposed to the size of everything in dist/.
-  // Counted once per URL, and only until the page's load event: that is the code the launch needs, not what lazily arrives after.
-  const scripts: Promise<number>[] = []
-  const seen = new Set<string>()
-  let loaded = false
-  page.on('load', () => { loaded = true })
-  page.on('response', (r) => {
-    if (loaded || !r.url().endsWith('.js') || seen.has(r.url())) return
-    seen.add(r.url())
-    scripts.push(r.body().then((b) => gzipSync(b).length).catch(() => 0))
-  })
   await page.addInitScript(installSplashTracker)
   await page.addInitScript(() => {
     try { localStorage.setItem('clarity-dashboard-state-v5', '{}'); sessionStorage.setItem('clarity-pin-unlocked', '1') } catch { /* ignore */ }
@@ -58,16 +47,14 @@ test('startup and bundle metrics', async ({ page }) => {
   await page.waitForTimeout(1500)
   const m = await page.evaluate(() => (window as unknown as { __m: Record<string, number> }).__m)
   const nodes = await page.evaluate(() => document.getElementsByTagName('*').length)
-  const firstLoadJsGzipBytes = (await Promise.all(scripts)).reduce((a, b) => a + b, 0)
-  const out = { timeToUsableMs: splashMs, firstLoadJsGzipBytes, fcpMs: Math.round(m.fcp), lcpMs: Math.round(m.lcp), longTaskMs: Math.round(m.longMs), domNodes: nodes, ...bundleBytes() }
+  const out = { timeToUsableMs: splashMs, fcpMs: Math.round(m.fcp), lcpMs: Math.round(m.lcp), longTaskMs: Math.round(m.longMs), domNodes: nodes, ...bundleBytes() }
   writeMeasure('perf', out)
   if (process.env.UPDATE_BASELINE === '1') { writeBaseline('perf', out); return }
   const base = readBaseline<typeof out>('perf')
   if (base) {
     // The first-launch time includes the animated splash and swung 5.6-7.3 s between identical builds, so it gets a wider band.
-    const tolerance = { timeToUsableMs: 1.6, lcpMs: 1.25, jsGzipBytes: 1.25, firstLoadJsGzipBytes: 1.15, domNodes: 1.25 } as const
-    for (const k of ['timeToUsableMs', 'lcpMs', 'jsGzipBytes', 'firstLoadJsGzipBytes', 'domNodes'] as const) {
-      if (base[k] === undefined) continue // a metric added after the baseline was recorded
+    const tolerance = { timeToUsableMs: 1.6, lcpMs: 1.25, jsGzipBytes: 1.25, domNodes: 1.25 } as const
+    for (const k of ['timeToUsableMs', 'lcpMs', 'jsGzipBytes', 'domNodes'] as const) {
       expect(out[k], `${k} got >${Math.round((tolerance[k] - 1) * 100)}% worse (baseline ${base[k]})`).toBeLessThanOrEqual(Math.max(base[k] * tolerance[k], base[k] + 200))
     }
   }

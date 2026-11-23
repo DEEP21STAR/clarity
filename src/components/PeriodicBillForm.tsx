@@ -72,10 +72,10 @@ export function PeriodicBillForm({
     <StatCard label={existing ? `Edit ${existing.name}` : 'Add Periodic Bill'} glow="cyan" tilt={false}>
       <form onSubmit={handleSubmit} className="mt-4 space-y-4">
         <div className="flex justify-between items-start">
-          <p className="text-xs text-white/55 max-w-sm">
+          <p className="text-xs text-white/40 max-w-sm">
             For any usage-metered bill (power, gas, water-by-usage, etc) — gets the same projected-charge gauge and fortnightly-smoothing suggestion as Gas/Electricity.
           </p>
-          <button type="button" onClick={onCancel} className="text-white/55 hover:text-white shrink-0">
+          <button type="button" onClick={onCancel} className="text-white/30 hover:text-white shrink-0">
             <X className="w-4 h-4" />
           </button>
         </div>
@@ -116,7 +116,7 @@ export function PeriodicBillForm({
         <div>
           <label className="text-xs text-white/50">Projected charge for this period</label>
           <div className="mt-1 flex items-center gap-1 bg-black/30 border border-white/10 rounded-lg px-3 py-2 focus-within:border-cyan-400/50">
-            <span className="text-white/55">$</span>
+            <span className="text-white/40">$</span>
             <input
               type="number"
               step="0.01"
@@ -142,7 +142,7 @@ export function PeriodicBillForm({
           <div>
             <label className="text-xs text-white/50">Credit balance</label>
             <div className="mt-1 flex items-center gap-1 bg-black/30 border border-white/10 rounded-lg px-3 py-2 focus-within:border-emerald-400/50">
-              <span className="text-white/55">$</span>
+              <span className="text-white/40">$</span>
               <input
                 type="number"
                 step="0.01"
@@ -166,7 +166,7 @@ export function PeriodicBillForm({
             Fold the suggested fortnightly set-aside into Live Funds Available
           </label>
         </div>
-        <p className="text-xs text-white/55 -mt-2">
+        <p className="text-[11px] text-white/35 -mt-2">
           Off = informational gauge only, no cash-flow impact on Upcoming Payments.
         </p>
 

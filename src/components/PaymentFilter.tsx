@@ -22,7 +22,7 @@ export function PaymentFilterBar({ targets, filter, onChange }: {
   const hasActiveFilter = !!(filter.targetId || filter.startDate || filter.endDate)
   return (
     <div className="flex flex-wrap items-center gap-2 text-xs">
-      <span className="flex items-center gap-1 text-white/55"><Filter className="w-3 h-3" /> Filter</span>
+      <span className="flex items-center gap-1 text-white/40"><Filter className="w-3 h-3" /> Filter</span>
       <select
         aria-label="Filter payments by account or card" value={filter.targetId ?? ''}
         onChange={(e) => onChange({ ...filter, targetId: e.target.value || undefined })}
@@ -31,7 +31,7 @@ export function PaymentFilterBar({ targets, filter, onChange }: {
         <option value="">All bills / cards</option>
         {targets.map((t) => <option key={t.id} value={t.id}>{t.label}</option>)}
       </select>
-      <span className="text-white/55">from</span>
+      <span className="text-white/30">from</span>
       <DateField
         ariaLabel="Show payments from date" value={filter.startDate ?? ''}
         onChange={(v) => onChange({ ...filter, startDate: v || undefined })}
@@ -39,7 +39,7 @@ export function PaymentFilterBar({ targets, filter, onChange }: {
         overlayClassName="px-2"
         placeholder="any"
       />
-      <span className="text-white/55">to</span>
+      <span className="text-white/30">to</span>
       <DateField
         ariaLabel="Show payments up to date" value={filter.endDate ?? ''}
         onChange={(v) => onChange({ ...filter, endDate: v || undefined })}
@@ -48,7 +48,7 @@ export function PaymentFilterBar({ targets, filter, onChange }: {
         placeholder="any"
       />
       {hasActiveFilter && (
-        <button onClick={() => onChange({})} className="flex items-center gap-1 text-white/55 hover:text-white">
+        <button onClick={() => onChange({})} className="flex items-center gap-1 text-white/40 hover:text-white">
           <X className="w-3 h-3" /> Clear
         </button>
       )}

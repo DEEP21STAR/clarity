@@ -4,5 +4,3 @@ dist
 .DS_Store
 test-results
 playwright-report
-# Visual baselines are per machine and large (~14 MB); regenerate with: npx playwright test e2e/visual.spec.ts --update-snapshots
-e2e/visual.spec.ts-snapshots

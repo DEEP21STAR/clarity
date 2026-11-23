@@ -17,14 +17,14 @@ export function TrendArrow({ current, previous, goodDirection = 'up', suffix = '
   const pct = percentChange(current, previous)
   if (dir === 'flat' || pct === null) {
     return (
-      <span className="trend-arrow inline-flex items-center gap-1 text-xs text-white/55">
+      <span className="trend-arrow inline-flex items-center gap-1 text-[11px] text-white/40">
         <Minus className="w-3 h-3" /> flat{suffix}
       </span>
     )
   }
   const isGood = dir === goodDirection
   return (
-    <span className={`trend-arrow inline-flex items-center gap-1 text-xs font-medium ${isGood ? 'text-emerald-300' : 'text-rose-300'}`}>
+    <span className={`trend-arrow inline-flex items-center gap-1 text-[11px] font-medium ${isGood ? 'text-emerald-300' : 'text-rose-300'}`}>
       {dir === 'up' ? <ArrowUp className="w-3 h-3" /> : <ArrowDown className="w-3 h-3" />}
       {Math.abs(pct).toFixed(1)}%{suffix}
     </span>

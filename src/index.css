@@ -901,29 +901,3 @@ mark.search-hit { background: rgba(34, 211, 238, 0.35); color: #fff; border-radi
   .header-name-pill { animation: none; box-shadow: 0 0 6px 0 var(--name-glow, rgba(34,211,238,0.25)); }
   .header-name-text { animation: none; background-position: 50% 50%; }
 }
-
-/* ============================================================================
-   Motion language (Phase 5): three easings, three durations, one interaction layer.
-   Everything animates transform/opacity/filter only. :where() keeps this at zero specificity, so any
-   component's own transition or active: utility still wins, and nothing here runs under reduced motion.
-   ============================================================================ */
-:root {
-  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);      /* things arriving and settling */
-  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1); /* small playful overshoot: toggles, chips, pills */
-  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);    /* things moving between two places */
-  --dur-fast: 120ms;  /* press feedback */
-  --dur-base: 220ms;  /* hover, colour, focus */
-  --dur-slow: 420ms;  /* entrances, hand-offs */
-}
-@media (prefers-reduced-motion: no-preference) {
-  :where(button:not(:disabled), [role="button"]:not([aria-disabled="true"]), summary) {
-    transition-property: transform, filter, background-color, border-color, box-shadow, opacity, color;
-    transition-duration: var(--dur-base);
-    transition-timing-function: var(--ease-out);
-  }
-  /* every control answers a press: a small, quick squeeze */
-  :where(button:not(:disabled):active, [role="button"]:not([aria-disabled="true"]):active) {
-    transform: scale(0.97);
-    transition-duration: var(--dur-fast);
-  }
-}

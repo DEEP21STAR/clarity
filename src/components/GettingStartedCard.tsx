@@ -58,11 +58,11 @@ export function GettingStartedCard() {
         type="button"
         onClick={dismiss}
         aria-label="Dismiss"
-        className="absolute top-3 right-3 z-20 w-6 h-6 rounded-md flex items-center justify-center text-white/55 hover:text-white hover:bg-white/5 transition-colors"
+        className="absolute top-3 right-3 z-20 w-6 h-6 rounded-md flex items-center justify-center text-white/30 hover:text-white hover:bg-white/5 transition-colors"
       >
         <X className="w-3.5 h-3.5" />
       </button>
-      <p className="mt-4 text-xs text-white/55">Nothing's been added yet — here's the quickest path to a real number on this Dashboard.</p>
+      <p className="mt-4 text-xs text-white/45">Nothing's been added yet — here's the quickest path to a real number on this Dashboard.</p>
       <div className="mt-4 space-y-3">
         {steps.map((s, i) => {
           const Icon = s.icon
@@ -73,7 +73,7 @@ export function GettingStartedCard() {
               </div>
               <div>
                 <p className="text-xs font-semibold text-white/85">{s.title}</p>
-                <p className="text-xs text-white/55 mt-0.5 leading-relaxed">{s.body}</p>
+                <p className="text-[11px] text-white/45 mt-0.5 leading-relaxed">{s.body}</p>
               </div>
             </div>
           )

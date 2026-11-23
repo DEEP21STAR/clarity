@@ -63,7 +63,7 @@ export function SegmentedControl<T extends string>({
   }, [value, options.length, size])
 
   return (
-    <div ref={trackRef} className={cn('segmented-track relative inline-flex rounded-full border border-white/10 p-0.5', size === 'sm' ? 'text-xs' : 'text-xs')}>
+    <div ref={trackRef} className={cn('segmented-track relative inline-flex rounded-full border border-white/10 p-0.5', size === 'sm' ? 'text-[10px]' : 'text-xs')}>
       {thumb && (
         <div
           className="segmented-thumb"
