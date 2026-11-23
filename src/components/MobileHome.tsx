@@ -8,6 +8,7 @@ import { computeSafeToSpend } from '@/lib/safeToSpend'
 import { readLastCategory, writeLastCategory } from '@/lib/quickAddMemory'
 import { haptic } from '@/lib/haptics'
 import { WeeklyReviewCard } from './WeeklyReviewCard'
+import { MonthRecapCard } from './MonthRecapCard'
 import { computeLiveFunds, applyQuickEntry, undoQuickEntry, type QuickEntry, type QuickCategory } from '@/lib/liveFunds'
 import { addDaysIso, daysBetweenIso, incomeOnDate, nextMonthlyDueDate, nzNetIncome, auNetIncome, monthlyEquivalent, generateInsights } from '@/lib/logic'
 import { cn, formatCurrency, formatShortDate, todayIso } from '@/lib/utils'
@@ -139,6 +140,7 @@ export function MobileHome({ onOpenMenu, onNavigate }: { onOpenMenu: () => void;
       </section>
 
       <WeeklyReviewCard />
+      <MonthRecapCard />
 
       <section aria-label="Next bills">
         <h3 className="text-base font-bold text-white mb-2">Next bills</h3>

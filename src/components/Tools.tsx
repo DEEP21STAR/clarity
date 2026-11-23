@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import { MoneyField } from '@/components/MoneyField'
 import { useStore } from '@/lib/store'
 import { StatCard } from './StatCard'
 import { CountUp } from './CountUp'
@@ -279,7 +280,7 @@ export function Tools() {
         </div>
         <div className="mt-4 flex items-center gap-2">
           <span className="text-white/55">$</span>
-          <input type="number" aria-label="Amount for GST" value={gstAmount} onChange={(e) => setGstAmount(parseFloat(e.target.value) || 0)} className="bg-transparent text-2xl font-bold tabular-nums text-purple-200 outline-none border-b border-white/10 focus:border-purple-400/60 w-full" />
+          <MoneyField label="Amount for GST" value={gstAmount} onChange={setGstAmount} className="bg-transparent text-2xl font-bold tabular-nums text-purple-200 outline-none border-b border-white/10 focus:border-purple-400/60 w-full" />
         </div>
         <div key={gstResult.gst} className="result-reveal mt-4 grid grid-cols-3 gap-4 text-sm">
           <Metric label="Ex-GST" value={gstResult.amountExGst} />

@@ -4,6 +4,7 @@ import { useStore } from '@/lib/store'
 import { StatCard } from './StatCard'
 import { EmptyState } from './EmptyState'
 import { CategoryBudgets } from './CategoryBudgets'
+import { MonthRecapCard } from './MonthRecapCard'
 import { TrendingUp } from 'lucide-react'
 import { CountUp } from './CountUp'
 import { convertPeriodAmount, monthlyEquivalent, nzNetIncome, auNetIncome, monthlySpendByCategory, categoryColor, generateCategoryTrendInsights } from '@/lib/logic'
@@ -160,6 +161,7 @@ export function Budgets() {
       </StatCard>
 
       <CategoryBudgets />
+      <MonthRecapCard />
 
       {/* #5 — real month-over-month spend trend PER CATEGORY, from actual imported transactions.
           Deliberately separate from the bill-category donut above (free-text CSV categories have

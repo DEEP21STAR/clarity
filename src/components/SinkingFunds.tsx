@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { MoneyField } from '@/components/MoneyField'
 import { StatCard } from './StatCard'
 import { useStore } from '@/lib/store'
 import { suggestedFortnightlyForSinkingFund } from '@/lib/logic'
@@ -107,7 +108,7 @@ function FundForm({ onCancel, onSave }: { onCancel: () => void; onSave: (v: { na
             <label className="text-xs text-white/50">Target amount</label>
             <div className="mt-1 flex items-center gap-1 bg-black/30 border border-white/10 rounded-lg px-3 py-2">
               <span className="text-white/55">$</span>
-              <input type="number" step="0.01" value={targetAmount} onChange={(e) => setTargetAmount(parseFloat(e.target.value) || 0)} className="w-full bg-transparent outline-none tabular-nums" />
+              <MoneyField label="Sinking fund target amount" value={targetAmount} onChange={setTargetAmount} className="w-full bg-transparent outline-none tabular-nums" />
             </div>
           </div>
           <div>
