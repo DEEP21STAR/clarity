@@ -65,7 +65,8 @@ export function CategoryBudgets() {
     const trend = categoryTrend(state.transactions, r.category, today)
     const trendText = trendSentence(trend, r.spent)
     const showTrend = trend.monthsWithSpend >= 2
-    const pace = r.target > 0 ? monthEndPace(r.spent, r.target, day, dim) : null
+    // rows already over target say so in their own line; the projection is for the ones still inside it
+    const pace = r.target > 0 && r.status !== 'over' ? monthEndPace(r.spent, r.target, day, dim) : null
     return (
       <li key={r.category} className="rounded-xl border border-white/10 bg-black/25 p-3">
         <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2">

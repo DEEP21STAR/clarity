@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useLayoutEffect, useRef, useState } from 'react'
 import { Lightbulb, X } from 'lucide-react'
 import { todayIso } from '@/lib/utils'
 
@@ -37,6 +37,15 @@ export function FinancialTipOfDay({ country = 'NZ' }: { country?: 'NZ' | 'AU' })
   const tip = pool[((dayOfYear % pool.length) + pool.length) % pool.length]
   const dismissKey = `clarity:tip-dismissed:${today}`
 
+  // On a phone the tip is two lines until you ask for the rest, so the first real card stays near the top of the screen.
+  const [expanded, setExpanded] = useState(false)
+  const [clamped, setClamped] = useState(false)
+  const textRef = useRef<HTMLParagraphElement>(null)
+  // the toggle only appears when the text really is cut off (a short tip needs no "Show more")
+  useLayoutEffect(() => {
+    const el = textRef.current
+    if (el && !expanded) setClamped(el.scrollHeight > el.clientHeight + 1)
+  }, [expanded, tip])
   const [dismissed, setDismissed] = useState(() => {
     try { return localStorage.getItem(dismissKey) === '1' } catch { return false }
   })
@@ -49,10 +58,15 @@ export function FinancialTipOfDay({ country = 'NZ' }: { country?: 'NZ' | 'AU' })
   }
 
   return (
-    <div className="result-reveal flex items-start gap-2.5 rounded-xl border border-amber-400/20 bg-amber-400/5 px-4 py-3 text-sm">
+    <div className="result-reveal flex items-start gap-2.5 rounded-xl border border-amber-400/20 bg-amber-400/5 px-4 py-3 text-sm" data-testid="tip-of-day">
       <Lightbulb className="w-4 h-4 text-amber-300 shrink-0 mt-0.5" />
-      <p className="flex-1 text-white/70 leading-snug">{tip}</p>
-      <button onClick={dismiss} title="Dismiss today's tip" className="text-white/55 hover:text-white/60 shrink-0">
+      <div className="min-w-0 flex-1">
+        <p ref={textRef} className={expanded ? 'text-white/70 leading-snug' : 'text-white/70 leading-snug max-sm:line-clamp-2'} data-testid="tip-text">{tip}</p>
+        {(clamped || expanded) && <button type="button" onClick={() => setExpanded((v) => !v)} aria-expanded={expanded} className="sm:hidden mt-1 flex min-h-11 items-center text-xs font-semibold text-cyan-300">
+          {expanded ? 'Show less' : 'Show more'}
+        </button>}
+      </div>
+      <button onClick={dismiss} title="Dismiss today's tip" aria-label="Dismiss today's tip" className="-my-2 -mr-2 flex h-11 w-11 shrink-0 items-center justify-center text-white/55 hover:text-white/80">
         <X className="w-3.5 h-3.5" />
       </button>
     </div>

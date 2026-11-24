@@ -952,6 +952,12 @@ mark.search-hit { background: rgba(34, 211, 238, 0.35); color: #fff; border-radi
 @media (prefers-reduced-motion: reduce) { .money-flow-reveal, .money-flow-band { animation: none; } }
 
 /* A number changes meaning (for example free-to-spend turns overspent): one soft glow, then it settles. Off under reduced motion. */
-.hero-pulse { animation: hero-pulse 1100ms ease-out 1; }
-@keyframes hero-pulse { 0% { text-shadow: 0 0 0 transparent; } 35% { text-shadow: 0 0 22px currentColor; } 100% { text-shadow: 0 0 0 transparent; } }
+/* The big number is gradient text (transparent colour), so a text-shadow has nothing to glow with; a drop-shadow filter works for it and for plain rose text. */
+.hero-pulse {
+  --pulse-rest: drop-shadow(0 0 18px color-mix(in oklab, var(--ux-accent-a) 35%, transparent));
+  --pulse-peak: drop-shadow(0 0 30px color-mix(in oklab, var(--ux-accent-a) 95%, transparent));
+  animation: hero-pulse 1100ms ease-out 1;
+}
+.hero-pulse.text-rose-300 { --pulse-rest: drop-shadow(0 0 0 transparent); --pulse-peak: drop-shadow(0 0 26px rgb(253 164 175 / 0.9)); }
+@keyframes hero-pulse { 0% { filter: var(--pulse-rest); } 35% { filter: var(--pulse-peak); } 100% { filter: var(--pulse-rest); } }
 @media (prefers-reduced-motion: reduce) { .hero-pulse { animation: none; } }

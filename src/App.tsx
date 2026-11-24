@@ -4,15 +4,26 @@ import { StoreProvider, useStore, STORAGE_KEY } from '@/lib/store'
 import { BootSequence } from './components/BootSequence'
 import { greetingFor } from '@/lib/bootMode'
 import { markBooted, whenBooted } from '@/lib/bootSignal'
-const Dashboard = lazy(() => import('./components/Dashboard').then((m) => ({ default: m.Dashboard })))
+import { schedulePrefetch } from '@/lib/prefetchTabs'
+const loadDashboard = () => import('./components/Dashboard').then((m) => ({ default: m.Dashboard }))
+const Dashboard = lazy(loadDashboard)
 import { UpcomingPayments } from './components/UpcomingPayments'
-const Transactions = lazy(() => import('./components/Transactions').then((m) => ({ default: m.Transactions })))
-const Budgets = lazy(() => import('./components/Budgets').then((m) => ({ default: m.Budgets })))
-const Debts = lazy(() => import('./components/Debts').then((m) => ({ default: m.Debts })))
-const NetWorth = lazy(() => import('./components/NetWorth').then((m) => ({ default: m.NetWorth })))
-const BillCalendar = lazy(() => import('./components/BillCalendar').then((m) => ({ default: m.BillCalendar })))
-const ShoppingExpenses = lazy(() => import('./components/ShoppingExpenses').then((m) => ({ default: m.ShoppingExpenses })))
-const Tools = lazy(() => import('./components/Tools').then((m) => ({ default: m.Tools })))
+const loadTransactions = () => import('./components/Transactions').then((m) => ({ default: m.Transactions }))
+const Transactions = lazy(loadTransactions)
+const loadBudgets = () => import('./components/Budgets').then((m) => ({ default: m.Budgets }))
+const Budgets = lazy(loadBudgets)
+const loadDebts = () => import('./components/Debts').then((m) => ({ default: m.Debts }))
+const Debts = lazy(loadDebts)
+const loadNetWorth = () => import('./components/NetWorth').then((m) => ({ default: m.NetWorth }))
+const NetWorth = lazy(loadNetWorth)
+const loadBillCalendar = () => import('./components/BillCalendar').then((m) => ({ default: m.BillCalendar }))
+const BillCalendar = lazy(loadBillCalendar)
+const loadShoppingExpenses = () => import('./components/ShoppingExpenses').then((m) => ({ default: m.ShoppingExpenses }))
+const ShoppingExpenses = lazy(loadShoppingExpenses)
+const loadTools = () => import('./components/Tools').then((m) => ({ default: m.Tools }))
+const Tools = lazy(loadTools)
+/** Opened next, most likely first; loaded one at a time while the browser is idle so the first tap on a tab is instant. */
+const PREFETCH_ORDER = [loadBudgets, loadTransactions, loadNetWorth, loadDebts, loadBillCalendar, loadShoppingExpenses, loadTools, loadDashboard]
 import { PinGate } from './components/PinGate'
 // Three.js is large; the animated backdrop loads (via LazyAmbient) once the page is usable, not before.
 import { AmbientBackground } from './components/LazyAmbient'
@@ -101,6 +112,8 @@ export function AppContent() {
   const [tab, setTab] = useState<TabId>(initialTab)
   const mainRef = useRef<HTMLDivElement>(null)
   const tint = useTimeOfDayTint()
+  // warm up the other screens in idle time (skipped on data saver and slow connections)
+  useEffect(() => schedulePrefetch(PREFETCH_ORDER), [])
   // The colour drift and time-of-day tint are CSS filters. A filter on an ordinary wrapper turns it into the anchor for every fixed
   // child (Add button, toasts, drawer, palette), pinning them to the end of the page. On the root element they stay anchored to the screen.
   useEffect(() => {
