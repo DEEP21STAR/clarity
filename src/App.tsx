@@ -316,7 +316,7 @@ export function AppContent() {
       <CursorGlow />
       <CommandPalette tabCommands={tabCommands} />
       <div className="relative z-10 page-enter-3d">
-        <header className="border-b border-white/10 sticky top-0 z-40 backdrop-blur-md bg-[#05060a]/80">
+        <header className="border-b border-white/10 sticky [@media(max-height:480px)]:static top-0 z-40 backdrop-blur-md bg-[#05060a]/80">
           <div className="max-w-6xl mx-auto px-3 sm:px-4 py-4 flex items-center justify-between">
             <div className="flex items-center gap-1.5 sm:gap-2 min-w-0">
               {/* Mobile-only hamburger — opens MobileNavDrawer. Desktop keeps the horizontal
