@@ -4,6 +4,7 @@ import { useStore } from '@/lib/store'
 import { StatCard } from './StatCard'
 import { CountUp } from './CountUp'
 import { AccountsPanel } from './AccountsPanel'
+import { NetWorthForecastCard } from './NetWorthForecastCard'
 import { TrendArrow } from './TrendArrow'
 import { calcNetWorth, netWorthMilestones } from '@/lib/logic'
 import { formatCurrency, formatShortDate } from '@/lib/utils'
@@ -90,6 +91,8 @@ export function NetWorth() {
           </div>
         )}
       </StatCard>
+
+      <NetWorthForecastCard />
 
       <AccountsPanel />
     </div>
