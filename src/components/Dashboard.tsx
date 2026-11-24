@@ -228,7 +228,7 @@ export function Dashboard() {
             <MoodIcon score={healthScore.score} size={44} />
           </HealthRings>
           <div className="min-w-0">
-            <div className="text-5xl font-black tabular-nums ux-hero-number"><CountUp value={healthScore.score} decimals={0} />/100</div>
+            <div className="text-4xl sm:text-5xl font-black tabular-nums ux-hero-number"><CountUp value={healthScore.score} decimals={0} />/100</div>
             {state.healthScoreHistory.length >= 2 ? (
               <div className="mt-2"><Sparkline values={state.healthScoreHistory.slice(-30).map((h) => h.score)} label={`Health score trend over ${Math.min(30, state.healthScoreHistory.length)} days`} /></div>
             ) : (
@@ -236,7 +236,7 @@ export function Dashboard() {
             )}
             <p className="text-xs text-white/55 mt-1">
               Savings rate {healthScore.breakdown.savingsRate.toFixed(0)} · Debt-to-income {healthScore.breakdown.debtToIncome.toFixed(0)} · Bill coverage {healthScore.breakdown.billCoverage.toFixed(0)} · Emergency fund {healthScore.breakdown.emergencyFund.toFixed(0)}
-              <span className="block mt-1 text-white/55">Weighted 30/25/25/20 — see calcFinancialHealthScore() for the exact documented formula.</span>
+              <span className="block mt-1 text-white/55">Weighted 30 / 25 / 25 / 20 in that order: savings rate counts most, emergency fund least.</span>
               {efRunwayDate && (
                 <span className="flex items-center gap-1 mt-1.5 text-cyan-300/80">
                   <Clock className="w-3 h-3" /> Savings alone cover fixed bills until ≈ {formatShortDate(efRunwayDate)} at zero income.

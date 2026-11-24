@@ -59,9 +59,9 @@ export function CashFlowChart() {
 
   return (
     <StatCard label="Cash-Flow Forecast" glow={lowestPoint < 0 ? 'danger' : 'cyan'}>
-      <div className="mt-4 flex items-center justify-between">
-        <p className="text-xs text-white/55">Projected balance from HSBC + Overdraft, walking forward real paydays and bills.</p>
-        <div className="flex rounded-full border border-white/10 overflow-hidden">
+      <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
+        <p className="min-w-[12rem] flex-1 text-xs text-white/55">Projected balance from HSBC + Overdraft, walking forward real paydays and bills.</p>
+        <div className="flex shrink-0 rounded-full border border-white/10 overflow-hidden">
           {[30, 90].map((h) => (
             <button
               key={h}
