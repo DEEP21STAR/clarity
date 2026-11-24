@@ -23,6 +23,7 @@ import { TakeawaySavings } from './TakeawaySavings'
 import { FinancialTipOfDay } from './FinancialTipOfDay'
 import { WeeklyReviewCard } from './WeeklyReviewCard'
 import { SinceLastVisitStrip } from './SinceLastVisitStrip'
+import { MoneyFlowRibbon } from './MoneyFlowRibbon'
 import { GettingStartedCard } from './GettingStartedCard'
 
 /**
@@ -357,6 +358,8 @@ export function Dashboard() {
       <FinancialTipOfDay country={country} />
 
       <InsightsTicker />
+
+      <MoneyFlowRibbon />
 
       {/* Draggable card blocks — order persisted in state.dashboardCardOrder */}
       {state.dashboardCardOrder.map((id) => (

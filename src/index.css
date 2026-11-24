@@ -943,3 +943,10 @@ mark.search-hit { background: rgba(34, 211, 238, 0.35); color: #fff; border-radi
 .since-item { opacity: 0; transform: translateX(-8px); animation: since-in 420ms cubic-bezier(.2,.7,.2,1) forwards; }
 @keyframes since-in { to { opacity: 1; transform: none; } }
 @media (prefers-reduced-motion: reduce) { .since-item { animation: none; opacity: 1; transform: none; } }
+
+/* Income ribbons: reveal left to right once, then drift a little. Off under reduced motion. */
+.money-flow-reveal { transform-box: fill-box; transform-origin: left center; animation: flow-reveal 1100ms cubic-bezier(.2,.7,.2,1) 100ms both; }
+@keyframes flow-reveal { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+.money-flow-band { animation: flow-breathe 7s ease-in-out infinite alternate; }
+@keyframes flow-breathe { from { filter: brightness(1); } to { filter: brightness(1.25); } }
+@media (prefers-reduced-motion: reduce) { .money-flow-reveal, .money-flow-band { animation: none; } }
