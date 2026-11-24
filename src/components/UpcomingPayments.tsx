@@ -1,4 +1,5 @@
 import { lazy, Suspense, useEffect, useMemo, useRef, useState, type CSSProperties } from 'react'
+import { heroAmountSize } from '@/lib/heroSize'
 import { allocationCaption } from '@/lib/allocationCaption'
 import gsap from 'gsap'
 import { haptic } from '@/lib/haptics'
@@ -269,7 +270,7 @@ export function UpcomingPayments() {
           </p>
           <div
             className={cn(
-              'mt-3 text-5xl min-[360px]:text-6xl md:text-8xl font-black tabular-nums tracking-tight',
+              'mt-3 font-black tabular-nums tracking-tight', heroAmountSize(liveFundsAvailable, { desktopFull: true }),
               isOverspent
                 ? 'text-rose-300 drop-shadow-[0_0_35px_rgba(255,45,85,0.6)]'
                 : 'text-transparent bg-clip-text bg-gradient-to-r from-cyan-300 via-teal-200 to-purple-300 drop-shadow-[0_0_35px_rgba(34,211,238,0.35)]'

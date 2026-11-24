@@ -31,3 +31,28 @@ for (const WIDTH of [320, 360, 390]) for (const tab of ['home', ...TABS]) {
     expect(await page.evaluate(findClipped), `clipped text on ${tab} at ${WIDTH}px`).toEqual([])
   })
 }
+
+// Large amounts: the big hero figure must still fit a 320px card (-$674.94 fits at the full size; -$12,674.94 and -$123,674.94 do not).
+const iso = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+for (const [label, spent] of [['-$12,6xx', 12000], ['-$123,6xx', 123000]] as const) {
+  for (const tab of ['upcoming', 'home']) {
+    test(`a large overspend (${label}) is not clipped on ${tab} at 320px`, async ({ page }) => {
+      await page.setViewportSize({ width: 320, height: 844 })
+      await page.addInitScript((seed) => { try { localStorage.setItem('clarity-dashboard-state-v5', JSON.stringify(seed)); sessionStorage.setItem('clarity-pin-unlocked', '1'); localStorage.setItem('clarity-last-boot', String(Date.now() - 60000)) } catch { /* ignore */ } },
+        { spendTracker: { food: spent, fuel: 0, personal: 0, periodStart: iso(new Date()) } })
+      await page.goto(`./?tab=${tab}`)
+      await page.waitForTimeout(2800) // the figure counts up for about a second
+      const text = await page.locator('body').innerText()
+      expect(text, 'the seeded overspend shows').toMatch(/-\$\d{2,3},\d{3}\.\d{2}/)
+      expect(await page.evaluate(findClipped), `clipped text on ${tab} with ${label}`).toEqual([])
+      // the big figure stays on ONE line (a wrapped number such as '-$12,674.9' / '4' is clipped by nothing but is still broken)
+      const lines = await page.evaluate(() => {
+        const el = (document.querySelector('[data-testid="live-funds"]') ?? [...document.querySelectorAll('div')].find((d) => /^-?\$[\d,]+\.\d{2}$/.test((d.textContent || '').trim()))) as HTMLElement | null
+        if (!el) return -1
+        return Math.round(el.getBoundingClientRect().height / parseFloat(getComputedStyle(el).lineHeight || getComputedStyle(el).fontSize))
+      })
+      expect(lines, `the figure on ${tab} wrapped onto ${lines} lines`).toBe(1)
+      await page.screenshot({ path: `test-results/hero-large-${tab}-${spent}.png` })
+    })
+  }
+}
