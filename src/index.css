@@ -938,3 +938,8 @@ mark.search-hit { background: rgba(34, 211, 238, 0.35); color: #fff; border-radi
   .trend-spark-line { animation: none; stroke-dashoffset: 0; }
   .trend-spark-area, .trend-spark-dot { animation: none; opacity: 1; }
 }
+
+/* "Since you were last here": the lines slide in one after another. Off under reduced motion. */
+.since-item { opacity: 0; transform: translateX(-8px); animation: since-in 420ms cubic-bezier(.2,.7,.2,1) forwards; }
+@keyframes since-in { to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .since-item { animation: none; opacity: 1; transform: none; } }

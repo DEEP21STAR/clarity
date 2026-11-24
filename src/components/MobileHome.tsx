@@ -9,6 +9,7 @@ import { computeSafeToSpend } from '@/lib/safeToSpend'
 import { readLastCategory, writeLastCategory } from '@/lib/quickAddMemory'
 import { haptic } from '@/lib/haptics'
 import { WeeklyReviewCard } from './WeeklyReviewCard'
+import { SinceLastVisitStrip } from './SinceLastVisitStrip'
 import { MonthRecapCard } from './MonthRecapCard'
 import { computeLiveFunds, applyQuickEntry, undoQuickEntry, type QuickEntry, type QuickCategory } from '@/lib/liveFunds'
 import { addDaysIso, daysBetweenIso, incomeOnDate, nextMonthlyDueDate, nzNetIncome, auNetIncome, monthlyEquivalent, generateInsights } from '@/lib/logic'
@@ -140,6 +141,7 @@ export function MobileHome({ onOpenMenu, onNavigate }: { onOpenMenu: () => void;
         )}
       </section>
 
+      <SinceLastVisitStrip />
       <WeeklyReviewCard />
       <MonthRecapCard />
 

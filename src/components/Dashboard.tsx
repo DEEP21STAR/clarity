@@ -22,6 +22,7 @@ import { DashboardForecastCard } from './DashboardForecastCard'
 import { TakeawaySavings } from './TakeawaySavings'
 import { FinancialTipOfDay } from './FinancialTipOfDay'
 import { WeeklyReviewCard } from './WeeklyReviewCard'
+import { SinceLastVisitStrip } from './SinceLastVisitStrip'
 import { GettingStartedCard } from './GettingStartedCard'
 
 /**
@@ -351,6 +352,7 @@ export function Dashboard() {
 
       <GettingStartedCard />
 
+      <SinceLastVisitStrip />
       <WeeklyReviewCard />
       <FinancialTipOfDay country={country} />
 
