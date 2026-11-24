@@ -87,21 +87,24 @@ export function PinGate({ children }: { children: React.ReactNode }) {
   if (unlocked) return <>{children}</>
 
   return (
-    <div ref={gateRef} className="fixed inset-0 z-[100] flex items-center justify-center bg-[#05060a] overflow-hidden">
+    // Scrolls when the window is short (a tiled 340px-tall window used to cut the keypad off with no way to reach 7-0), and the keypad
+    // gets compact below 640px of height so most of it still fits without scrolling.
+    <div ref={gateRef} className="fixed inset-0 z-[100] overflow-y-auto overflow-x-hidden bg-[#05060a]">
       <div className="fixed inset-0 -z-10">
         <AmbientBackground />
       </div>
-      <div className="wizard-neon-frame text-center px-6 py-8 rounded-3xl border-2 bg-[#0b0d14]/90">
+      <div className="flex min-h-full items-center justify-center py-3 [@media(max-height:380px)]:py-1">
+      <div className="wizard-neon-frame text-center px-6 py-8 [@media(min-height:381px)_and_(max-height:640px)]:py-4 [@media(max-height:380px)]:py-2 rounded-3xl border-2 bg-[#0b0d14]/90">
         <div
-          className="w-14 h-14 mx-auto rounded-2xl border flex items-center justify-center mb-6"
+          className="w-14 h-14 mx-auto rounded-2xl border flex items-center justify-center mb-6 [@media(min-height:381px)_and_(max-height:640px)]:mb-3 [@media(max-height:480px)]:hidden"
           style={{ background: 'linear-gradient(135deg, color-mix(in oklab, var(--theme-1) 20%, transparent), color-mix(in oklab, var(--theme-2) 20%, transparent))', borderColor: 'color-mix(in oklab, var(--theme-1) 30%, transparent)' }}
         >
           <Lock className="w-6 h-6" style={{ color: 'var(--theme-1)' }} />
         </div>
         <h1 className="gradient-heading text-xl font-bold tracking-tight mb-1">Clarity</h1>
-        <p className="text-xs text-white/55 mb-6">Enter your PIN</p>
+        <p className="text-xs text-white/55 mb-6 [@media(min-height:381px)_and_(max-height:640px)]:mb-3 [@media(max-height:380px)]:mb-1.5">Enter your PIN</p>
 
-        <div className={`pin-dots flex justify-center gap-3 mb-8 ${error ? 'text-rose-400' : ''}`}>
+        <div className={`pin-dots flex justify-center gap-3 mb-8 [@media(min-height:381px)_and_(max-height:640px)]:mb-4 [@media(max-height:380px)]:mb-2 ${error ? 'text-rose-400' : ''}`}>
           {[0, 1, 2, 3].map((i) => (
             <div
               key={i}
@@ -111,7 +114,7 @@ export function PinGate({ children }: { children: React.ReactNode }) {
           ))}
         </div>
 
-        <div className="grid grid-cols-3 gap-3 max-w-[220px] mx-auto">
+        <div className="grid grid-cols-3 gap-3 [@media(min-height:381px)_and_(max-height:640px)]:gap-2 [@media(max-height:380px)]:gap-1.5 max-w-[220px] mx-auto">
           {['1', '2', '3', '4', '5', '6', '7', '8', '9'].map((n) => (
             <NumButton key={n} label={n} onClick={() => pressKey(n)} />
           ))}
@@ -120,11 +123,12 @@ export function PinGate({ children }: { children: React.ReactNode }) {
           <button
             onClick={backspace}
             aria-label="Backspace"
-            className="w-16 h-16 rounded-2xl border border-white/10 text-white/50 hover:bg-white/5 flex items-center justify-center text-sm"
+            className="w-16 h-16 [@media(min-height:381px)_and_(max-height:640px)]:w-12 [@media(min-height:381px)_and_(max-height:640px)]:h-12 [@media(max-height:380px)]:w-10 [@media(max-height:380px)]:h-10 rounded-2xl border border-white/10 text-white/50 hover:bg-white/5 flex items-center justify-center text-sm"
           >
             ⌫
           </button>
         </div>
+      </div>
       </div>
     </div>
   )
@@ -134,7 +138,7 @@ function NumButton({ label, onClick }: { label: string; onClick: () => void }) {
   return (
     <button
       onClick={onClick}
-      className="pin-numbtn w-16 h-16 rounded-2xl border border-white/10 text-xl font-semibold text-white hover:bg-white/5"
+      className="pin-numbtn w-16 h-16 [@media(min-height:381px)_and_(max-height:640px)]:w-12 [@media(min-height:381px)_and_(max-height:640px)]:h-12 [@media(max-height:380px)]:w-10 [@media(max-height:380px)]:h-10 rounded-2xl border border-white/10 text-xl font-semibold text-white hover:bg-white/5"
       style={{ fontSize: 20 }} // >=16px avoids iOS Safari auto-zoom-on-focus
     >
       {label}
