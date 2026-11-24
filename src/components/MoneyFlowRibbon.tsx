@@ -44,7 +44,8 @@ export function MoneyFlowRibbon() {
       <p className="mt-3 flex items-start gap-2 text-sm text-white/75" data-testid="money-flow-summary">
         <Waves className="mt-0.5 h-4 w-4 shrink-0 text-cyan-300" aria-hidden="true" /> {summary}
       </p>
-      <svg viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" role="img" aria-label={summary} className="money-flow mt-3 h-40 w-full overflow-visible" data-testid="money-flow">
+      <div className="md:mt-3 md:flex md:items-center md:gap-10">
+      <svg viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" role="img" aria-label={summary} className="money-flow mt-3 h-40 w-full overflow-visible md:mt-0 md:w-[55%]" data-testid="money-flow">
         <defs>
           <clipPath id={`${id}-reveal`}><rect x="0" y="-4" width={W} height={H + 8} className="money-flow-reveal" /></clipPath>
         </defs>
@@ -59,7 +60,7 @@ export function MoneyFlowRibbon() {
           {bands.map((b) => <rect key={b.name} x={W - BAR} y={b.ty0} width={BAR} height={Math.max(1, b.ty1 - b.ty0)} rx="3" fill={b.color} />)}
         </g>
       </svg>
-      <ul className="mt-3 grid grid-cols-1 gap-x-6 gap-y-1.5 text-sm min-[420px]:grid-cols-2" data-testid="money-flow-legend">
+      <ul className="mt-3 grid grid-cols-1 gap-x-6 gap-y-1.5 text-sm min-[420px]:grid-cols-2 md:mt-0 md:flex-1 md:grid-cols-1" data-testid="money-flow-legend">
         {flow.parts.map((p) => (
           <li key={p.name} className="flex items-center justify-between gap-3 text-white/80">
             <span className="flex min-w-0 items-center gap-2"><span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ background: p.color }} aria-hidden="true" /><span className="truncate">{LABEL[p.name] ?? p.name}</span></span>
@@ -73,6 +74,7 @@ export function MoneyFlowRibbon() {
           </li>
         )}
       </ul>
+      </div>
     </StatCard>
   )
 }

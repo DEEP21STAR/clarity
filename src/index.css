@@ -950,3 +950,8 @@ mark.search-hit { background: rgba(34, 211, 238, 0.35); color: #fff; border-radi
 .money-flow-band { animation: flow-breathe 7s ease-in-out infinite alternate; }
 @keyframes flow-breathe { from { filter: brightness(1); } to { filter: brightness(1.25); } }
 @media (prefers-reduced-motion: reduce) { .money-flow-reveal, .money-flow-band { animation: none; } }
+
+/* A number changes meaning (for example free-to-spend turns overspent): one soft glow, then it settles. Off under reduced motion. */
+.hero-pulse { animation: hero-pulse 1100ms ease-out 1; }
+@keyframes hero-pulse { 0% { text-shadow: 0 0 0 transparent; } 35% { text-shadow: 0 0 22px currentColor; } 100% { text-shadow: 0 0 0 transparent; } }
+@media (prefers-reduced-motion: reduce) { .hero-pulse { animation: none; } }

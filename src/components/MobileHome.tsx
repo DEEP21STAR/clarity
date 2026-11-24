@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { heroAmountSize } from '@/lib/heroSize'
+import { useStatusPulse } from '@/lib/useStatusPulse'
 import { createPortal } from 'react-dom'
 import { Menu, Plus, X, ArrowDownLeft, ArrowUpRight, Wallet, ChevronRight, AlertTriangle, CheckCircle2, Info } from 'lucide-react'
 import { useStore } from '@/lib/store'
@@ -36,6 +37,7 @@ export function MobileHome({ onOpenMenu, onNavigate }: { onOpenMenu: () => void;
 
   const lf = useMemo(() => computeLiveFunds(state, today, 'week', view), [state, today, view])
   const isOverspent = lf.liveFundsAvailable < 0
+  const heroPulse = useStatusPulse(isOverspent)
   const safe = useMemo(() => computeSafeToSpend(state, today, view), [state, today, view])
 
   const events = useMemo(() => {
@@ -87,7 +89,7 @@ export function MobileHome({ onOpenMenu, onNavigate }: { onOpenMenu: () => void;
 
       <section aria-label="Live Funds Available" className={cn('ux-glass border border-white/10 p-5', isOverspent && 'overspend-alert')}>
         <div className="flex items-center gap-2 text-sm font-semibold text-white/70"><Wallet className="w-4 h-4" /> Free to spend · 7 days</div>
-        <div className={cn('mt-2 font-black tabular-nums break-words', heroAmountSize(lf.liveFundsAvailable), isOverspent ? 'text-rose-300' : 'ux-hero-number')} data-testid="live-funds">
+        <div className={cn('mt-2 font-black tabular-nums break-words', heroAmountSize(lf.liveFundsAvailable), isOverspent ? 'text-rose-300' : 'ux-hero-number', heroPulse && 'hero-pulse')} data-testid="live-funds">
           <CountUp value={lf.liveFundsAvailable} prefix="$" decimals={2} duration={1} />
         </div>
         {isOverspent && <p className="mt-1 text-sm font-semibold text-rose-300">Overspent — bills due this week exceed what you have.</p>}
