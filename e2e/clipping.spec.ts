@@ -2,7 +2,7 @@
 // the part outside the box paints nothing). Scrolling areas (overflow auto), ellipsis truncation, the ticker and screen-reader text are excluded.
 import { test, expect } from '@playwright/test'
 import { TABS } from './support/app'
-test.use({ viewport: { width: 390, height: 844 }, reducedMotion: 'reduce' })
+test.use({ reducedMotion: 'reduce' })
 function findClipped() {
   const out: string[] = []
   for (const el of document.querySelectorAll<HTMLElement>('body *')) {
@@ -22,11 +22,12 @@ function findClipped() {
   }
   return out.slice(0, 12)
 }
-for (const tab of ['home', ...TABS]) {
-  test(`no clipped text on ${tab} at phone width`, async ({ page }) => {
+for (const WIDTH of [320, 360, 390]) for (const tab of ['home', ...TABS]) {
+  test(`no clipped text on ${tab} at ${WIDTH}px`, async ({ page }) => {
+    await page.setViewportSize({ width: WIDTH, height: 844 })
     await page.addInitScript(() => { try { localStorage.setItem('clarity-dashboard-state-v5', '{}'); sessionStorage.setItem('clarity-pin-unlocked', '1'); localStorage.setItem('clarity-last-boot', String(Date.now() - 60000)) } catch { /* ignore */ } })
     await page.goto(`./?tab=${tab}`)
     await page.waitForTimeout(2200)
-    expect(await page.evaluate(findClipped), `clipped text on ${tab}`).toEqual([])
+    expect(await page.evaluate(findClipped), `clipped text on ${tab} at ${WIDTH}px`).toEqual([])
   })
 }

@@ -223,11 +223,11 @@ export function Dashboard() {
     forecast: <DashboardForecastCard />,
     health: (
       <StatCard label="Financial Health Score" glow={healthScore.score >= 75 ? 'success' : healthScore.score >= 40 ? 'amber' : 'danger'} copyable>
-        <div className="mt-4 flex items-center gap-6">
+        <div className="mt-4 flex flex-wrap items-center gap-x-6 gap-y-3">
           <HealthRings breakdown={healthScore.breakdown}>
             <MoodIcon score={healthScore.score} size={44} />
           </HealthRings>
-          <div className="min-w-0">
+          <div className="min-w-[9rem]">
             <div className="text-4xl sm:text-5xl font-black tabular-nums ux-hero-number"><CountUp value={healthScore.score} decimals={0} />/100</div>
             {state.healthScoreHistory.length >= 2 ? (
               <div className="mt-2"><Sparkline values={state.healthScoreHistory.slice(-30).map((h) => h.score)} label={`Health score trend over ${Math.min(30, state.healthScoreHistory.length)} days`} /></div>
