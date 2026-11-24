@@ -48,3 +48,16 @@ export function trendSentence(t: CategoryTrend, spentNow: number): string | null
   const d = (n: number) => `$${Math.round(n).toLocaleString('en-NZ')}`
   return `${t.changeVsLast > 0 ? 'Up' : 'Down'} ${pct}% on this point last month (${d(spentNow)} vs ${d(t.lastSameDay)})`
 }
+
+export interface MonthEndPace { projected: number; over: number }
+
+/**
+ * Where this month's spend lands if it carries on at the same daily rate. Needs at least 7 days of the month gone and some spend,
+ * otherwise a single early purchase would swing it wildly; returns null then. `over` is how far past the target the projection is (0 if not).
+ */
+export function monthEndPace(spent: number, target: number, day: number, daysInMonth: number): MonthEndPace | null {
+  if (![spent, target, day, daysInMonth].every((n) => Number.isFinite(n))) return null
+  if (target <= 0 || spent <= 0 || day < 7 || day >= daysInMonth) return null
+  const projected = round2((spent / day) * daysInMonth)
+  return { projected, over: Math.max(0, round2(projected - target)) }
+}

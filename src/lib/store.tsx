@@ -1,5 +1,5 @@
 import type { CelebrationLevel } from './confetti'
-import { sanitizeTransactions } from './sanitize'
+import { dropNonObjectRows, sanitizeBills, sanitizeTransactions } from './sanitize'
 import { withBudget, type CategoryBudget, type CategoryBudgets } from './categoryBudgets'
 import React, { createContext, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import type {
@@ -162,8 +162,8 @@ function backfillPaymentMethod(bills: RecurringBill[]): RecurringBill[] {
  * Keeps every row.
  */
 export function normaliseState(parsed: Partial<AppState>, fallback: AppState): AppState {
-  const merged: AppState = { ...fallback, ...parsed }
-  return { ...merged, bills: backfillPaymentMethod(merged.bills), transactions: sanitizeTransactions(merged.transactions) }
+  const merged: AppState = dropNonObjectRows({ ...fallback, ...parsed } as AppState, fallback)
+  return { ...merged, bills: backfillPaymentMethod(sanitizeBills(merged.bills)), transactions: sanitizeTransactions(merged.transactions) }
 }
 
 function loadState(key: string, fallback: AppState): AppState {

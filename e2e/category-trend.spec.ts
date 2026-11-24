@@ -57,3 +57,14 @@ test('the trend row does not run past the right edge at 320px', async ({ page })
   expect(r).toBeLessThanOrEqual(321)
   await page.screenshot({ path: 'test-results/category-trend-320.png' })
 })
+
+test('a budget row says where the month is heading at the current pace', async ({ page }) => {
+  await open(page, 390)
+  const day = now.getDate(), dim = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate()
+  const rows = page.getByTestId('month-end-pace')
+  if (day < 7 || day >= dim) { await expect(rows).toHaveCount(0); return } // too early or the month is over: nothing is said
+  const food = Math.round(((60 / day) * dim) * 100) / 100
+  await expect(rows.first()).toBeVisible()
+  const all = (await rows.allInnerTexts()).join(' | ')
+  expect(all).toContain('On pace for $' + food.toLocaleString('en-NZ', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' by month end, within your target.')
+})

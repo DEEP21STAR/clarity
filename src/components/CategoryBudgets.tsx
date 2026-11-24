@@ -4,7 +4,7 @@ import { useStore } from '@/lib/store'
 import { computeBudgetRows, daysInMonth, suggestionsToApply, trimSaving, type BudgetRow, type BudgetStatus } from '@/lib/categoryBudgets'
 import { categoryColor } from '@/lib/logic'
 import { cn, formatCurrency, todayIso } from '@/lib/utils'
-import { categoryTrend, trendSentence } from '@/lib/categoryTrend'
+import { categoryTrend, monthEndPace, trendSentence } from '@/lib/categoryTrend'
 import { StatCard } from './StatCard'
 import { TrendSpark } from './TrendSpark'
 
@@ -65,6 +65,7 @@ export function CategoryBudgets() {
     const trend = categoryTrend(state.transactions, r.category, today)
     const trendText = trendSentence(trend, r.spent)
     const showTrend = trend.monthsWithSpend >= 2
+    const pace = r.target > 0 ? monthEndPace(r.spent, r.target, day, dim) : null
     return (
       <li key={r.category} className="rounded-xl border border-white/10 bg-black/25 p-3">
         <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
@@ -109,6 +110,11 @@ export function CategoryBudgets() {
             )}
           </span>
         </div>
+        {pace && (
+          <p className={cn('mt-1 text-xs', pace.over > 0 ? 'text-amber-200' : 'text-white/70')} data-testid="month-end-pace">
+            {pace.over > 0 ? `On pace for ${formatCurrency(pace.projected)} by month end, ${formatCurrency(pace.over)} over.` : `On pace for ${formatCurrency(pace.projected)} by month end, within your target.`}
+          </p>
+        )}
         {showTrend && (
           <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-white/70" data-testid="category-trend">
             <TrendSpark values={trend.series} tone={r.status} label={`${r.category} spending, last ${trend.series.length} months: ${trend.series.map((v) => formatCurrency(v)).join(', ')}`} />

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { categoryTrend, spentInMonthUpTo, trendSentence } from './categoryTrend'
+import { categoryTrend, monthEndPace, spentInMonthUpTo, trendSentence } from './categoryTrend'
 
 const tx = (date: string, amount: number, category = 'Food') => ({ id: date + amount, date, amount, description: '', category }) as never
 const txs = [tx('2026-10-03', -100), tx('2026-10-20', -300), tx('2026-11-02', -150), tx('2026-09-05', -50), tx('2026-11-03', 500, 'Income')]
@@ -29,5 +29,19 @@ describe('categoryTrend', () => {
   it('ignores income, and does not throw on malformed rows', () => {
     const bad = [...txs, { id: 'x' } as never, null as never]
     expect(categoryTrend(bad, 'Food', '2026-11-10').series[5]).toBe(150)
+  })
+})
+
+describe('monthEndPace', () => {
+  it('projects the month from the daily rate and says how far over', () => {
+    expect(monthEndPace(150, 400, 10, 30)).toEqual({ projected: 450, over: 50 })
+    expect(monthEndPace(100, 400, 10, 30)).toEqual({ projected: 300, over: 0 })
+  })
+  it('stays quiet when it is too early, nothing is spent, there is no target, or the month is over', () => {
+    expect(monthEndPace(150, 400, 6, 30)).toBeNull()
+    expect(monthEndPace(0, 400, 15, 30)).toBeNull()
+    expect(monthEndPace(150, 0, 15, 30)).toBeNull()
+    expect(monthEndPace(150, 400, 30, 30)).toBeNull()
+    expect(monthEndPace(NaN, 400, 15, 30)).toBeNull()
   })
 })
