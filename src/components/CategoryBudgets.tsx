@@ -4,7 +4,9 @@ import { useStore } from '@/lib/store'
 import { computeBudgetRows, daysInMonth, suggestionsToApply, trimSaving, type BudgetRow, type BudgetStatus } from '@/lib/categoryBudgets'
 import { categoryColor } from '@/lib/logic'
 import { cn, formatCurrency, todayIso } from '@/lib/utils'
+import { categoryTrend, trendSentence } from '@/lib/categoryTrend'
 import { StatCard } from './StatCard'
+import { TrendSpark } from './TrendSpark'
 
 /** Categories offered as ready-to-fill rows before you have any spending history. */
 const COMMON = ['Groceries', 'Food', 'Fuel', 'Transport', 'Shopping', 'Health', 'Entertainment', 'Subscriptions', 'Utilities']
@@ -60,6 +62,9 @@ export function CategoryBudgets() {
   const renderRow = (r: BudgetRow) => {
     const pct = Math.min(100, Math.round(r.pctSpent * 100))
     const trim = trimSaving(r.monthly)
+    const trend = categoryTrend(state.transactions, r.category, today)
+    const trendText = trendSentence(trend, r.spent)
+    const showTrend = trend.monthsWithSpend >= 2
     return (
       <li key={r.category} className="rounded-xl border border-white/10 bg-black/25 p-3">
         <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
@@ -104,6 +109,12 @@ export function CategoryBudgets() {
             )}
           </span>
         </div>
+        {showTrend && (
+          <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-white/70" data-testid="category-trend">
+            <TrendSpark values={trend.series} tone={r.status} label={`${r.category} spending, last ${trend.series.length} months: ${trend.series.map((v) => formatCurrency(v)).join(', ')}`} />
+            {trendText && <span>{trendText}</span>}
+          </div>
+        )}
         {trim && <p className="mt-1 text-xs text-white/55">Trim 10% and you free up {formatCurrency(trim.perMonth)} a month, {formatCurrency(trim.perYear)} a year.</p>}
       </li>
     )
