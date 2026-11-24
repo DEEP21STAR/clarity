@@ -79,7 +79,7 @@ export function MobileHome({ onOpenMenu, onNavigate }: { onOpenMenu: () => void;
     <div className="space-y-5 pb-28">
       <div className="flex items-center justify-between">
         <h2 className="gradient-heading text-2xl font-bold tracking-tight">Home</h2>
-        <button type="button" onClick={onOpenMenu} aria-label="Open all sections" className="flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-4 min-h-11 text-sm font-semibold text-white">
+        <button type="button" onClick={onOpenMenu} aria-label="Menu: open all sections" className="flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-4 min-h-11 text-sm font-semibold text-white">
           <Menu className="w-4 h-4" /> Menu
         </button>
       </div>
