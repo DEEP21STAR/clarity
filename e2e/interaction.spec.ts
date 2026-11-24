@@ -14,7 +14,15 @@ function coveredByFab() {
   const covered: string[] = []
   for (const el of document.querySelectorAll('button, a[href], input, select, textarea, [role="button"]')) {
     if (el === fab || fab.contains(el)) continue
-    const r = el.getBoundingClientRect()
+    let r = el.getBoundingClientRect()
+    if (r.width === 0 || r.height === 0) continue
+    // only the part an ancestor scroll box actually shows: a ledger row scrolled out of its own box is clipped, not hidden under the Add button
+    for (let a = el.parentElement; a && a !== document.documentElement; a = a.parentElement) {
+      const o = getComputedStyle(a)
+      if (o.overflowY === 'visible' && o.overflowX === 'visible') continue
+      const c = a.getBoundingClientRect()
+      r = new DOMRect(Math.max(r.left, c.left), Math.max(r.top, c.top), Math.max(0, Math.min(r.right, c.right) - Math.max(r.left, c.left)), Math.max(0, Math.min(r.bottom, c.bottom) - Math.max(r.top, c.top)))
+    }
     if (r.width === 0 || r.height === 0) continue
     // only elements that are actually on screen right now
     if (r.bottom < 0 || r.top > window.innerHeight || r.right < 0 || r.left > window.innerWidth) continue
