@@ -23,15 +23,15 @@ describe('normaliseState (used by load and by backup restore)', () => {
 
   it('drops null and non-object rows from every saved list instead of crashing a screen later', () => {
     const s = normaliseState({
-      accounts: [null, { id: 'a', name: 'Real', value: 10 }, 5], debts: [null], creditCards: ['x', null], savingsGoals: [undefined, null],
+      accounts: [null, { id: 'a', name: 'Real', value: 10, countsTowardLiveFunds: true }, 5], debts: [null], creditCards: ['x', null], savingsGoals: [undefined, null],
       sinkingFunds: [null], periodicBills: [null], oneOffEntries: [null], netWorthHistory: [null], paymentRecords: [null], deviceRepayments: [null], healthScoreHistory: [null],
     } as never, DEFAULT_STATE)
-    expect(s.accounts).toEqual([{ id: 'a', name: 'Real', value: 10 }])
+    expect(s.accounts).toEqual([{ id: 'a', name: 'Real', value: 10, countsTowardLiveFunds: true }])
     for (const k of ['debts', 'creditCards', 'savingsGoals', 'sinkingFunds', 'periodicBills', 'oneOffEntries', 'netWorthHistory', 'paymentRecords', 'deviceRepayments', 'healthScoreHistory'] as const) expect(s[k], k).toEqual([])
   })
 
   it('replaces a saved list that is not a list with the default one, and leaves good lists as the same objects', () => {
-    const acct = { id: 'a', name: 'Real', value: 10 }
+    const acct = { id: 'a', name: 'Real', value: 10, countsTowardLiveFunds: true }
     const s = normaliseState({ debts: 'oops', accounts: [acct] } as never, DEFAULT_STATE)
     expect(s.debts).toEqual(DEFAULT_STATE.debts)
     expect(s.accounts[0]).toBe(acct)
@@ -48,5 +48,28 @@ describe('normaliseState (used by load and by backup restore)', () => {
     expect(s.bills[0]).toMatchObject({ id: 'b1', amount: 0, frequency: 'monthly', dueDay: 1, category: 'other', active: true })
     expect(s.bills[0]).not.toHaveProperty('owner') // ownership is never guessed
     expect(s.bills[1]).toMatchObject({ amount: 0, frequency: 'monthly', dueDay: 15, category: 'other' })
+  })
+
+  it('leaves a complete default state exactly as it is (no field of any row is rewritten)', () => {
+    const s = normaliseState(DEFAULT_STATE as never, DEFAULT_STATE)
+    expect(s).toEqual(DEFAULT_STATE)
+  })
+
+  it('repairs rows missing the fields screens read, in every list, and keeps them all', () => {
+    const s = normaliseState({
+      creditCards: [{ id: 'c1' }], sinkingFunds: [{ id: 's1', targetDate: 'nope' }], periodicBills: [{ id: 'p1', pendingBill: { amount: 'a', dueDate: 'nope' } }],
+      oneOffEntries: [{ id: 'o1', amount: '12' }], deviceRepayments: [{ id: 'r1' }], accounts: [{ id: 'a1' }], netWorthHistory: [{}], healthScoreHistory: [{ date: 1 }],
+      paymentRecords: [{ id: 'q' }], spendTracker: null, incomeAnchor: null, dashboardCardOrder: [null, 'x'],
+    } as never, DEFAULT_STATE)
+    expect(s.creditCards[0]).toMatchObject({ id: 'c1', balance: 0, plans: [] })
+    expect(typeof s.creditCards[0].rates).toBe('object')
+    expect(s.sinkingFunds[0].targetDate).toMatch(/^\d{4}-\d{2}-\d{2}$/)
+    expect(s.periodicBills[0]).not.toHaveProperty('pendingBill')
+    expect(s.oneOffEntries[0].amount).toBe(12)
+    expect(s.deviceRepayments[0]).toMatchObject({ monthlyAmount: 0, paymentsRemaining: 0 })
+    expect(s.accounts[0]).toMatchObject({ value: 0, countsTowardLiveFunds: false })
+    expect(s.spendTracker).toEqual(DEFAULT_STATE.spendTracker)
+    expect(s.incomeAnchor).toEqual(DEFAULT_STATE.incomeAnchor)
+    expect(s.dashboardCardOrder).toEqual(['x'])
   })
 })
