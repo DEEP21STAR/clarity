@@ -58,3 +58,29 @@ for (const [label, spent, shape] of [['-$xxx.xx', 300, /-\$\d{3}\.\d{2}/], ['-$1
     })
   }
 }
+
+// Nothing may run past the right edge of the phone screen (the page hides sideways scroll, so overflow is clipped, not scrolled):
+// found in real Brave at 320px on Upcoming, where "$1,238.95" in the household split and the "22 / 36" device progress ran off the card.
+for (const tab of ['upcoming', 'budgets', 'debts', 'tools', 'home']) {
+  test(`nothing runs past the right edge on ${tab} at 320px (demo data)`, async ({ page }) => {
+    await page.setViewportSize({ width: 320, height: 800 })
+    await page.addInitScript(() => { try { sessionStorage.setItem('clarity-pin-unlocked', '1'); localStorage.setItem('clarity-last-boot', String(Date.now() - 60000)); localStorage.setItem('clarity-dashboard-state-v5', JSON.stringify({ spendTracker: { food: 300, fuel: 0, personal: 0, periodStart: new Date().toISOString().slice(0, 10) } })) } catch { /* ignore */ } })
+    await page.goto(`./?tab=${tab}`)
+    await page.waitForTimeout(2500)
+    const past = await page.evaluate(() => {
+      const bad: string[] = []
+      for (const e of document.querySelectorAll('body *')) {
+        if (e.children.length) continue
+        const tx = (e.textContent || '').trim()
+        if (!tx) continue
+        const r = e.getBoundingClientRect()
+        if (!r.height || getComputedStyle(e).position === 'fixed') continue
+        let scroller = false
+        for (let a = e.parentElement; a && a !== document.body; a = a.parentElement) { if (/(auto|scroll|hidden|clip)/.test(getComputedStyle(a).overflowX)) { scroller = true; break } }
+        if (!scroller && r.right > innerWidth + 1) bad.push(`${tx.slice(0, 30)} (${Math.round(r.right)}px)`)
+      }
+      return bad
+    })
+    expect(past, `text past the right edge on ${tab}`).toEqual([])
+  })
+}

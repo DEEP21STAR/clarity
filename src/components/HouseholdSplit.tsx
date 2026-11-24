@@ -24,12 +24,12 @@ export function HouseholdSplit() {
   return (
     <StatCard label="Household Bill Split" glow="purple" tilt={false}>
       {/* Tier 1: the answer that matters, always visible */}
-      <div className="mt-4 flex gap-6 text-sm">
-        <div>
+      <div className="mt-4 flex flex-wrap gap-x-6 gap-y-3 text-sm">
+        <div className="min-w-0">
           <div className="text-xs text-white/55 uppercase tracking-wide">Deep owes / month</div>
           <div className="text-2xl font-bold tabular-nums text-cyan-300">{formatCurrency(totals.deep)}</div>
         </div>
-        <div>
+        <div className="min-w-0">
           <div className="text-xs text-white/55 uppercase tracking-wide">Mimi owes / month</div>
           <div className="text-2xl font-bold tabular-nums text-pink-300">{formatCurrency(totals.mimi)}</div>
         </div>

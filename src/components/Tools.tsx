@@ -306,7 +306,7 @@ export function Tools() {
               />
             </div>
           </div>
-          <div className="flex items-center gap-4">
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
             <div>
               <p className="text-xs text-white/55 uppercase tracking-wide">Balance in 30 days — now</p>
               <p className="text-lg font-bold tabular-nums text-white/70">{formatCurrency(whatIfComparison.realEnd)}</p>

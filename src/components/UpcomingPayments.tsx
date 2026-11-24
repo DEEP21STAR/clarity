@@ -867,7 +867,7 @@ function BillsManager({ bills, onUpdate, onAdd, onRemove, view, onViewChange, li
       </div>
 
       {view === 'snapshot' ? (
-        <div className="mt-4 grid grid-cols-2 sm:grid-cols-3 gap-3">
+        <div className="mt-4 grid grid-cols-1 min-[400px]:grid-cols-2 sm:grid-cols-3 gap-3">
           {activeBills.length === 0 && <p className="text-sm text-white/55 col-span-full">No active bills.</p>}
           {activeBills.map((bill, i) => (
             <BillSnapshotCard key={bill.id} bill={bill} delay={i * 0.04} highlighted={highlightedBillIds.has(bill.id)} />

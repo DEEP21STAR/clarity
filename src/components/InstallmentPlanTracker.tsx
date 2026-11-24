@@ -257,7 +257,7 @@ export function DeviceRepaymentCard({
           className="mt-3 bg-transparent outline-none text-sm font-medium text-white/80 border-b border-white/10 focus:border-cyan-400/50 w-full"
         />
       )}
-      <div className="mt-4 flex items-baseline justify-between text-sm">
+      <div className="mt-4 flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1 text-sm">
         <span className="flex items-center gap-2 text-2xl font-bold tabular-nums text-cyan-200">
           <BillIcon name={device.name} className="w-5 h-5" />
           {onUpdate ? (
@@ -273,7 +273,7 @@ export function DeviceRepaymentCard({
           )}
           <span className="text-sm text-white/55">/mo</span>
         </span>
-        <span className="text-white/55 text-xs flex items-center gap-1">
+        <span className="text-white/55 text-xs flex flex-wrap items-center gap-1">
           {paidOff ? (
             <span className="text-emerald-300 font-medium">Paid off</span>
           ) : onUpdate ? (

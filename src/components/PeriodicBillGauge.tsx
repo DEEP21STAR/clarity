@@ -125,8 +125,8 @@ export function PeriodicBillGauge({
               const severity = dueDateSeverity(daysUntilDue)
               return (
                 <div className={cn('rounded-lg border px-3 py-2 text-sm', PENDING_BILL_SEVERITY_CLASSES[severity])}>
-                  <div className={cn('flex justify-between items-center font-semibold', PENDING_BILL_TEXT_CLASSES[severity])}>
-                    <span className="flex items-center gap-2">
+                  <div className={cn('flex flex-wrap justify-between items-center gap-x-3 font-semibold', PENDING_BILL_TEXT_CLASSES[severity])}>
+                    <span className="flex flex-wrap items-center gap-x-2">
                       Bill due
                       <DueBadge dueDateIso={bill.pendingBill.dueDate} />
                     </span>
