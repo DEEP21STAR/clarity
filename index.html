@@ -9,6 +9,52 @@
          default more restrictively without an explicit opt-in. -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes, maximum-scale=5.0" />
     <title>Clarity — Deep's Budget Dashboard</title>
+    <!-- Blank-screen watchdog. Runs independently of React: if the page stays empty it shows what went wrong
+         (captured errors, loaded files) with Reload / Clear-cache buttons, instead of leaving a blank screen. -->
+    <script>
+      (function () {
+        var cfg = window.__clarityWatchdog || { first: 6000, every: 3000, stopAfter: 180000 }
+        var errors = []
+        var started = Date.now()
+        function note(s) { try { s = String(s); if (errors.length < 6 && errors.indexOf(s) === -1) errors.push(s.slice(0, 220)) } catch (e) {} }
+        window.addEventListener('error', function (e) { note((e.message || 'error') + (e.filename ? ' @ ' + e.filename.split('/').pop() + ':' + e.lineno : '')) })
+        window.addEventListener('unhandledrejection', function (e) { note('promise: ' + ((e.reason && (e.reason.message || e.reason)) || 'rejected')) })
+        var origErr = console.error
+        console.error = function () { try { note('console.error: ' + (arguments[0] && arguments[0].message ? arguments[0].message : [].slice.call(arguments, 0, 2).join(' '))) } catch (e) {} return origErr.apply(console, arguments) }
+        function blank() { return !document.getElementById('clarity-diagnostic') && ((document.body && document.body.innerText) || '').trim().length < 20 }
+        function clearAndReload() {
+          var done = function () { location.reload() }
+          try {
+            Promise.all([
+              navigator.serviceWorker ? navigator.serviceWorker.getRegistrations().then(function (rs) { return Promise.all(rs.map(function (r) { return r.unregister() })) }) : 0,
+              window.caches ? caches.keys().then(function (ks) { return Promise.all(ks.map(function (k) { return caches.delete(k) })) }) : 0
+            ]).then(done, done)
+          } catch (e) { done() }
+        }
+        function show() {
+          var files = [].slice.call(document.scripts).map(function (s) { return (s.src || '').split('/').pop() }).filter(Boolean).join(', ')
+          var d = document.createElement('div')
+          d.id = 'clarity-diagnostic'
+          d.setAttribute('role', 'alert')
+          d.style.cssText = 'position:fixed;inset:0;z-index:2147483647;background:#05060a;color:#fff;font:15px/1.5 system-ui,sans-serif;display:flex;align-items:center;justify-content:center;padding:24px;text-align:center;overflow:auto'
+          var inner = document.createElement('div'); inner.style.cssText = 'max-width:520px'
+          var h = document.createElement('h1'); h.textContent = "Clarity didn't finish loading"; h.style.cssText = 'font-size:20px;margin:0 0 8px'
+          var p = document.createElement('p'); p.textContent = 'The screen stayed empty. Your data is safe: it stays on this device. Try Reload; if it happens again use Clear app cache.'; p.style.cssText = 'color:#b8bcc8;margin:0 0 16px'
+          function btn(label, fn) { var b = document.createElement('button'); b.type = 'button'; b.textContent = label; b.onclick = fn; b.style.cssText = 'min-height:44px;margin:4px;padding:0 20px;border-radius:999px;border:0;font-weight:700;cursor:pointer;background:linear-gradient(90deg,#22d3ee,#a855f7);color:#000'; return b }
+          var info = document.createElement('pre'); info.style.cssText = 'text-align:left;white-space:pre-wrap;word-break:break-word;color:#8b90a0;font:12px/1.4 ui-monospace,monospace;margin:16px 0 0'
+          info.textContent = 'seconds since load: ' + Math.round((Date.now() - started) / 1000) + '\nfiles: ' + files + '\nservice worker controlling this page: ' + (navigator.serviceWorker && navigator.serviceWorker.controller ? 'yes' : 'no') + '\nerrors:\n' + (errors.length ? errors.map(function (x) { return ' - ' + x }).join('\n') : ' (none captured)')
+          inner.appendChild(h); inner.appendChild(p); inner.appendChild(btn('Reload', function () { location.reload() })); inner.appendChild(btn('Clear app cache and reload', clearAndReload)); inner.appendChild(info)
+          d.appendChild(inner); document.body.appendChild(d)
+        }
+        var misses = 0
+        function tick() {
+          if (Date.now() - started > cfg.stopAfter) return
+          if (blank()) { misses++; if (misses >= 2) { show(); return } } else { misses = 0 }
+          setTimeout(tick, cfg.every)
+        }
+        setTimeout(tick, cfg.first)
+      })()
+    </script>
   </head>
   <body>
     <div id="root"></div>
