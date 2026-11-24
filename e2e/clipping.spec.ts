@@ -22,13 +22,15 @@ function findClipped() {
   }
   return out.slice(0, 12)
 }
-for (const WIDTH of [320, 360, 390]) for (const tab of ['home', ...TABS]) {
+for (const WIDTH of [320, 360, 390, 768, 1024]) for (const tab of ['home', ...TABS]) {
   test(`no clipped text on ${tab} at ${WIDTH}px`, async ({ page }) => {
     await page.setViewportSize({ width: WIDTH, height: 844 })
     await page.addInitScript(() => { try { localStorage.setItem('clarity-dashboard-state-v5', '{}'); sessionStorage.setItem('clarity-pin-unlocked', '1'); localStorage.setItem('clarity-last-boot', String(Date.now() - 60000)) } catch { /* ignore */ } })
     await page.goto(`./?tab=${tab}`)
     await page.waitForTimeout(2200)
     expect(await page.evaluate(findClipped), `clipped text on ${tab} at ${WIDTH}px`).toEqual([])
+    // and the page itself must not scroll sideways
+    expect(await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth), `${tab} scrolls sideways at ${WIDTH}px`).toBeLessThanOrEqual(1)
   })
 }
 
