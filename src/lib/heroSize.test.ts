@@ -17,7 +17,8 @@ describe('heroAmountSize', () => {
     expect(heroAmountSize(-1234567.89, { desktopFull: true })).toBe('text-2xl min-[360px]:text-4xl md:text-6xl')
   })
   it('phone Home hero: narrower, so it steps down earlier', () => {
-    expect(heroAmountSize(-674.94)).toBe('text-5xl') // 8 chars
+    expect(heroAmountSize(-674.94)).toBe('text-4xl') // 8 chars (wrapped at text-5xl in real Brave at 320px)
+    expect(heroAmountSize(-74.94)).toBe('text-5xl') // 7 chars
     expect(heroAmountSize(12.5)).toBe('text-5xl') // "$12.50"
     expect(heroAmountSize(1534.21)).toBe('text-4xl') // "$1,534.21" 9 chars
     expect(heroAmountSize(-1534.21)).toBe('text-3xl') // 10

@@ -6,7 +6,7 @@ export function heroAmountText(value: number): string {
 
 /**
  * Text size classes for a big money figure that must fit a narrow card. Short amounts keep the full size; longer ones step down
- * (at 320px "-$674.94" fits at text-5xl but "-$12,674.94" does not).
+ * (at 320px in Brave "-$674.94" wraps at text-5xl, so it uses text-4xl).
  * `desktopFull` picks the Upcoming hero scale (with md: steps); without it the narrower phone Home hero scale is used.
  */
 export function heroAmountSize(value: number, opts: { desktopFull?: boolean } = {}): string {
@@ -18,7 +18,7 @@ export function heroAmountSize(value: number, opts: { desktopFull?: boolean } = 
     return 'text-2xl min-[360px]:text-4xl md:text-6xl'
   }
   // Phone Home hero card: narrower, and the figure must stay on one line (about 228px of text width at 320px)
-  if (n <= 8) return 'text-5xl'
+  if (n <= 7) return 'text-5xl'
   if (n <= 9) return 'text-4xl'
   if (n <= 11) return 'text-3xl'
   return 'text-2xl'
