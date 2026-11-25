@@ -22,8 +22,7 @@ import { DashboardForecastCard } from './DashboardForecastCard'
 import { TakeawaySavings } from './TakeawaySavings'
 import { FinancialTipOfDay } from './FinancialTipOfDay'
 import { WeeklyReviewCard } from './WeeklyReviewCard'
-import { SinceLastVisitStrip } from './SinceLastVisitStrip'
-import { BackupNudgeStrip } from './BackupNudgeStrip'
+import { TopNotice } from './TopNotice'
 import { MoneyFlowRibbon } from './MoneyFlowRibbon'
 import { GettingStartedCard } from './GettingStartedCard'
 
@@ -354,14 +353,15 @@ export function Dashboard() {
 
       <GettingStartedCard />
 
-      <BackupNudgeStrip />
-      <SinceLastVisitStrip />
+      <TopNotice />
+
+      {/* the first picture comes before the text blocks (design pass: four notices pushed it 1,400 px down a phone) */}
+      <MoneyFlowRibbon />
+
       <WeeklyReviewCard />
       <FinancialTipOfDay country={country} />
 
       <InsightsTicker />
-
-      <MoneyFlowRibbon />
 
       {/* Draggable card blocks — order persisted in state.dashboardCardOrder */}
       {state.dashboardCardOrder.map((id) => (

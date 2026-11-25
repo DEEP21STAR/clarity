@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import { History, X } from 'lucide-react'
 import { useStore } from '@/lib/store'
-import { buildSinceLastVisit } from '@/lib/sinceLastVisit'
+import { buildSinceLastVisit, type SinceSummary } from '@/lib/sinceLastVisit'
 import { cn, todayIso } from '@/lib/utils'
 
 const LAST_KEY = 'clarity-last-visit'
@@ -23,15 +23,19 @@ function readBaseline(today: string): string | null {
   } catch { return null }
 }
 
-/** "Since you were last here": new transactions and targets passed, a few plain lines. Shown only when you have been away at least a day. */
-export function SinceLastVisitStrip() {
+/** State for the "since you were last here" notice: what changed, and whether it was hidden this session. */
+export function useSinceLastVisit() {
   const { state } = useStore()
   const today = todayIso()
   const [baseline] = useState(() => readBaseline(today))
   const [dismissed, setDismissed] = useState(() => { try { return sessionStorage.getItem(DISMISS_KEY) === '1' } catch { return false } })
   const summary = useMemo(() => buildSinceLastVisit({ transactions: state.transactions, budgets: state.categoryBudgets ?? {}, lastVisitIso: baseline, todayIso: today }), [state.transactions, state.categoryBudgets, baseline, today])
+  const dismiss = () => { setDismissed(true); try { sessionStorage.setItem(DISMISS_KEY, '1') } catch { /* ignore */ } }
+  return { summary, visible: !dismissed && summary.items.length > 0, dismiss }
+}
 
-  if (dismissed || summary.items.length === 0) return null
+/** "Since you were last here": new transactions and targets passed, a few plain lines. Shown only when you have been away at least a day. */
+export function SinceLastVisitStrip({ summary, onDismiss }: { summary: SinceSummary; onDismiss: () => void }) {
   const away = summary.daysAway === 1 ? 'yesterday' : `${summary.daysAway} days ago`
   return (
     <section aria-label="Since you were last here" data-testid="since-last-visit" className="since-strip relative overflow-hidden rounded-2xl border border-white/10 bg-white/[0.04] p-4 pl-5 pr-12">
@@ -47,11 +51,7 @@ export function SinceLastVisitStrip() {
           </li>
         ))}
       </ul>
-      <button
-        type="button" aria-label="Hide this summary"
-        onClick={() => { setDismissed(true); try { sessionStorage.setItem(DISMISS_KEY, '1') } catch { /* ignore */ } }}
-        className="absolute right-1 top-1 flex h-11 w-11 items-center justify-center rounded-full text-white/60 transition-colors hover:bg-white/10 hover:text-white"
-      >
+      <button type="button" aria-label="Hide this summary" onClick={onDismiss} className="absolute right-1 top-1 flex h-11 w-11 items-center justify-center rounded-full text-white/60 transition-colors hover:bg-white/10 hover:text-white">
         <X className="h-4 w-4" aria-hidden="true" />
       </button>
     </section>

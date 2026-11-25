@@ -25,15 +25,15 @@ export function BackupNudgeStrip() {
         <span>{nudge.text}</span>
       </p>
       <span className="flex items-center">
-        <button type="button" onClick={() => window.dispatchEvent(new CustomEvent('clarity:goto-tab', { detail: 'tools' }))} className="min-h-11 rounded-full px-3 text-sm font-semibold text-cyan-200 transition-colors hover:bg-white/10">
-          Back up now
+        <button type="button" aria-label="Back up now" onClick={() => window.dispatchEvent(new CustomEvent('clarity:goto-tab', { detail: 'tools' }))} className="min-h-11 rounded-full px-3 text-sm font-semibold text-cyan-200 transition-colors hover:bg-white/10">
+          Back up
         </button>
         <button
-          type="button"
+          type="button" aria-label="Later: remind me next week"
           onClick={() => { const until = snoozeUntil(today); setSnoozed(until); try { localStorage.setItem(SNOOZE_KEY, until) } catch { /* ignore */ } }}
           className="min-h-11 rounded-full px-3 text-sm text-white/65 transition-colors hover:bg-white/10 hover:text-white"
         >
-          Remind me next week
+          Later
         </button>
       </span>
     </section>
