@@ -18,6 +18,8 @@ test('shows the release list once, then the backup reminder takes the slot after
   const card = page.getByTestId('whats-new')
   await expect(card).toBeVisible()
   expect(await card.locator('li').count()).toBe(RELEASE.items.length)
+  expect((await card.boundingBox())!.height, 'two columns on a wide screen keep it short').toBeLessThan(260)
+  await expect(card.getByRole('button', { name: /open Tools/ }), 'the destination is named Tools').toBeVisible()
   await expect(page.getByTestId('backup-nudge'), 'one notice at a time').toHaveCount(0)
   await card.getByRole('button', { name: 'Got it' }).click()
   await expect(page.getByTestId('whats-new')).toHaveCount(0)

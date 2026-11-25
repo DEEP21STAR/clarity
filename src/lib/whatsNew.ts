@@ -11,7 +11,7 @@ export const RELEASE: Release = {
     { text: 'Budget trend lines and month-end pace', tab: 'budgets', tabLabel: 'Budgets' },
     { text: 'Six-month Net Worth projection', tab: 'networth', tabLabel: 'Net Worth' },
     { text: 'Where your income goes (Dashboard)', tab: 'dashboard', tabLabel: 'Dashboard' },
-    { text: 'Backup reminder and visit summary', tab: 'tools', tabLabel: 'Back up' },
+    { text: 'Backup reminder and visit summary', tab: 'tools', tabLabel: 'Tools' },
     { text: 'Damaged saved data no longer blanks a screen' },
   ],
 }

@@ -32,7 +32,7 @@ export function WhatsNewCard({ onDismiss }: { onDismiss: () => void }) {
           Got it
         </button>
       </div>
-      <ul className="text-sm leading-snug text-white/85">
+      <ul className="text-sm leading-snug text-white/85 md:grid md:grid-cols-2 md:gap-x-6">
         {RELEASE.items.map((it, i) => (
           <li key={i}>
             {it.tab ? (
