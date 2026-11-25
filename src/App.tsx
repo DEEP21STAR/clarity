@@ -114,6 +114,12 @@ export function AppContent() {
   const tint = useTimeOfDayTint()
   // warm up the other screens in idle time (skipped on data saver and slow connections)
   useEffect(() => schedulePrefetch(PREFETCH_ORDER), [])
+  // lets a card anywhere (for example the backup reminder) open a screen: window.dispatchEvent(new CustomEvent('clarity:goto-tab', { detail: 'tools' }))
+  useEffect(() => {
+    const open = (e: Event) => { const id = (e as CustomEvent).detail; if (typeof id === 'string' && TABS.some((t) => t.id === id)) setTab(id as TabId) }
+    window.addEventListener('clarity:goto-tab', open)
+    return () => window.removeEventListener('clarity:goto-tab', open)
+  }, [])
   // The colour drift and time-of-day tint are CSS filters. A filter on an ordinary wrapper turns it into the anchor for every fixed
   // child (Add button, toasts, drawer, palette), pinning them to the end of the page. On the root element they stay anchored to the screen.
   useEffect(() => {

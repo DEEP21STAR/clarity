@@ -28,6 +28,10 @@ const CASES: Record<string, object> = {
   'spend tracker missing': { spendTracker: null },
   'income anchor with a bad date': { incomeAnchor: { date: 'nope' } },
   'income anchor missing': { incomeAnchor: null },
+  'streak missing': { streak: null },
+  'streak empty object': { streak: {} },
+  'streak text': { streak: 'x' },
+  'streak with wrong field types': { streak: { current: 'x', best: null, lastCheckedDate: 5, milestonesHit: null } },
   'bill with no due day, text amount, unknown frequency': { bills: [{ id: 'b1', name: 'Odd', active: true }, { id: 'b2', name: 'T', active: true, amount: 'lots', frequency: 'sometimes', category: 'zzz' }] },
 }
 

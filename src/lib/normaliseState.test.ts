@@ -72,4 +72,18 @@ describe('normaliseState (used by load and by backup restore)', () => {
     expect(s.incomeAnchor).toEqual(DEFAULT_STATE.incomeAnchor)
     expect(s.dashboardCardOrder).toEqual(['x'])
   })
+
+  it('repairs a damaged streak (found by Predator: null broke all 10 screens, {} or text broke Home, Upcoming and Tools)', () => {
+    for (const bad of [null, {}, 'x', 5, [], { current: 'x', best: null, lastCheckedDate: 5, milestonesHit: null }]) {
+      const s = normaliseState({ streak: bad } as never, DEFAULT_STATE)
+      expect(typeof s.streak.current, JSON.stringify(bad)).toBe('number')
+      expect(Number.isFinite(s.streak.current)).toBe(true)
+      expect(Number.isFinite(s.streak.best)).toBe(true)
+      expect(typeof s.streak.lastCheckedDate).toBe('string')
+      expect(Array.isArray(s.streak.milestonesHit)).toBe(true)
+    }
+    expect(normaliseState({ streak: null } as never, DEFAULT_STATE).streak).toEqual(DEFAULT_STATE.streak)
+    const good = { current: 3, best: 9, lastCheckedDate: '2026-11-24', milestonesHit: [3] }
+    expect(normaliseState({ streak: good } as never, DEFAULT_STATE).streak).toBe(good) // a good streak is the same object
+  })
 })

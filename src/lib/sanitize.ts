@@ -155,6 +155,10 @@ export function sanitizeSettings<T extends object>(state: T, fallback: object): 
   if (ia === null || typeof ia !== 'object' || Array.isArray(ia)) out.incomeAnchor = fb.incomeAnchor
   else if (!(isDay(ia.anchorDate) && typeof ia.weeklyAmount === 'number' && typeof ia.fortnightlyBonusAmount === 'number'))
     out.incomeAnchor = { ...ia, anchorDate: day(ia.anchorDate, fb.incomeAnchor?.anchorDate), weeklyAmount: num(ia.weeklyAmount, fb.incomeAnchor?.weeklyAmount), fortnightlyBonusAmount: num(ia.fortnightlyBonusAmount, fb.incomeAnchor?.fortnightlyBonusAmount) }
+  const sk = out.streak as Record<string, unknown> | null | undefined
+  if (sk === null || typeof sk !== 'object' || Array.isArray(sk)) out.streak = fb.streak
+  else if (!(typeof sk.current === 'number' && Number.isFinite(sk.current) && typeof sk.best === 'number' && Number.isFinite(sk.best) && typeof sk.lastCheckedDate === 'string' && Array.isArray(sk.milestonesHit) && sk.milestonesHit.every((m) => typeof m === 'number')))
+    out.streak = { ...sk, current: num(sk.current, 0), best: num(sk.best, 0), lastCheckedDate: typeof sk.lastCheckedDate === 'string' ? sk.lastCheckedDate : '', milestonesHit: Array.isArray(sk.milestonesHit) ? sk.milestonesHit.filter((m) => typeof m === 'number') : [] }
   const order = out.dashboardCardOrder
   if (!Array.isArray(order)) out.dashboardCardOrder = (fallback as Record<string, unknown>).dashboardCardOrder
   else if (order.some((x) => typeof x !== 'string')) out.dashboardCardOrder = order.filter((x) => typeof x === 'string')

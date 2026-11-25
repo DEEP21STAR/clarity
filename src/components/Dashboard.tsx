@@ -23,6 +23,7 @@ import { TakeawaySavings } from './TakeawaySavings'
 import { FinancialTipOfDay } from './FinancialTipOfDay'
 import { WeeklyReviewCard } from './WeeklyReviewCard'
 import { SinceLastVisitStrip } from './SinceLastVisitStrip'
+import { BackupNudgeStrip } from './BackupNudgeStrip'
 import { MoneyFlowRibbon } from './MoneyFlowRibbon'
 import { GettingStartedCard } from './GettingStartedCard'
 
@@ -353,6 +354,7 @@ export function Dashboard() {
 
       <GettingStartedCard />
 
+      <BackupNudgeStrip />
       <SinceLastVisitStrip />
       <WeeklyReviewCard />
       <FinancialTipOfDay country={country} />
