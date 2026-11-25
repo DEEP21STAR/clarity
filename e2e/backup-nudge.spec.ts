@@ -1,5 +1,9 @@
+import { RELEASE } from '../src/lib/whatsNew'
 import { test, expect, type Page } from '@playwright/test'
 import AxeBuilder from '@axe-core/playwright'
+
+// the one-time "What's new" card would take the notice slot these tests look at, so mark this release as already seen
+test.beforeEach(async ({ page }) => { await page.addInitScript((id) => { try { localStorage.setItem('clarity-whatsnew-seen', id) } catch { /* ignore */ } }, RELEASE.id) })
 
 // Backup reminder on Home (phone) and Dashboard. Shows only when there is data to lose and no backup in 30+ days.
 const iso = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
@@ -48,7 +52,7 @@ test('stays hidden for an empty app and after a recent backup', async ({ page, b
   await page.waitForTimeout(800)
   await expect(page.getByTestId('backup-nudge'), 'empty app').toHaveCount(0)
   const p2 = await (await browser.newContext({ viewport: { width: 1440, height: 900 }, serviceWorkers: 'block', baseURL: process.env.PW_BASE ?? 'http://127.0.0.1:4173/clarity/' })).newPage()
-  await p2.addInitScript((s) => { try { sessionStorage.setItem('clarity-pin-unlocked', '1'); localStorage.setItem('clarity-last-boot', String(Date.now() - 60000)); localStorage.setItem('clarity-dashboard-state-v5', JSON.stringify(s)) } catch { /* ignore */ } }, { ...WITH_DATA, lastExportedAt: new Date().toISOString() })
+  await p2.addInitScript((s) => { try { localStorage.setItem('clarity-whatsnew-seen', s.__rel); sessionStorage.setItem('clarity-pin-unlocked', '1'); localStorage.setItem('clarity-last-boot', String(Date.now() - 60000)); localStorage.setItem('clarity-dashboard-state-v5', JSON.stringify(s)) } catch { /* ignore */ } }, { ...WITH_DATA, lastExportedAt: new Date().toISOString(), __rel: RELEASE.id })
   await p2.goto('./?tab=dashboard')
   await p2.waitForTimeout(800)
   await expect(p2.getByTestId('backup-nudge'), 'recent backup').toHaveCount(0)

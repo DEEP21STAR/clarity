@@ -1,4 +1,8 @@
+import { RELEASE } from '../src/lib/whatsNew'
 import { test, expect, type Page } from '@playwright/test'
+
+// the one-time "What's new" card would take the notice slot these tests look at, so mark this release as already seen
+test.beforeEach(async ({ page }) => { await page.addInitScript((id) => { try { localStorage.setItem('clarity-whatsnew-seen', id) } catch { /* ignore */ } }, RELEASE.id) })
 
 // One notice at a time above the data, and the first picture before the text blocks (from Predator's design pass).
 const iso = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
