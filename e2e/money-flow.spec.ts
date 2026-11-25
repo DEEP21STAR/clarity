@@ -23,9 +23,8 @@ test('the ribbon, its summary sentence and a text legend that adds up all show o
 
 test('the ribbon finishes revealing, and is shown at once with reduced motion', async ({ page, browser }) => {
   await open(page, 1440)
-  await page.waitForTimeout(1600)
-  const w = await page.locator('.money-flow-reveal').evaluate((e) => getComputedStyle(e).transform)
-  expect(w === 'none' || w.startsWith('matrix(1,') || w === 'matrix(1, 0, 0, 1, 0, 0)').toBe(true)
+  // wait for the reveal to end (about 1.2 s after the card is on screen; longer on a loaded machine) instead of guessing a delay
+  await expect.poll(() => page.locator('.money-flow-reveal').evaluate((e) => { const t = getComputedStyle(e).transform; return t === 'none' || t.startsWith('matrix(1,') }), { timeout: 8000 }).toBe(true)
   const ctx = await browser.newContext({ reducedMotion: 'reduce', viewport: { width: 1440, height: 900 }, serviceWorkers: 'block', baseURL: 'http://127.0.0.1:4173/clarity/' })
   const p2 = await ctx.newPage()
   await p2.addInitScript((s) => { try { sessionStorage.setItem('clarity-pin-unlocked', '1'); localStorage.setItem('clarity-last-boot', String(Date.now() - 60000)); localStorage.setItem('clarity-dashboard-state-v5', JSON.stringify(s)) } catch { /* ignore */ } }, SET_UP)
