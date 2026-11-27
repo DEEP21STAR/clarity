@@ -166,6 +166,12 @@ export function AppContent() {
   useEffect(() => {
     document.documentElement.dataset.accentTheme = state.accentTheme
   }, [state.accentTheme])
+  // Appearance: 'light' sets <html data-theme="light"> (lightTheme.generated.css); dark is the default and sets nothing.
+  useEffect(() => {
+    const root = document.documentElement
+    if (state.colorMode === 'light') root.dataset.theme = 'light'
+    else delete root.dataset.theme
+  }, [state.colorMode])
 
   // The saved celebration level (Off / Subtle / Showtime) scales every confetti burst.
   useEffect(() => { setCelebrationLevel(state.celebrationLevel ?? 'subtle') }, [state.celebrationLevel])

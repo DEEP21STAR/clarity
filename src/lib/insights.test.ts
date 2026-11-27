@@ -94,19 +94,19 @@ describe('buildDashboardHeadline — plain-language sentence computed from real 
 
   it('names emergency fund as the weakest area when its sub-score is lowest', () => {
     const headline = buildDashboardHeadline(500, 70, breakdown)
-    expect(headline).toContain('$500.00 ahead')
-    expect(headline).toContain('your emergency fund')
+    expect(headline).toContain('$500.00 a month to work with')
+    expect(headline).toContain('Biggest opportunity: your emergency fund')
   })
 
   it('groups thousands like every other dollar figure', () => {
-    expect(buildDashboardHeadline(1534.21, 62, breakdown)).toContain('$1,534.21 ahead')
-    expect(buildDashboardHeadline(1234567.5, 62, breakdown)).toContain('$1,234,567.50 ahead')
-    expect(buildDashboardHeadline(-2500, 40, breakdown)).toContain('by $2,500.00 this month')
+    expect(buildDashboardHeadline(1534.21, 62, breakdown)).toContain('$1,534.21 a month to work with')
+    expect(buildDashboardHeadline(1234567.5, 62, breakdown)).toContain('$1,234,567.50 a month to work with')
+    expect(buildDashboardHeadline(-2500, 40, breakdown)).toContain('$2,500.00 more than your net income each month')
   })
 
   it('flips to a "behind" framing when leftover is negative, still naming the real weakest area', () => {
     const headline = buildDashboardHeadline(-200, 40, breakdown)
-    expect(headline).toContain('behind')
+    expect(headline).toContain('more than your net income')
     expect(headline).toContain('$200.00')
     expect(headline).toContain('mergency fund')
   })

@@ -17,7 +17,7 @@ import { isNotificationSupported, getNotificationPermission, requestNotification
 import { isSpeechRecognitionSupported, startListening, parseVoiceTranscript } from '@/lib/voiceInput'
 
 export function Tools() {
-  const { state, addOneOffEntry, removeOneOffEntry, setSoundEnabled, setCelebrationLevel, setTextScale, setBillAlertsEnabled, setAccentTheme } = useStore()
+  const { state, addOneOffEntry, removeOneOffEntry, setSoundEnabled, setCelebrationLevel, setTextScale, setBillAlertsEnabled, setAccentTheme, setColorMode } = useStore()
   const withUndo = useUndoableDelete()
   const [hoursPerWeek, setHoursPerWeek] = useState(15)
   const [weeksPerYear, setWeeksPerYear] = useState(48)
@@ -167,6 +167,23 @@ export function Tools() {
           comment): swaps the app's shared brand gradient only. Semantic StatCard colors
           (danger/success/amber) and a couple of one-off hardcoded hero-number gradients
           elsewhere are unaffected — that's a much bigger refactor, out of scope here. */}
+      <StatCard label="Appearance" glow="cyan" tooltip="Dark is the classic look. Light is a brighter version for daytime use. Your data and every setting stay the same.">
+        <div className="mt-4 grid grid-cols-2 gap-2" role="radiogroup" aria-label="Appearance">
+          {([{ value: 'dark', label: 'Dark', note: 'Classic' }, { value: 'light', label: 'Light', note: 'Brighter, for daytime' }] as const).map((m) => (
+            <button
+              key={m.value}
+              role="radio"
+              aria-checked={state.colorMode === m.value}
+              onClick={() => setColorMode(m.value)}
+              className={cn('flex min-h-11 flex-col items-center gap-0.5 rounded-lg border p-3 transition-colors', state.colorMode === m.value ? 'border-white/40 bg-white/5' : 'border-white/10 hover:border-white/20')}
+            >
+              <span className={cn('text-sm font-semibold', state.colorMode === m.value ? 'text-white' : 'text-white/60')}>{m.label}</span>
+              <span className="text-xs text-white/55">{m.note}</span>
+            </button>
+          ))}
+        </div>
+      </StatCard>
+
       <StatCard label="Theme" glow="purple" tooltip="Changes the app's brand gradient — logo, headings, nav glow, card hover border, wizard frame. Warning/success/danger colors elsewhere stay the same on purpose, since those carry real meaning.">
         <div className="mt-4 grid grid-cols-4 gap-2">
           {(

@@ -40,7 +40,7 @@ test('GST amount box groups thousands and the calculator still works', async ({ 
 test('dashboard headline groups thousands and highlights the whole figure', async ({ page }) => {
   await page.addInitScript(() => { try { localStorage.setItem('clarity-dashboard-state-v5', '{}'); sessionStorage.setItem('clarity-pin-unlocked', '1'); localStorage.setItem('clarity-last-boot', String(Date.now() - 60_000)) } catch { /* ignore */ } })
   await page.goto('./?tab=dashboard')
-  const headline = page.locator('p.font-semibold').filter({ hasText: /ahead after fixed bills|You're behind/ })
+  const headline = page.locator('p.font-semibold').filter({ hasText: /a month to work with|more than your net income/ })
   await expect(headline).toContainText('$1,534.21')
   await expect(headline.locator('.gradient-heading').first()).toHaveText('$1,534.21')
   await headline.screenshot({ path: 'test-results/headline.png' })

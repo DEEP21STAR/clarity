@@ -99,6 +99,8 @@ export interface AppState {
    * (index.css's --theme-1/2/3) — semantic StatCard colors (danger/success/amber) stay fixed.
    * Default 'aurora' matches every existing account's current cyan/purple/pink look exactly. */
   accentTheme: AccentTheme
+  /** Appearance. Dark is the classic look and the default; Light is opt-in (Settings > Appearance). */
+  colorMode: 'dark' | 'light'
 }
 
 export const DEFAULT_STATE: AppState = {
@@ -135,6 +137,7 @@ export const DEFAULT_STATE: AppState = {
   textScale: 'large',
   billAlertsEnabled: false,
   accentTheme: 'aurora',
+  colorMode: 'dark',
 }
 
 /**
@@ -166,7 +169,7 @@ export function normaliseState(parsed: Partial<AppState>, fallback: AppState): A
   const repaired: Record<string, unknown> = { ...merged }
   const cardRates = (fallback.creditCards?.[0] as { rates?: unknown } | undefined)?.rates
   for (const list of Object.keys(ROW_SPECS)) repaired[list] = sanitizeRows(merged[list as keyof AppState], list, { rates: cardRates })
-  return sanitizeSettings({ ...(repaired as unknown as AppState), bills: backfillPaymentMethod(sanitizeBills(merged.bills)), transactions: sanitizeTransactions(merged.transactions) }, fallback)
+  return sanitizeSettings({ ...(repaired as unknown as AppState), colorMode: (merged as { colorMode?: unknown }).colorMode === 'light' ? 'light' : 'dark', bills: backfillPaymentMethod(sanitizeBills(merged.bills)), transactions: sanitizeTransactions(merged.transactions) }, fallback)
 }
 
 function loadState(key: string, fallback: AppState): AppState {
@@ -234,6 +237,7 @@ interface StoreContextValue {
   setTextScale: (scale: TextScale) => void
   setBillAlertsEnabled: (enabled: boolean) => void
   setAccentTheme: (theme: AccentTheme) => void
+  setColorMode: (mode: 'dark' | 'light') => void
   /** #8 expanded — records a real amount+date payment AND reduces the real balance/remaining it targets. Returns the new record's id. */
   recordPayment: (input: Omit<PaymentRecord, 'id' | 'recordedAt'>) => string
   /** Reverses a payment's balance effect and removes it — the real Undo for #8's toast action. */
@@ -419,6 +423,7 @@ export function StoreProvider({ children, storageKey = STORAGE_KEY, seedState = 
     setTextScale: (scale) => setState((s) => ({ ...s, textScale: scale })),
     setBillAlertsEnabled: (enabled) => setState((s) => ({ ...s, billAlertsEnabled: enabled })),
     setAccentTheme: (theme) => setState((s) => ({ ...s, accentTheme: theme })),
+    setColorMode: (mode) => setState((s) => ({ ...s, colorMode: mode === 'light' ? 'light' : 'dark' })),
   }), [state])
 
   return <StoreContext.Provider value={value}>{children}</StoreContext.Provider>

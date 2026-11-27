@@ -86,4 +86,10 @@ describe('normaliseState (used by load and by backup restore)', () => {
     const good = { current: 3, best: 9, lastCheckedDate: '2026-11-24', milestonesHit: [3] }
     expect(normaliseState({ streak: good } as never, DEFAULT_STATE).streak).toBe(good) // a good streak is the same object
   })
+
+  it('Appearance: dark by default, light is kept, anything else becomes dark', () => {
+    expect(normaliseState({} as never, DEFAULT_STATE).colorMode).toBe('dark')
+    expect(normaliseState({ colorMode: 'light' } as never, DEFAULT_STATE).colorMode).toBe('light')
+    for (const bad of ['blue', null, 5, {}]) expect(normaliseState({ colorMode: bad } as never, DEFAULT_STATE).colorMode, JSON.stringify(bad)).toBe('dark')
+  })
 })

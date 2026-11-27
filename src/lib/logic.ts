@@ -1806,7 +1806,9 @@ export function buildDashboardHeadline(leftover: number, score: number, breakdow
   const weakestLabel = HEALTH_BREAKDOWN_LABEL[weakest[0]] ?? 'your finances'
 
   if (leftover < 0) {
-    return `You're behind — fixed bills exceed net income by $${money2(Math.abs(round2(leftover)))} this month. ${weakestLabel[0].toUpperCase()}${weakestLabel.slice(1)} needs the most attention.`
+    return `Fixed bills are $${money2(Math.abs(round2(leftover)))} more than your net income each month. ${weakestLabel[0].toUpperCase()}${weakestLabel.slice(1)} needs the most attention.`
   }
-  return `You're $${money2(round2(leftover))} ahead after fixed bills this month (health score ${score}/100) — ${weakestLabel} is your biggest opportunity.`
+  // Plan-level wording on purpose: this is the monthly picture (income after tax minus fixed bills). "Your week" below it is about what is
+  // left to spend right now, so the two can differ without contradicting each other.
+  return `After fixed bills you plan on $${money2(round2(leftover))} a month to work with (health score ${score}/100). Biggest opportunity: ${weakestLabel}.`
 }
