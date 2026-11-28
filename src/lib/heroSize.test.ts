@@ -12,9 +12,10 @@ describe('heroAmountText', () => {
 
 describe('heroAmountSize', () => {
   it('Upcoming hero: full size for short amounts, stepping down for longer ones', () => {
-    expect(heroAmountSize(-674.94, { desktopFull: true })).toBe('text-5xl min-[360px]:text-6xl md:text-8xl')
-    expect(heroAmountSize(-12674.94, { desktopFull: true })).toBe('text-3xl min-[360px]:text-5xl md:text-7xl')
-    expect(heroAmountSize(-1234567.89, { desktopFull: true })).toBe('text-2xl min-[360px]:text-4xl md:text-6xl')
+    expect(heroAmountSize(-674.94, { desktopFull: true })).toBe('text-4xl min-[360px]:text-5xl min-[440px]:text-6xl md:text-8xl')
+    expect(heroAmountSize(-99.5, { desktopFull: true })).toBe('text-5xl min-[400px]:text-6xl md:text-8xl')
+    expect(heroAmountSize(-12674.94, { desktopFull: true })).toBe('text-2xl min-[360px]:text-3xl min-[440px]:text-5xl md:text-7xl')
+    expect(heroAmountSize(-1234567.89, { desktopFull: true })).toBe('text-xl min-[360px]:text-2xl min-[440px]:text-4xl md:text-6xl')
   })
   it('phone Home hero: narrower, so it steps down earlier', () => {
     expect(heroAmountSize(-674.94)).toBe('text-4xl') // 8 chars (wrapped at text-5xl in real Brave at 320px)

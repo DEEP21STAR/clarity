@@ -13,9 +13,10 @@ export function heroAmountSize(value: number, opts: { desktopFull?: boolean } = 
   const n = heroAmountText(value).length
   if (opts.desktopFull) {
     // Upcoming hero card (md: sizes only matter on wide screens)
-    if (n <= 9) return 'text-5xl min-[360px]:text-6xl md:text-8xl'
-    if (n <= 11) return 'text-3xl min-[360px]:text-5xl md:text-7xl'
-    return 'text-2xl min-[360px]:text-4xl md:text-6xl'
+    if (n <= 7) return 'text-5xl min-[400px]:text-6xl md:text-8xl'
+    if (n <= 9) return 'text-4xl min-[360px]:text-5xl min-[440px]:text-6xl md:text-8xl'
+    if (n <= 11) return 'text-2xl min-[360px]:text-3xl min-[440px]:text-5xl md:text-7xl'
+    return 'text-xl min-[360px]:text-2xl min-[440px]:text-4xl md:text-6xl'
   }
   // Phone Home hero card: narrower, and the figure must stay on one line (about 228px of text width at 320px)
   if (n <= 7) return 'text-5xl'
