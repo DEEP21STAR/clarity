@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, type ReactNode } from 'react'
 import { ShieldAlert } from 'lucide-react'
 import { useStore } from '@/lib/store'
 import { backupNudge, snoozeUntil } from '@/lib/backupNudge'
@@ -7,7 +7,7 @@ import { todayIso } from '@/lib/utils'
 const SNOOZE_KEY = 'clarity-backup-snooze'
 
 /** A slim reminder to back up when the data has never been (or not for 30+ days) saved off this device. "Back up now" opens Tools. */
-export function BackupNudgeStrip() {
+export function BackupNudgeStrip({ fallback = null }: { fallback?: ReactNode } = {}) {
   const { state } = useStore()
   const today = todayIso()
   const [snoozed, setSnoozed] = useState<string | null>(() => { try { return localStorage.getItem(SNOOZE_KEY) } catch { return null } })
@@ -17,7 +17,7 @@ export function BackupNudgeStrip() {
     historyDays: Array.isArray(state.netWorthHistory) ? state.netWorthHistory.length : 0,
     dismissedUntilIso: snoozed,
   })
-  if (!nudge.show) return null
+  if (!nudge.show) return <>{fallback}</>
   return (
     <section aria-label="Backup reminder" data-testid="backup-nudge" className="flex flex-wrap items-center gap-x-4 gap-y-1 rounded-xl border border-amber-400/30 bg-amber-400/[0.06] py-1 pl-4 pr-2">
       <p className="flex min-w-0 flex-1 basis-56 items-start gap-2 py-2 text-sm leading-snug text-amber-100">

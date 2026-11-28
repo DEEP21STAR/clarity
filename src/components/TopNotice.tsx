@@ -1,4 +1,5 @@
 import { BackupNudgeStrip } from './BackupNudgeStrip'
+import { SupportNudgeStrip } from './SupportNudgeStrip'
 import { WhatsNewCard, useWhatsNew } from './WhatsNewCard'
 import { SinceLastVisitStrip, useSinceLastVisit } from './SinceLastVisitStrip'
 
@@ -11,5 +12,6 @@ export function TopNotice() {
   const since = useSinceLastVisit()
   if (news.visible) return <WhatsNewCard onDismiss={news.dismiss} />
   if (since.visible) return <SinceLastVisitStrip summary={since.summary} onDismiss={since.dismiss} />
-  return <BackupNudgeStrip />
+  // lowest priority: the thank-you ask only appears when there is nothing more useful to say
+  return <BackupNudgeStrip fallback={<SupportNudgeStrip />} />
 }
