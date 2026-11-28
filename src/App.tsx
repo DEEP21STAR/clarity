@@ -354,8 +354,8 @@ export function AppContent() {
               >
                 <Menu className="w-4.5 h-4.5" />
               </button>
-              <img data-brand-logo src={`${import.meta.env.BASE_URL}favicon.svg`} alt="" aria-hidden="true" width={32} height={32} className="h-8 w-8 min-w-8 max-w-none shrink-0 select-none max-[339px]:hidden" style={{ flex: "none" }} draggable={false} />
-              <span className="gradient-heading font-bold text-lg tracking-tight hidden min-[430px]:inline">Clarity</span>
+              <img data-brand-logo src={`${import.meta.env.BASE_URL}favicon.svg`} alt="" aria-hidden="true" width={32} height={32} className="h-8 w-8 min-w-8 max-w-none shrink-0 select-none max-[399px]:hidden" style={{ flex: "none" }} draggable={false} />
+              <span className="gradient-heading font-bold text-lg tracking-tight hidden min-[480px]:inline">Clarity</span>
             </div>
             <div className="flex items-center gap-2 sm:gap-3 shrink-0">
               {/* Round 21, item #21 — real debounced "Saved" pulse, not permanent chrome. */}
