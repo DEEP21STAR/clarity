@@ -483,7 +483,7 @@ export function Tools() {
       <DataExportPanel />
 
       {/* 2026-09-23 — Clarity is free, donation-supported (same honor-system model as NUTRYOS),
-          separate Buy Me a Coffee page so support/interest for each product stays distinct. */}
+          the ONE shared Buy Me a Coffee page used by every Whetū dashboard (2026-11-28, Deep: same link for all). Keep it in step with dashboards.whetudigital.co.nz/support.js. */}
       <StatCard
         label="Support Clarity"
         glow="purple"
@@ -494,7 +494,7 @@ export function Tools() {
           stress, a coffee genuinely helps keep it running. Completely optional, no strings attached.
         </p>
         <a
-          href="https://buymeacoffee.com/clarity"
+          href="https://buymeacoffee.com/nutryos"
           target="_blank"
           rel="noopener noreferrer"
           className="donation-pulse mt-4 block rounded-xl border border-purple-400/30 bg-purple-400/10 py-3 text-center text-sm font-semibold text-purple-200"
