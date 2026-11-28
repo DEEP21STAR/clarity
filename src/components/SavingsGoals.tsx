@@ -1,4 +1,4 @@
-import { goalPace, milestone } from '@/lib/goalPace'
+import { goalPace, milestone, validIsoDate } from '@/lib/goalPace'
 import { useState } from 'react'
 import { MoneyField } from '@/components/MoneyField'
 import { StatCard } from './StatCard'
@@ -135,17 +135,21 @@ function GoalCard({ goal, onUpdate, onRemove, onLogContribution }: {
           )}
         </div>
       </div>
-      {goal.targetDate && <p className="mt-2 text-xs text-white/55">Target date: {formatShortDate(goal.targetDate)}</p>}
+      {goal.targetDate && validIsoDate(goal.targetDate) && <p className="mt-2 text-xs text-white/55">Target date: {formatShortDate(goal.targetDate)}</p>}
       {(() => {
         const pace = goalPace(goal, todayIso())
-        const ms = milestone(progress)
+        const ms = milestone(Math.round(progress))
         return (
           <>
-            {pace.state === 'running' && (
+            {pace.state === 'running' && !pace.short && (
               <p className="mt-1 text-xs text-emerald-200/90" data-testid="goal-pace">
                 {formatCurrency(pace.perWeek)} a week for {pace.daysLeft} {pace.daysLeft === 1 ? 'day' : 'days'} gets you there.
               </p>
             )}
+            {pace.state === 'running' && pace.short && (
+              <p className="mt-1 text-xs text-emerald-200/90" data-testid="goal-pace">{formatCurrency(pace.remaining)} still to go in {pace.daysLeft} {pace.daysLeft === 1 ? 'day' : 'days'}.</p>
+            )}
+            {pace.state === 'due-today' && <p className="mt-1 text-xs text-amber-300" data-testid="goal-pace">Due today. {formatCurrency(pace.remaining)} still to go.</p>}
             {pace.state === 'overdue' && <p className="mt-1 text-xs text-amber-300" data-testid="goal-pace">Target date has passed. {formatCurrency(pace.remaining)} still to go; pick a new date to get a weekly figure.</p>}
             {pace.state === 'done' && <p className="mt-1 text-xs text-emerald-300" data-testid="goal-pace">Goal reached. Well done.</p>}
             {ms > 0 && pace.state !== 'done' && <span className="mt-1 inline-block rounded-full border border-emerald-400/30 bg-emerald-400/10 px-2 py-0.5 text-[11px] text-emerald-200" data-testid="goal-milestone">{ms}% of the way</span>}
